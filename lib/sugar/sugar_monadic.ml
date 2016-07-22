@@ -50,15 +50,14 @@ open Sugar_result
 module Make  (UserMonad:Sugar_s.Monad)  (UserError:Sugar_s.Error) : Monadic_result_s
   with
     type error := UserError.error
-    (* and type 'a monad := 'a UserMonad.monad *)
+    and type 'a monad := 'a UserMonad.monad
     and type 'a result = ('a, UserError.error) std_result
 =
 struct
   type error = UserError.error
-  (* type 'a monad = 'a UserMonad.monad *)
+  type 'a monad = 'a UserMonad.monad
   type 'a result = ('a, error) std_result
 
-  type 'a monad = 'a UserMonad.monad
   let return = UserMonad.return
   let (>>=) = UserMonad.(>>=)
 
