@@ -1,4 +1,4 @@
-module LwtMonad: Sugar_s.Monad
+module LwtMonad: Sugar_std.Monad
   with type 'a monad := 'a Lwt.t =
 struct
   type 'a monad = 'a Lwt.t
@@ -9,9 +9,9 @@ end
 
 module Result = struct
 
-  module Make(UserError:Sugar_s.Error) = struct
+  module Make(UserError:Sugar.Std.Error) = struct
 
-    include Sugar.Std.Monadic.Make
+    include Sugar.Monadic.Make
       (struct
         type 'a monad = 'a Lwt.t
         let return = Lwt.return

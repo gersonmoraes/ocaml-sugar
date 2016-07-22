@@ -1,4 +1,4 @@
-open Sugar_s
+open Sugar_std
 
 (**
  * Difine a common result type. This definition is experimental.
@@ -11,14 +11,8 @@ open Sugar_s
 end *)
 
 
-(* This should be refactored to the default result in OCaml >= 4.03  *)
-type ('a, 'b) std_result =
-  | Ok of 'a
-  | Error of 'b
-
-
 module type S = sig
-  include Error
+  include Sugar_std.Error
 
   type 'a result = ('a, error) std_result
 
@@ -85,7 +79,7 @@ struct
   let (&&=) = bind_if
   let (||=) = bind_unless
 
-  module Monad : Sugar_s.Monad
+  module Monad : Sugar_std.Monad
     with type 'a monad := 'a result =
   struct
     let return = commit

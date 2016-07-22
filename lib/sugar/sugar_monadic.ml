@@ -1,9 +1,11 @@
+open Sugar_std
+
 module type Monadic_result_s = sig
 
   open Sugar_result
 
-  include Sugar_s.Error
-  include Sugar_s.Monad
+  include Sugar_std.Error
+  include Sugar_std.Monad
 
   type 'a result = ('a, error) std_result
 
@@ -47,7 +49,7 @@ end
 
 open Sugar_result
 
-module Make  (UserMonad:Sugar_s.Monad)  (UserError:Sugar_s.Error) : Monadic_result_s
+module Make  (UserMonad:Sugar_std.Monad)  (UserError:Sugar_std.Error) : Monadic_result_s
   with
     type error := UserError.error
     and type 'a monad := 'a UserMonad.monad

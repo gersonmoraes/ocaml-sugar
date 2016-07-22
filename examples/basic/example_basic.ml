@@ -11,7 +11,6 @@ open Sugar.Std
  * for computations: ('a result).
  *)
 
-
 (* Create a module with your own "error" type *)
 module MyError =
 struct
@@ -21,7 +20,7 @@ struct
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-module MyResult = Result.Make(MyError)
+module MyResult = Sugar.Result.Make(MyError)
 
 (* Start using them *)
 open MyResult
