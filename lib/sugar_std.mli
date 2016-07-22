@@ -7,3 +7,7 @@ module type Monad = sig
   val return: 'a -> 'a m
   val (>>=): 'a m -> ('a -> 'b m) -> 'b m
 end
+
+module type Error = sig
+  type error
+end

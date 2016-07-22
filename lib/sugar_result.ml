@@ -1,3 +1,4 @@
+open Sugar_std
 
 (**
  * Difine a common result type. This definition is experimental.
@@ -9,14 +10,19 @@
   type ('a, 'b) result = Ok of 'a | Error of 'b
 end *)
 
-module type Error_s = sig
-  type t
+(* This should be refactored to the default result in OCaml >= 4.03  *)
+type ('a, 'b) generic_result =
+  | Ok of 'a
+  | Error of 'b
+
+module type Error = sig
+  type error
 end
 
 module type S = sig
-  type error
+  include Error
 
-  type 'a result = Ok of 'a | Error of error
+  type 'a result = ('a, error) generic_result
 
   (**
    * Apply the binding only if the computation was successful.
@@ -36,6 +42,11 @@ module type S = sig
    *)
   val catch: 'a result -> (error -> 'a result) -> 'a result
 
+  (**
+   * Apply a function to the wraped value if the result is successful
+   *)
+  val map:  'a result -> ('a -> 'b) -> 'b result
+
   (** Indicate a successful computation *)
   val commit: 'a -> 'a result
 
@@ -49,10 +60,14 @@ module type S = sig
   val (||=): 'a result -> (error -> 'a result) -> 'a result
 end
 
-module Make(Error: Error_s) : S =
+module Make (UserError:Error) : S =
 struct
-  type error = Error.t
-  type 'a result = Ok of 'a | Error of error
+
+  type error = UserError.error
+
+  type 'a result = ('a, error) generic_result
+
+  open UserError
 
   let commit v = Ok v
   let throw e = Error e
@@ -66,6 +81,11 @@ struct
     match r with
     | Error e -> f e
     | Ok v -> Ok v
+
+  let map r f =
+    match r with
+    | Error e -> Error e
+    | Ok v -> Ok (f v)
 
   let (&&=) = bind
   let (||=) = catch
