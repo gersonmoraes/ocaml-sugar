@@ -29,7 +29,7 @@ module type S = sig
    *
    * You can use the operator (&&=) instead of this function for syntatic sugar
    *)
-  val bind:  'a result -> ('a -> 'b result) -> 'b result
+  val bind_if:  'a result -> ('a -> 'b result) -> 'b result
 
   (**
    * Apply the binding only if the computation failed.
@@ -40,7 +40,7 @@ module type S = sig
    *
    * You can use the operator (||=) instead of this function for syntatic sugar
    *)
-  val catch: 'a result -> (error -> 'a result) -> 'a result
+  val bind_unless: 'a result -> (error -> 'a result) -> 'a result
 
   (**
    * Apply a function to the wraped value if the result is successful
@@ -60,24 +60,21 @@ module type S = sig
   val (||=): 'a result -> (error -> 'a result) -> 'a result
 end
 
+
 module Make (UserError:Error) : S =
 struct
-
   type error = UserError.error
-
   type 'a result = ('a, error) generic_result
-
-  open UserError
 
   let commit v = Ok v
   let throw e = Error e
 
-  let bind r f =
+  let bind_if r f =
     match r with
       | Error e -> Error e
       | Ok v -> f v
 
-  let catch r f =
+  let bind_unless r f =
     match r with
     | Error e -> f e
     | Ok v -> Ok v
@@ -87,13 +84,13 @@ struct
     | Error e -> Error e
     | Ok v -> Ok (f v)
 
-  let (&&=) = bind
-  let (||=) = catch
+  let (&&=) = bind_if
+  let (||=) = bind_unless
 
   module Monad : Sugar_std.Monad
     with type 'a m := 'a result =
   struct
     let return = commit
-    let (>>=) = bind
+    let (>>=) = bind_if
   end
 end
