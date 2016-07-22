@@ -11,7 +11,7 @@ module Result = struct
 
   module Make(UserError:Sugar_s.Error) = struct
 
-    include Sugar_monadic.Make
+    include Sugar.Std.Monadic.Make
       (struct
         type 'a monad = 'a Lwt.t
         let return = Lwt.return
