@@ -61,10 +61,10 @@ module type S = sig
 end
 
 
-module Make (UserError:Error) : S =
+module Make (UserError:Error) : S
+  with type error := UserError.error =
 struct
-  type error = UserError.error
-  type 'a result = ('a, error) generic_result
+  type 'a result = ('a, UserError.error) generic_result
 
   let commit v = Ok v
   let throw e = Error e
