@@ -1,0 +1,15 @@
+opam-version: "1.2"
+name: "sugar"
+version: "0.1"
+maintainer: "Gerson Moraes <gerson@digirati.com.br>"
+author: "Gerson Moraes <gerson@digirati.com.br>"
+homepage: "https://bitbucket.org/gsmoraes/ocaml-sugar"
+license: "MIT"
+dev-repo: "https://bitbucket.org/gsmoraes/ocaml-sugar"
+build: [
+  ["./configure" "--prefix=%{prefix}%"]
+  [make]
+]
+install: [make "install"]
+remove: ["ocamlfind" "remove" "project"]
+depends: "ocamlfind"""""

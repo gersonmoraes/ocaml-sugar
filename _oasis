@@ -1,0 +1,49 @@
+OASISFormat: 0.4
+Name:        sugar
+Version:     0.1
+Synopsis:    A library to bring sugar syntatic to your error handling layer.
+Authors:     Gerson Moraes <gerson@digirati.com.br>
+License:     MIT
+Plugins:     META (0.4), DevFiles (0.4)
+BuildTools:  ocamlbuild
+
+
+# Flags
+# ------------------------------------------------------------------
+
+Flag example
+  Description:   Build the examples
+  Default:       true
+
+
+
+# Libraries
+# ------------------------------------------------------------------
+
+Library "sugar"
+  FindlibName:      sugar
+  Path:             lib
+  Modules:          Sugar
+  InternalModules:  Sugar_option, Sugar_result
+
+
+
+# Examples
+# ------------------------------------------------------------------
+
+Executable "example_basic"
+  Build$:         flag(example)
+  Install:        false
+  Path:           examples
+  MainIs:         example_basic.ml
+  CompiledObject: best
+  BuildDepends:   sugar
+
+
+Executable "example_monadic"
+  Build$:         flag(example)
+  Install:        false
+  Path:           examples
+  MainIs:         example_monadic.ml
+  CompiledObject: best
+  BuildDepends:   sugar

@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: c7faf6b5a2e3630ddea2963a6ea6ca90)
+version = "0.1"
+description =
+"A library to bring sugar syntatic to your error handling layer."
+archive(byte) = "sugar.cma"
+archive(byte, plugin) = "sugar.cma"
+archive(native) = "sugar.cmxa"
+archive(native, plugin) = "sugar.cmxs"
+exists_if = "sugar.cma"
+# OASIS_STOP
+
