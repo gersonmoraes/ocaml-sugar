@@ -54,7 +54,8 @@ module Make  (UserMonad:Sugar_s.Monad)  (UserError:Sugar_s.Error) : Monadic_resu
     and type 'a result = ('a, UserError.error) std_result
 =
 struct
-  type error = UserError.error
+  (* type error = UserError.error *)
+  include UserError
   type 'a monad = 'a UserMonad.monad
   type 'a result = ('a, error) std_result
 

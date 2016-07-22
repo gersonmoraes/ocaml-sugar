@@ -42,7 +42,7 @@ Library "sugar_lwt"
   FindlibParent:    sugar
   Path:             lib/lwt
   Modules:          Sugar_lwt
-  BuildDepends:     lwt, sugar
+  BuildDepends:     lwt, lwt.unix, lwt, sugar
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
 
