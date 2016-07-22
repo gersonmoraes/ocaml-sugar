@@ -24,7 +24,7 @@ Library "sugar"
   FindlibName:      sugar
   Path:             lib
   Modules:          Sugar
-  InternalModules:  Sugar_option, Sugar_result
+  InternalModules:  Sugar_std, Sugar_option, Sugar_result
 
 
 
