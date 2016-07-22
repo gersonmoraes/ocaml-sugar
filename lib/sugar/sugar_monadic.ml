@@ -48,7 +48,8 @@ open Sugar_result
 
 module Make (UserError:Sugar_s.Error) (Monad:Sugar_s.Monad) : Monadic_result_s
   with
-    type 'a monad = 'a Monad.monad
+    type error = UserError.error
+    and type 'a monad = 'a Monad.monad
     and type 'a result = (('a, UserError.error) std_result) Monad.monad
 =
 struct
