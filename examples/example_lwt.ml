@@ -47,7 +47,7 @@ let error_handler e: string result =
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let main (): unit result =
+let main: unit result =
   print_message "We are extensively using a user defined result type"
   &&= load_list 10
   &&= fun l -> commit (List.length l)
@@ -59,4 +59,4 @@ let main (): unit result =
          commit ()
 
 let _ =
-  Lwt_main.run (main ())
+  Lwt_main.run (main)

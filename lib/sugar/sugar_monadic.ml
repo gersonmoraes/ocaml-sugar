@@ -5,7 +5,8 @@ module type Monadic_result_s = sig
   include Sugar_s.Error
   include Sugar_s.Monad
 
-  type 'a result
+  type 'a result = ('a, error) std_result
+
   (* = (('a , Error.error) std_result) Monad.m *)
 
   (**
@@ -13,7 +14,7 @@ module type Monadic_result_s = sig
    *
    * You can use the operator (&&=) instead of this function for syntatic sugar
    *)
-  val bind_if:  'a result -> ('a -> 'b result) -> 'b result
+  val bind_if:  'a result monad -> ('a -> 'b result monad) -> 'b result monad
 
   (**
    * Apply the binding only if the computation failed.
@@ -24,43 +25,42 @@ module type Monadic_result_s = sig
    *
    * You can use the operator (||=) instead of this function for syntatic sugar
    *)
-  val bind_unless: 'a result -> (error -> 'a result) -> 'a result
+  val bind_unless: 'a result monad -> (error -> 'a result monad) -> 'a result monad
 
   (**
    * Apply a function to the wraped value if the result is successful
    *)
-  val map:  'a result -> ('a -> 'b) -> 'b result
+  val map:  'a result monad -> ('a -> 'b) -> 'b result monad
 
   (** Indicate a successful computation *)
-  val commit: 'a -> 'a result
+  val commit: 'a -> 'a result monad
 
   (** Indicate a failure in a computation *)
-  val throw: error -> 'a result
+  val throw: error -> 'a result monad
 
   (** Conditional binding operator AND *)
-  val (&&=): 'a result -> ('a -> 'b result) -> 'b result
+  val (&&=): 'a result monad -> ('a -> 'b result monad) -> 'b result monad
 
   (** Conditional binding operator OR *)
-  val (||=): 'a result -> (error -> 'a result) -> 'a result
+  val (||=): 'a result monad -> (error -> 'a result monad) -> 'a result monad
 end
 
 open Sugar_result
 
-module Make (UserError:Sugar_s.Error) (Monad:Sugar_s.Monad) : Monadic_result_s
+module Make  (UserMonad:Sugar_s.Monad)  (UserError:Sugar_s.Error) : Monadic_result_s
   with
-    type error = UserError.error
-    and type 'a monad = 'a Monad.monad
-    and type 'a result = (('a, UserError.error) std_result) Monad.monad
+    type error := UserError.error
+    (* and type 'a monad := 'a UserMonad.monad *)
+    and type 'a result = ('a, UserError.error) std_result
 =
 struct
   type error = UserError.error
-  type 'a monad = 'a Monad.monad
-  type 'a result = (('a, error) std_result) monad
+  (* type 'a monad = 'a UserMonad.monad *)
+  type 'a result = ('a, error) std_result
 
-  let return = Monad.return
-  let (>>=) = Monad.(>>=)
-
-  open Monad
+  type 'a monad = 'a UserMonad.monad
+  let return = UserMonad.return
+  let (>>=) = UserMonad.(>>=)
 
   let commit v = return (Ok v)
   let throw e = return (Error e)

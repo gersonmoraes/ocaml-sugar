@@ -13,7 +13,7 @@ BuildTools:  ocamlbuild
 
 Flag example
   Description:   Build the examples
-  Default:       false
+  Default:       true
 
 Flag lwt
   Description:   Build the Lwt library
@@ -64,4 +64,4 @@ Executable "example_lwt"
   Path:           examples
   MainIs:         example_lwt.ml
   CompiledObject: best
-  BuildDepends:   sugar, sugar.lwt
+  BuildDepends:   sugar, sugar.lwt, lwt

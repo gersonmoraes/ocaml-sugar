@@ -1,4 +1,6 @@
-module LwtMonad: Sugar_s.Monad = struct
+module LwtMonad: Sugar_s.Monad
+  with type 'a monad := 'a Lwt.t =
+struct
   type 'a monad = 'a Lwt.t
   let return = Lwt.return
   let (>>=) = Lwt.bind
@@ -6,21 +8,18 @@ end
 
 
 module Result = struct
-  open Sugar_result
 
-  module Make(UserError:Sugar_s.Error): Sugar_monadic.Monadic_result_s
-    with type error := UserError.error
-     and type 'a monad := 'a LwtMonad.monad
-  = struct
-      (* type error = UserError.error
-      type 'a monad = 'a LwtMonad.monad *)
+  module Make(UserError:Sugar_s.Error) = struct
 
-      include (Sugar_monadic.Make (UserError) (LwtMonad))
+    include Sugar_monadic.Make
+      (struct
+        type 'a monad = 'a Lwt.t
+        let return = Lwt.return
+        let (>>=) = Lwt.bind
+      end)
+      (UserError)
 
-    (* module GeneratedResult: Sugar_monadic.Monadic_result_s
-      with type error := Error.error = struct
-
-    end *)
-
+    (* include Sugar_monadic.Make (LwtMonad) (UserError) *)
   end
+
 end
