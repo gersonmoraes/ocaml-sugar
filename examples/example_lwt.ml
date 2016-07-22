@@ -1,6 +1,5 @@
 open Sugar.Std
 
-
 (* Example of basic usage of Sugar to build an Error Handling Layer
  *
  * It uses a parametrized module to build sugar syntatic and useful functions
@@ -22,6 +21,8 @@ end
 
 (* Generate your error handling layer with your parametrized Result module *)
 module MyResult = Result.Make(MyError)
+(* Sugar_lwt *)
+(* module MyLwtResult = Sugar_lwt.Result.Make() *)
 
 (* Start using them *)
 open MyResult

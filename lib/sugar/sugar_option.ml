@@ -1,4 +1,4 @@
-open Sugar_std
+open Sugar_s
 
 let commit v = Some v
 

@@ -15,6 +15,13 @@ Flag example
   Description:   Build the examples
   Default:       true
 
+Flag lwt
+  Description:   Build the Lwt library
+  Default:       true
+
+Flag async
+  Description:   Build the Async library
+  Default:       false
 
 
 # Libraries
@@ -22,10 +29,21 @@ Flag example
 
 Library "sugar"
   FindlibName:      sugar
-  Path:             lib
-  Modules:          Sugar
-  InternalModules:  Sugar_std, Sugar_option, Sugar_result
+  Path:             lib/sugar
+  Modules:          Sugar, Sugar_monadic
+  InternalModules:  Sugar_s, Sugar_option, Sugar_result
+  XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
+
+Library "sugar_lwt"
+  Build$:           flag(lwt)
+  Install$:         flag(lwt)
+  FindlibName:      lwt
+  FindlibParent:    sugar
+  Path:             lib/lwt
+  Modules:          Sugar_lwt
+  BuildDepends:     lwt, sugar
+  XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
 
 # Examples
@@ -40,10 +58,10 @@ Executable "example_basic"
   BuildDepends:   sugar
 
 
-Executable "example_monadic"
+Executable "example_lwt"
   Build$:         flag(example)
   Install:        false
   Path:           examples
-  MainIs:         example_monadic.ml
+  MainIs:         example_lwt.ml
   CompiledObject: best
-  BuildDepends:   sugar
+  BuildDepends:   sugar, sugar.lwt

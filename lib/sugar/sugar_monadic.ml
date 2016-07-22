@@ -1,28 +1,10 @@
-open Sugar_std
-
-(**
- * Difine a common result type. This definition is experimental.
- *
- * A functor for this types might be created.
- * When we adapt this module for OCaml 4.03, we'll use Core.Std.result type
- *)
-(* module Std = struct
-  type ('a, 'b) result = Ok of 'a | Error of 'b
-end *)
-
-(* This should be refactored to the default result in OCaml >= 4.03  *)
-type ('a, 'b) generic_result =
-  | Ok of 'a
-  | Error of 'b
-
-module type Error = sig
-  type error
-end
+open Sugar_result
 
 module type S = sig
   include Error
 
-  type 'a result = ('a, error) generic_result
+  type 'a monad
+  type 'a result = ('a, error) generic_result monad
 
   (**
    * Apply the binding only if the computation was successful.
@@ -60,37 +42,44 @@ module type S = sig
   val (||=): 'a result -> (error -> 'a result) -> 'a result
 end
 
-
-module Make (UserError:Error) : S
-  with type error := UserError.error =
+module Make (UserError2:Sugar_s.Error) (Monad:Sugar_s.Monad) : S
+  with type error := UserError2.error
+    and type 'a monad = 'a Monad.m
+    and type 'a result = ('a, UserError2.error) generic_result Monad.m =
 struct
-  type 'a result = ('a, UserError.error) generic_result
+  type 'a monad = 'a Monad.m
+  type 'a result = ('a, UserError2.error) generic_result monad
 
-  let commit v = Ok v
-  let throw e = Error e
+  open Monad
+
+  let commit v = return (Ok v)
+  let throw e = return (Error e)
 
   let bind_if r f =
-    match r with
-      | Error e -> Error e
-      | Ok v -> f v
+    r
+    >>= function
+    | Error e -> throw e
+    | Ok v -> f v
 
   let bind_unless r f =
-    match r with
+    r
+    >>= function
     | Error e -> f e
-    | Ok v -> Ok v
+    | Ok v -> commit v
 
   let map r f =
-    match r with
-    | Error e -> Error e
-    | Ok v -> Ok (f v)
+    r
+    >>= function
+    | Error e -> throw e
+    | Ok v -> commit (f v)
 
   let (&&=) = bind_if
   let (||=) = bind_unless
 
-  module Monad : Sugar_std.Monad
-    with type 'a m := 'a result =
+  (* module Monad : Sugar_s.Monad
+    with type 'a m := 'a monad =
   struct
     let return = commit
     let (>>=) = bind_if
-  end
+  end *)
 end
