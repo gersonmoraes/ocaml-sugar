@@ -12,20 +12,15 @@ end *)
 
 
 (* This should be refactored to the default result in OCaml >= 4.03  *)
-type ('a, 'b) generic_result =
+type ('a, 'b) std_result =
   | Ok of 'a
   | Error of 'b
-
-
-module type Error = sig
-  type error
-end
 
 
 module type S = sig
   include Error
 
-  type 'a result = ('a, error) generic_result
+  type 'a result = ('a, error) std_result
 
   (**
    * Apply the binding only if the computation was successful.
@@ -67,7 +62,7 @@ end
 module Make (UserError:Error) : S
   with type error := UserError.error =
 struct
-  type 'a result = ('a, UserError.error) generic_result
+  type 'a result = ('a, UserError.error) std_result
 
   let commit v = Ok v
   let throw e = Error e
@@ -91,7 +86,7 @@ struct
   let (||=) = bind_unless
 
   module Monad : Sugar_s.Monad
-    with type 'a m := 'a result =
+    with type 'a monad := 'a result =
   struct
     let return = commit
     let (>>=) = bind_if

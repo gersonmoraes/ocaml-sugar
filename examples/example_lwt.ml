@@ -20,13 +20,13 @@ struct
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-module MyResult = Result.Make(MyError)
+(* module MyResult = Result.Make(MyError) *)
 (* Sugar_lwt *)
-(* module MyLwtResult = Sugar_lwt.Result.Make() *)
+module LwtResult = Sugar_lwt.Result.Make(MyError)
 
 (* Start using them *)
-open MyResult
 open MyError
+open LwtResult
 
 (* We're only printing messages to the screen here *)
 let print_message m: unit result =
@@ -47,7 +47,7 @@ let error_handler e: string result =
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let computation_chain: unit result =
+let main (): unit result =
   print_message "We are extensively using a user defined result type"
   &&= load_list 10
   &&= fun l -> commit (List.length l)
@@ -57,3 +57,6 @@ let computation_chain: unit result =
          print_endline "You can nearly do anything you want here.";
          print_endline "We are not restricted to result types.";
          commit ()
+
+let _ =
+  Lwt_main.run (main ())

@@ -33,7 +33,7 @@ let (|=) = bind_unless
  * Notice though, that is is composed with aliases for other functions.
  *)
   module Monad : Monad
-   with type 'a m := 'a option =
+   with type 'a monad := 'a option =
  struct
    let return = commit
    let (>>=) = bind_if

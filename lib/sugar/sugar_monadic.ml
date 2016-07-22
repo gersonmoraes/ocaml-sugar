@@ -1,10 +1,12 @@
-open Sugar_result
+module type Monadic_result_s = sig
 
-module type S = sig
-  include Error
+  open Sugar_result
 
-  type 'a monad
-  type 'a result = ('a, error) generic_result monad
+  include Sugar_s.Error
+  include Sugar_s.Monad
+
+  type 'a result
+  (* = (('a , Error.error) std_result) Monad.m *)
 
   (**
    * Apply the binding only if the computation was successful.
@@ -42,13 +44,20 @@ module type S = sig
   val (||=): 'a result -> (error -> 'a result) -> 'a result
 end
 
-module Make (UserError2:Sugar_s.Error) (Monad:Sugar_s.Monad) : S
-  with type error := UserError2.error
-    and type 'a monad = 'a Monad.m
-    and type 'a result = ('a, UserError2.error) generic_result Monad.m =
+open Sugar_result
+
+module Make (UserError:Sugar_s.Error) (Monad:Sugar_s.Monad) : Monadic_result_s
+  with
+    type 'a monad = 'a Monad.monad
+    and type 'a result = (('a, UserError.error) std_result) Monad.monad
+=
 struct
-  type 'a monad = 'a Monad.m
-  type 'a result = ('a, UserError2.error) generic_result monad
+  type error = UserError.error
+  type 'a monad = 'a Monad.monad
+  type 'a result = (('a, error) std_result) monad
+
+  let return = Monad.return
+  let (>>=) = Monad.(>>=)
 
   open Monad
 
