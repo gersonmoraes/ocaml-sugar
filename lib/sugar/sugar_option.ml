@@ -42,4 +42,5 @@ struct
   type 'a monad = 'a option
   let return = commit
   let (>>=) = bind_if
+  let semicolon x y = y
 end

@@ -8,9 +8,10 @@
  (** Common monadic signature *)
 module type Monad = sig
   type 'a monad
-
   val return: 'a -> 'a monad
   val (>>=): 'a monad -> ('a -> 'b monad) -> 'b monad
+
+  val semicolon: 'a monad -> 'b monad -> 'b monad
 end
 
 (** Minimalistic Error interface *)
@@ -66,6 +67,8 @@ end
 
 module type Promise = sig
   include Result
+
+  val (&&>): 'a result -> 'b result -> 'b result
 
   type 'a state
   type 'a promise

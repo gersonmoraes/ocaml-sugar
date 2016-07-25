@@ -8,6 +8,10 @@ module Result = struct
         type 'a monad = 'a Lwt.t
         let return = Lwt.return
         let (>>=) = Lwt.bind
+
+        let semicolon m1 m2 =
+          lwt _x = m1 and y = m2 in
+          return y
       end)
       (UserError)
 

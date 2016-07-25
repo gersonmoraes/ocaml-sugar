@@ -1,3 +1,4 @@
+open Lwt
 open Sugar.Types
 
 (* Example of basic usage of Sugar to build an Error Handling Layer
@@ -22,11 +23,11 @@ end
 (* Generate your error handling layer with your parametrized Result module *)
 (* module MyResult = Result.Make(MyError) *)
 (* Sugar_lwt *)
-module LwtResult = Sugar_lwt.Result.Make(MyError)
+module MyResult = Sugar_lwt.Result.Make(MyError)
 
 (* Start using them *)
 open MyError
-open LwtResult
+open MyResult
 
 (* We're only printing messages to the screen here.
  *
@@ -35,7 +36,8 @@ open LwtResult
  *    - It is just the full form of the type "unit result"
  *)
 let print_message m: unit state Lwt.t =
-  let open Lwt in
+  Lwt_unix.sleep (Random.float 5.)
+  >>= fun () ->
   Lwt_log.notice m
   >>= commit
 
@@ -54,9 +56,16 @@ let error_handler e: string result =
   | _ -> throw e
 
 let main: unit result =
-  print_message "We are extensively using a user defined result type"
-  &&= fun () ->
-  load_list 10
+  print_message "1 - We are extensively using a user defined result type"
+  &&> print_message "2 - We are extensively using a user defined result type"
+  &&> print_message "3 - We are extensively using a user defined result type"
+  &&> print_message "4 - We are extensively using a user defined result type"
+  &&> print_message "5 - We are extensively using a user defined result type"
+  &&> print_message "6 - We are extensively using a user defined result type"
+  &&> print_message "7 - We are extensively using a user defined result type"
+  &&> print_message "8 - We are extensively using a user defined result type"
+  &&> load_list 10
+  (* &&= fun () -> load_list 10 *)
   &&= fun l ->
   commit (List.length l)
   &&= computation_failed
@@ -67,4 +76,5 @@ let main: unit result =
 
 
 let _ =
+  Random.self_init ();
   Lwt_main.run (main)

@@ -41,8 +41,10 @@ struct
     with type 'a monad = 'a result =
   struct
     type 'a monad = 'a result
-    
+
     let return = commit
     let (>>=) = bind_if
+
+    let semicolon _ x = x
   end
 end
