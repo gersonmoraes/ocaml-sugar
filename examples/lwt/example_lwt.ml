@@ -28,26 +28,32 @@ module LwtResult = Sugar_lwt.Result.Make(MyError)
 open MyError
 open LwtResult
 
-(* We're only printing messages to the screen here *)
-let print_message m: unit result Lwt.t =
+(* We're only printing messages to the screen here.
+ *
+ *  Notes
+ *    - Notice the specific Lwt type hinting.
+ *    - It is just the full form of the type "unit result"
+ *)
+let print_message m: unit state Lwt.t =
+  let open Lwt in
   Lwt_log.notice m
   >>= commit
 
 (* Do some computation and return a list, if it is successful *)
-let load_list n: int list result Lwt.t =
+let load_list n: int list result =
   let l = [1; 2; 3] in
   let new_list = List.map (fun v -> v * n) l in
   commit new_list
 
-let computation_failed _length: 'a result Lwt.t =
+let computation_failed _length: 'a result =
   throw Resource_not_found
 
-let error_handler e: string result Lwt.t =
+let error_handler e: string result =
   match e with
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let main: unit result Lwt.t =
+let main: unit result =
   print_message "We are extensively using a user defined result type"
   &&= fun () ->
   load_list 10

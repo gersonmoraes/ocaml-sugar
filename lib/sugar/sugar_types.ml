@@ -59,3 +59,11 @@ module type Result = sig
   (** Conditional binding operator OR *)
   val (||=): 'a result -> (error -> 'a result) -> 'a result
 end
+
+
+module type Promise = sig
+  include Result
+
+  type 'a state
+  type 'a promise
+end

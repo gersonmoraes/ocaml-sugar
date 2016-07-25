@@ -6,7 +6,7 @@ module Types = Sugar_types
 module Result = Sugar_result
 
 (** Implements a monadic interface for wraped asynchronous results *)
-module Promise = Sugar_monadic
+module Promise = Sugar_promise
 
 
 (** Opaque error results *)

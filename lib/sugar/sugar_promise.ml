@@ -1,6 +1,6 @@
 open Sugar_types
-
-module type Monadic_result_s = sig
+(*
+module type Promise_s = sig
 
   open Sugar_result
 
@@ -46,20 +46,25 @@ module type Monadic_result_s = sig
   (** Conditional binding operator OR *)
   val (||=): 'a result monad -> (error -> 'a result monad) -> 'a result monad
 end
+*)
 
 open Sugar_result
 
-module Make  (UserMonad:Sugar_types.Monad)  (UserError:Sugar_types.Error) : Monadic_result_s
+module Make  (UserMonad:Sugar_types.Monad)  (UserError:Sugar_types.Error) : Sugar_types.Promise
   with
     type error := UserError.error
-    and type 'a monad := 'a UserMonad.monad
-    and type 'a result = ('a, UserError.error) std_result
+    and type 'a promise := 'a UserMonad.monad
+    (* and type 'a result = ('a, UserError.error) std_result *)
+    and type 'a state = ('a, UserError.error) std_result
+    and type 'a result = (('a, UserError.error) std_result) UserMonad.monad
 =
 struct
   (* type error = UserError.error *)
   include UserError
-  type 'a monad = 'a UserMonad.monad
-  type 'a result = ('a, error) std_result
+  type 'a promise = 'a UserMonad.monad
+
+  type 'a state = ('a, error) std_result
+  type 'a result = 'a state promise
 
   let return = UserMonad.return
   let (>>=) = UserMonad.(>>=)

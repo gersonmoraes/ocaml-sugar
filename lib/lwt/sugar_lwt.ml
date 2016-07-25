@@ -11,7 +11,7 @@ module Result = struct
       end)
       (UserError)
 
-    (* include Sugar_monadic.Make (LwtMonad) (UserError) *)
+    (* include Sugar_promise.Make (LwtMonad) (UserError) *)
   end
 
 end

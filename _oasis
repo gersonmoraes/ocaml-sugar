@@ -30,7 +30,7 @@ Flag async
 Library "sugar"
   FindlibName:      sugar
   Path:             lib/sugar
-  Modules:          Sugar, Sugar_monadic
+  Modules:          Sugar, Sugar_promise
   InternalModules:  Sugar_types, Sugar_option, Sugar_result
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
