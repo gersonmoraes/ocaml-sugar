@@ -68,7 +68,7 @@ end
 module type Promise = sig
   include Result
 
-  val (&&>): 'a result -> 'b result -> 'b result
+  val (/>): unit result -> 'a result -> 'a result
 
   type 'a state
   type 'a promise

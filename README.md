@@ -56,7 +56,7 @@ let print_message m: unit result =
   commit ()
 
 (* Do some computation and return a list, if it is successful *)
-let load_list n (): int list result =
+let load_list n: int list result =
   let l = [1; 2; 3] in
   let new_list = List.map (fun v -> v * n) l in
   commit new_list
@@ -71,12 +71,12 @@ let error_handler e: string result =
 
 let computation_chain: unit result =
   print_message "We are extensively using a user defined result type"
-  &&= load_list 10
+  /> load_list 10
   &&= fun l -> commit (List.length l)
   &&= computation_failed
   ||= error_handler
   &&= fun _ ->
-         print_endline "You can nearly do anything you want here.";
-         print_endline "We are not restricted to result types.";
-         commit ()
+  print_endline "You can nearly do anything you want here.";
+  print_endline "We are not restricted to result types.";
+  commit ()
 ```

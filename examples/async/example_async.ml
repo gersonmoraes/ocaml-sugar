@@ -50,7 +50,7 @@ let print_message m: unit state Deferred.t =
   >>= fun _ ->
   Log.info logger "%s" m;
   flush_logger ()
-  &&> commit ()
+  /> commit ()
 
 
 (* Do some computation and return a list, if it is successful *)
@@ -69,10 +69,10 @@ let error_handler e: string result =
 
 let main_handler: unit state Deferred.t =
   print_message     "1 - Parallels bindings"
-  &&> print_message "2 - Parallels bindings"
-  &&> print_message "3 - Parallels bindings"
-  &&> print_message "4 - Parallels bindings"
-  &&> load_list 10
+  /> print_message "2 - Parallels bindings"
+  /> print_message "3 - Parallels bindings"
+  /> print_message "4 - Parallels bindings"
+  /> load_list 10
   (* &&= fun () -> load_list 10 *)
   &&= fun l ->
   commit (List.length l)
