@@ -21,5 +21,4 @@ module Opaque = struct
   end
   (** This module implements the Types.Result using the standard option type *)
   module Result = Sugar_result.Make(OpaqueError)
-
 end

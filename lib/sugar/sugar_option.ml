@@ -36,9 +36,10 @@ let (||=) = bind_unless
 (* This module implements a monadic interface for the option type
  * Notice though, that is is composed with aliases for other functions.
  *)
-  module Monad : Sugar_types.Monad
-   with type 'a monad := 'a option =
- struct
-   let return = commit
-   let (>>=) = bind_if
- end
+module Monad : Sugar_types.Monad
+   with type 'a monad = 'a option =
+struct
+  type 'a monad = 'a option
+  let return = commit
+  let (>>=) = bind_if
+end

@@ -38,8 +38,10 @@ struct
   let (||=) = bind_unless
 
   module Monad : Sugar_types.Monad
-    with type 'a monad := 'a result =
+    with type 'a monad = 'a result =
   struct
+    type 'a monad = 'a result
+    
     let return = commit
     let (>>=) = bind_if
   end
