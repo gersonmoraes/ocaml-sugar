@@ -30,16 +30,16 @@ open LwtResult
 
 (* We're only printing messages to the screen here *)
 let print_message m: unit result Lwt.t =
-  print_endline m;
-  commit ()
+  Lwt_log.notice m
+  >>= commit
 
 (* Do some computation and return a list, if it is successful *)
-let load_list n (): int list result Lwt.t =
+let load_list n: int list result Lwt.t =
   let l = [1; 2; 3] in
   let new_list = List.map (fun v -> v * n) l in
   commit new_list
 
-let computation_failed _ignored: 'a result Lwt.t =
+let computation_failed _length: 'a result Lwt.t =
   throw Resource_not_found
 
 let error_handler e: string result Lwt.t =
@@ -49,14 +49,16 @@ let error_handler e: string result Lwt.t =
 
 let main: unit result Lwt.t =
   print_message "We are extensively using a user defined result type"
-  &&= load_list 10
-  &&= fun l -> commit (List.length l)
+  &&= fun () ->
+  load_list 10
+  &&= fun l ->
+  commit (List.length l)
   &&= computation_failed
   ||= error_handler
   &&= fun _ ->
-         print_endline "You can nearly do anything you want here.";
-         print_endline "We are not restricted to result types.";
-         commit ()
+  let message = "You can nearly do anything you want here." in
+  print_message message
+
 
 let _ =
   Lwt_main.run (main)
