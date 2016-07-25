@@ -1,4 +1,5 @@
-open Lwt
+open Async.Std
+
 open Sugar.Types
 
 (* Example of basic usage of Sugar to build an Error Handling Layer
@@ -23,7 +24,7 @@ end
 (* Generate your error handling layer with your parametrized Result module *)
 (* module MyResult = Result.Make(MyError) *)
 (* Sugar_lwt *)
-module MyResult = Sugar_lwt.Result.Make(MyError)
+module MyResult = Sugar_async.Result.Make(MyError)
 
 (* Start using them *)
 open MyError
@@ -35,11 +36,22 @@ open MyResult
  *    - Notice the specific Lwt type hinting.
  *    - It is just the full form of the type "unit result"
  *)
-let print_message m: unit state Lwt.t =
-  Lwt_unix.sleep (Random.float 3.)
+ let logger =
+  Log.create `Info [Log.Output.stdout ()] `Raise
+
+
+let flush_logger () =
+  Log.flushed logger
   >>= fun () ->
-  Lwt_log.notice m
-  >>= commit
+  commit ()
+
+let print_message m: unit state Deferred.t =
+  after (Core.Time.Span.of_sec (Random.float 3.))
+  >>= fun _ ->
+  Log.info logger "%s" m;
+  flush_logger ()
+  &&> commit ()
+
 
 (* Do some computation and return a list, if it is successful *)
 let load_list n: int list result =
@@ -55,7 +67,7 @@ let error_handler e: string result =
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let main: unit result =
+let main_handler: unit state Deferred.t =
   print_message     "1 - Parallels bindings"
   &&> print_message "2 - Parallels bindings"
   &&> print_message "3 - Parallels bindings"
@@ -69,8 +81,10 @@ let main: unit result =
   &&= fun _ ->
   let message = "You can nearly do anything you want here." in
   print_message message
+  &&= flush_logger
 
 
 let _ =
   Random.self_init ();
-  Lwt_main.run (main)
+  let _ = Deferred.bind main_handler (fun _ -> exit 0) in
+  Core.Std.never_returns (Scheduler.go ())

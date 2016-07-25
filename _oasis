@@ -21,7 +21,7 @@ Flag lwt
 
 Flag async
   Description:   Build the Async library
-  Default:       false
+  Default:       true
 
 
 # Libraries
@@ -46,6 +46,17 @@ Library "sugar_lwt"
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
 
+Library "sugar_async"
+  Build$:           flag(async)
+  Install$:         flag(async)
+  FindlibName:      async
+  FindlibParent:    sugar
+  Path:             lib/async
+  Modules:          Sugar_async
+  BuildDepends:     threads, async, async_unix, sugar
+  XMETADescription: A library to bring sugar syntatic to your error handling layer.
+
+
 # Examples
 # ------------------------------------------------------------------
 
@@ -65,3 +76,12 @@ Executable "example_lwt"
   MainIs:         example_lwt.ml
   CompiledObject: best
   BuildDepends:   lwt, sugar, sugar.lwt
+
+
+Executable "example_async"
+  Build$:         flag(example) && flag(async)
+  Install:        false
+  Path:           examples/async
+  MainIs:         example_async.ml
+  CompiledObject: best
+  BuildDepends:   async, async_unix, async_kernel, sugar, sugar.async
