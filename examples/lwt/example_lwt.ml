@@ -47,8 +47,6 @@ let load_list n: int list result =
   let new_list = List.map (fun v -> v * n) l in
   commit new_list
 
-let computation_failed _length: 'a result =
-  throw Resource_not_found
 
 let error_handler e: string result =
   match e with
@@ -61,9 +59,9 @@ let main: unit result =
   print_message "3 - Concurrent threads" />
   print_message "4 - Concurrent threads" />
   load_list 10
-  &&= fun l ->
-  commit (List.length l)
-  &&= computation_failed
+  &&| List.length
+  &&= fun _len ->
+  throw Resource_not_found
   ||= error_handler
   &&= fun _ ->
   let message = "You can nearly do anything you want here." in

@@ -60,6 +60,9 @@ module type Result = sig
   (** Conditional binding operator OR *)
   val (||=): 'a result -> (error -> 'a result) -> 'a result
 
+  (** Conditional binding operator MAP *)
+  val (&&|): 'a result -> ('a -> 'b) -> 'b result
+
   (* Idiomatic monad interface for the result type *)
   module Monad : Monad
 end

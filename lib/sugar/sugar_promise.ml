@@ -41,6 +41,7 @@ struct
 
   let (&&=) = bind_if
   let (||=) = bind_unless
+  let (&&|) = map
   let (/>) x y  = semicolon x y
 
   module Monad : Sugar_types.Monad

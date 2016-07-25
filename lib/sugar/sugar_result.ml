@@ -36,6 +36,7 @@ struct
 
   let (&&=) = bind_if
   let (||=) = bind_unless
+  let (&&|) = map
 
   module Monad : Sugar_types.Monad
     with type 'a monad = 'a result =
