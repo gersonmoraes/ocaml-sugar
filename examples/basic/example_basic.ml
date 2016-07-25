@@ -25,6 +25,7 @@ module MyResult = Sugar.Result.Make(MyError)
 (* Start using them *)
 open MyResult
 open MyError
+open Printf
 
 (* We're only printing messages to the screen here *)
 let print_message m: unit result =
@@ -32,26 +33,31 @@ let print_message m: unit result =
   commit ()
 
 (* Do some computation and return a list, if it is successful *)
-let load_list n (): int list result =
+let load_list n: int list result =
   let l = [1; 2; 3] in
   let new_list = List.map (fun v -> v * n) l in
   commit new_list
-
-let computation_failed _ignored: 'a result =
-  throw Resource_not_found
 
 let error_handler e: string result =
   match e with
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let computation_chain: unit result =
-  print_message "We are extensively using a user defined result type"
-  &&= load_list 10
-  &&= fun l -> commit (List.length l)
-  &&= computation_failed
+let _ =
+  print_message "We are extensively using a user defined result type" />
+  load_list 10
+  &&| List.length
+  &&= fun len ->
+  throw (Unexpected (sprintf "List length invalid: %d" len))
   ||= error_handler
+  &&= (fun recovered -> (
+         print_message "This will NOT be printed" />
+         print_message "The previous error_handler can't catch 'Unexpected' errors" />
+         print_message "The parentesis mark the end of this anonimous function"
+      ))
+  ||= fun e ->
+  commit "recover from any error"
   &&= fun _ ->
-         print_endline "You can nearly do anything you want here.";
-         print_endline "We are not restricted to result types.";
-         commit ()
+  print_endline "You can nearly do anything you want here.";
+  print_endline "We are not restricted to result types.";
+  commit ()
