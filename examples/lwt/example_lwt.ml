@@ -56,12 +56,11 @@ let error_handler e: string result =
   | _ -> throw e
 
 let main: unit result =
-  print_message     "1 - Parallels bindings"
+  print_message "1 - Parallels bindings"
   &&> print_message "2 - Parallels bindings"
   &&> print_message "3 - Parallels bindings"
   &&> print_message "4 - Parallels bindings"
   &&> load_list 10
-  (* &&= fun () -> load_list 10 *)
   &&= fun l ->
   commit (List.length l)
   &&= computation_failed

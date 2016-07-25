@@ -5,8 +5,15 @@ A small monadic library to simplify the creation of error handling layers in
 OCaml projects.
 
 
-Design Patterns
----------------
+Introduction
+------------
+
+Learn the basics of [OCaml Sugar](https://dl.dropboxusercontent.com/u/9364054/OCaml_Sugar.pdf) in the introduction slides. A somewhat deep explanation of some of its concepts are
+available [here](https://dl.dropboxusercontent.com/u/9364054/Bindings_Condicionais.doc).
+
+
+Conventions
+-----------
 
 - Error aware computations *from the same layer* should always return the same ```error type```.
 - Create your own ```Result``` module with the functor  ```Result.Make```.
@@ -15,15 +22,14 @@ Design Patterns
 as that makes OCaml hide implementation details of you error types.
 
 
-Usage example
--------------
+Code example
+------------
 
 Example of basic usage of Sugar to build an Error Handling Layer
 
 It uses a parametrized module to build sugar syntatic and useful functions
-that only make sense in your project.  We're hinting the functions result to
-make clear what's going on. But you can effectively remove them, because we're
-also using a concise result type for computations: *'a result*.
+that only make sense in your project.  We're hinting adding type hinting result
+to make clear what's going on.
 
 
 ```ocaml
