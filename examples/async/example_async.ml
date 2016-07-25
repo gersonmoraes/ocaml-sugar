@@ -68,10 +68,10 @@ let error_handler e: string result =
   | _ -> throw e
 
 let main_handler: unit state Deferred.t =
-  print_message     "1 - Parallels bindings"
-  /> print_message "2 - Parallels bindings"
-  /> print_message "3 - Parallels bindings"
-  /> print_message "4 - Parallels bindings"
+  print_message    "1 - Concurrent threads"
+  /> print_message "2 - Concurrent threads"
+  /> print_message "3 - Concurrent threads"
+  /> print_message "4 - Concurrent threads"
   /> load_list 10
   (* &&= fun () -> load_list 10 *)
   &&= fun l ->
