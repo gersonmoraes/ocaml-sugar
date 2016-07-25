@@ -38,6 +38,8 @@ struct
   let (||=) = bind_unless
   let (&&|) = map
 
+  let (/>) x y = y
+
   module Monad : Sugar_types.Monad
     with type 'a monad = 'a result =
   struct

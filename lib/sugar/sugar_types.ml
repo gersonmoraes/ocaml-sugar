@@ -63,6 +63,8 @@ module type Result = sig
   (** Conditional binding operator MAP *)
   val (&&|): 'a result -> ('a -> 'b) -> 'b result
 
+  val (/>): unit result -> 'a result -> 'a result
+
   (* Idiomatic monad interface for the result type *)
   module Monad : Monad
 end
@@ -70,8 +72,6 @@ end
 
 module type Promise = sig
   include Result
-
-  val (/>): unit result -> 'a result -> 'a result
 
   type 'a state
   type 'a promise
