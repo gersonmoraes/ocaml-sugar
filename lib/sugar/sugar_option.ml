@@ -1,5 +1,8 @@
 open Sugar_types
 
+type 'a result = 'a option
+type error = ()
+
 let commit v = Some v
 
 let bind_if r f =
@@ -26,8 +29,8 @@ let map r f =
  * This allows developers to use different result types between different
  * error handling layers.
  *)
-let (&=) = bind_if
-let (|=) = bind_unless
+let (&&=) = bind_if
+let (||=) = bind_unless
 
 (* This module implements a monadic interface for the option type
  * Notice though, that is is composed with aliases for other functions.

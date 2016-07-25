@@ -1,4 +1,4 @@
-open Sugar.Std
+open Sugar.Types
 
 (* Example of basic usage of Sugar to build an Error Handling Layer
  *

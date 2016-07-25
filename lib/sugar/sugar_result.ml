@@ -11,49 +11,7 @@ open Sugar_types
 end *)
 
 
-module type S = sig
-  include Sugar_types.Error
-
-  type 'a result = ('a, error) std_result
-
-  (**
-   * Apply the binding only if the computation was successful.
-   *
-   * You can use the operator (&&=) instead of this function for syntatic sugar
-   *)
-  val bind_if:  'a result -> ('a -> 'b result) -> 'b result
-
-  (**
-   * Apply the binding only if the computation failed.
-   *
-   * Notice that an error handler must be provided, and this handler
-   * must throw an error or provide an equivalent for the result type of the
-   * previous computation.
-   *
-   * You can use the operator (||=) instead of this function for syntatic sugar
-   *)
-  val bind_unless: 'a result -> (error -> 'a result) -> 'a result
-
-  (**
-   * Apply a function to the wraped value if the result is successful
-   *)
-  val map:  'a result -> ('a -> 'b) -> 'b result
-
-  (** Indicate a successful computation *)
-  val commit: 'a -> 'a result
-
-  (** Indicate a failure in a computation *)
-  val throw: error -> 'a result
-
-  (** Conditional binding operator AND *)
-  val (&&=): 'a result -> ('a -> 'b result) -> 'b result
-
-  (** Conditional binding operator OR *)
-  val (||=): 'a result -> (error -> 'a result) -> 'a result
-end
-
-
-module Make (UserError:Error) : S
+module Make (UserError:Error) : Sugar_types.Result
   with type error := UserError.error =
 struct
   type 'a result = ('a, UserError.error) std_result

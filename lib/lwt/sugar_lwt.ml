@@ -9,7 +9,7 @@ end
 
 module Result = struct
 
-  module Make(UserError:Sugar.Std.Error) = struct
+  module Make(UserError:Sugar.Types.Error) = struct
 
     include Sugar.Monadic.Make
       (struct
