@@ -1,4 +1,4 @@
-module LwtMonad: Sugar_std.Monad
+module LwtMonad: Sugar_types.Monad
   with type 'a monad := 'a Lwt.t =
 struct
   type 'a monad = 'a Lwt.t

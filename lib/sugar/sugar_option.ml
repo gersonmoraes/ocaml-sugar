@@ -1,4 +1,4 @@
-open Sugar_std
+open Sugar_types
 
 let commit v = Some v
 
@@ -32,7 +32,7 @@ let (|=) = bind_unless
 (* This module implements a monadic interface for the option type
  * Notice though, that is is composed with aliases for other functions.
  *)
-  module Monad : Sugar_std.Monad
+  module Monad : Sugar_types.Monad
    with type 'a monad := 'a option =
  struct
    let return = commit

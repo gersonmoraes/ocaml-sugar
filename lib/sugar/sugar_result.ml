@@ -1,4 +1,4 @@
-open Sugar_std
+open Sugar_types
 
 (**
  * Difine a common result type. This definition is experimental.
@@ -12,7 +12,7 @@ end *)
 
 
 module type S = sig
-  include Sugar_std.Error
+  include Sugar_types.Error
 
   type 'a result = ('a, error) std_result
 
@@ -79,7 +79,7 @@ struct
   let (&&=) = bind_if
   let (||=) = bind_unless
 
-  module Monad : Sugar_std.Monad
+  module Monad : Sugar_types.Monad
     with type 'a monad := 'a result =
   struct
     let return = commit

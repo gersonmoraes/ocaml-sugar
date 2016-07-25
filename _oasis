@@ -31,7 +31,7 @@ Library "sugar"
   FindlibName:      sugar
   Path:             lib/sugar
   Modules:          Sugar, Sugar_monadic
-  InternalModules:  Sugar_std, Sugar_option, Sugar_result
+  InternalModules:  Sugar_types, Sugar_option, Sugar_result
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
 
