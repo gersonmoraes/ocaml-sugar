@@ -21,7 +21,8 @@ end
 module type Result = sig
   include Error
 
-  type 'a result = ('a, error) std_result
+  type 'a result
+  (*type 'a result = ('a, error) std_result*)
 
   (**
    * Apply the binding only if the computation was successful.

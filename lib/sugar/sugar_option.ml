@@ -1,9 +1,10 @@
 open Sugar_types
 
-type 'a result = 'a option
 type error = ()
+type 'a result = 'a option
 
 let commit v = Some v
+let throw () = None
 
 let bind_if r f =
   match r with
@@ -13,9 +14,9 @@ let bind_if r f =
 (* This is an experimental function.
  * We still don't know if the second parameterer should be a thunk.
  *)
-let bind_unless r x =
+let bind_unless r f =
   match r with
-  | None -> x
+  | None -> f ()
   | Some v -> Some v
 
 let map r f =

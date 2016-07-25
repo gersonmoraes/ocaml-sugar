@@ -1,13 +1,25 @@
 
-(* Defining the library interface *)
-
+(* Type signatures for common modules *)
 module Types = Sugar_types
 
+(** Create a result module for a project *)
 module Result = Sugar_result
-module Monadic = Sugar_monadic
+
+(** Implements a monadic interface for wraped asynchronous results *)
+module Promise = Sugar_monadic
 
 
-(*
-module OpaqueResult = Result.Make (struct
-    type error = ()
-  end) *)
+(** Opaque error results *)
+module Opaque = struct
+
+  (** This module implements the Types.Result using the standard option type *)
+  module Option : Types.Result = Sugar_option
+
+  (** An empty error module *)
+  module OpaqueError = struct
+      type error = ()
+  end
+  (** This module implements the Types.Result using the standard option type *)
+  module Result = Sugar_result.Make(OpaqueError)
+
+end

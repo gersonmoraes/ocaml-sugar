@@ -1,17 +1,9 @@
-module LwtMonad: Sugar_types.Monad
-  with type 'a monad := 'a Lwt.t =
-struct
-  type 'a monad = 'a Lwt.t
-  let return = Lwt.return
-  let (>>=) = Lwt.bind
-end
-
 
 module Result = struct
 
   module Make(UserError:Sugar.Types.Error) = struct
 
-    include Sugar.Monadic.Make
+    include Sugar.Promise.Make
       (struct
         type 'a monad = 'a Lwt.t
         let return = Lwt.return

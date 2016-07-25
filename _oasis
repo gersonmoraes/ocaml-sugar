@@ -61,7 +61,7 @@ Executable "example_basic"
 Executable "example_lwt"
   Build$:         flag(example) && flag(lwt)
   Install:        false
-  Path:           examples/monadic
+  Path:           examples/lwt
   MainIs:         example_lwt.ml
   CompiledObject: best
   BuildDepends:   lwt, sugar, sugar.lwt
