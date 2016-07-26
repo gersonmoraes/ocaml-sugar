@@ -38,7 +38,10 @@ struct
   let (||=) = bind_unless
   let (&&|) = map
 
-  let (/>) x y = y
+  let (/>) x y =
+    match x, y with
+    | (Error e, _) -> Error e
+    | _ -> y
 
   module Monad : Sugar_types.Monad
     with type 'a monad = 'a result =

@@ -50,14 +50,11 @@ let _ =
   &&= fun len ->
   throw (Unexpected (sprintf "List length invalid: %d" len))
   ||= error_handler
-  &&= (fun recovered -> (
-         print_message "This will NOT be printed" />
-         print_message "The previous error_handler can't catch 'Unexpected' errors" />
-         print_message "The parentesis mark the end of this anonimous function"
-      ))
+  &&= (fun recovered ->
+         print_message "This will NOT be printed"        />
+         print_message "The previous error_handler"      />
+         print_message "can't catch 'Unexpected' errors"
+      )
   ||= fun e ->
-  commit "recover from any error"
-  &&= fun _ ->
-  print_endline "You can nearly do anything you want here.";
-  print_endline "We are not restricted to result types.";
-  commit ()
+  commit "Recover from any error"
+  &&= print_message
