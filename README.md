@@ -61,22 +61,18 @@ let load_list n: int list result =
   let new_list = List.map (fun v -> v * n) l in
   commit new_list
 
-let computation_failed _ignored: 'a result =
-  throw Resource_not_found
-
 let error_handler e: string result =
   match e with
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
 let computation_chain: unit result =
-  print_message "We are extensively using a user defined result type"
-  /> load_list 10
-  &&= fun l -> commit (List.length l)
-  &&= computation_failed
+  print_message "Error aware computations" />
+  load_list 10
+  &&= fun l ->
+  &&| List.length
+  &&= fun len ->
+  throw Resource_not_found
   ||= error_handler
-  &&= fun _ ->
-  print_endline "You can nearly do anything you want here.";
-  print_endline "We are not restricted to result types.";
-  commit ()
+  &&= print_message
 ```
