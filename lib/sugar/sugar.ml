@@ -8,7 +8,7 @@ module Result = Sugar_result
 (** Implements a monadic interface for wraped asynchronous results *)
 module Promise = Sugar_promise
 
-(*
+
 (** Opaque error results *)
 module Opaque = struct
 
@@ -22,4 +22,3 @@ module Opaque = struct
   (** This module implements the Types.Result using the standard option type *)
   module Result = Sugar_result.Make(OpaqueError)
 end
-*)
