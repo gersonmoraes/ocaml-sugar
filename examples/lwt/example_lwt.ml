@@ -28,7 +28,7 @@ open MyResult
  *    - Notice the specific Lwt type hinting.
  *    - It is just the full form of the type "unit promise"
  *)
-let print_message m: unit result Lwt.t =
+let puts m: unit result Lwt.t =
   Lwt_unix.sleep (Random.float 3.)
   >>= fun () ->
   Lwt_log.notice m
@@ -47,10 +47,10 @@ let error_handler e: string promise =
   | _ -> throw e
 
 let main (): unit promise =
-  print_message "1 - Concurrent threads" //>
-  print_message "2 - Concurrent threads" //>
-  print_message "3 - Concurrent threads" //>
-  print_message "4 - Concurrent threads" //>
+  puts "1 - Concurrent threads" //>
+  puts "2 - Concurrent threads" //>
+  puts "3 - Concurrent threads" //>
+  puts "4 - Concurrent threads" //>
   load_list 10
   &&| List.length
   &&= fun _len ->
@@ -58,7 +58,7 @@ let main (): unit promise =
   ||= error_handler
   &&= fun _ ->
   let message = "You can nearly do anything you want here." in
-  print_message message
+  puts message
 
 
 let _ =
