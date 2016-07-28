@@ -4,12 +4,10 @@ module Make  (UserMonad:Sugar_types.Monad)  (UserError:Sugar_types.Error) : Suga
   with
     type error := UserError.error
     and type 'a promise := 'a UserMonad.monad
-    (* and type 'a result = ('a, UserError.error) std_result *)
     and type 'a state = ('a, UserError.error) std_result
     and type 'a result = (('a, UserError.error) std_result) UserMonad.monad
 =
 struct
-  (* type error = UserError.error *)
   include UserError
   type 'a promise = 'a UserMonad.monad
 
