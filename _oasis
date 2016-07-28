@@ -17,11 +17,11 @@ Flag example
 
 Flag lwt
   Description:   Build the Lwt library
-  Default:       true
+  Default:       false
 
 Flag async
   Description:   Build the Async library
-  Default:       true
+  Default:       false
 
 
 # Libraries
