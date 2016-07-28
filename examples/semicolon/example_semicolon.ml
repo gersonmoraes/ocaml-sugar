@@ -21,16 +21,12 @@ open MyResult
 open Lwt
 
 let puts str () =
-  Lwt_unix.sleep (Random.float 0.1)
-  >>= fun () ->
-  Lwt_log.notice str
-  >>= commit
+  lwt () = Lwt_unix.sleep (Random.float 0.1) in
+  lwt () = Lwt_log.notice str in
+  commit ()
 
 let puts_concurrent str =
-  Lwt_unix.sleep (Random.float 2.)
-  >>= fun () ->
-  Lwt_log.notice str
-  >>= commit
+  puts str ()
 
 (* TODO: We're creating a blocking operator for semicolon,
  *       with operator (//>). Later on, will invert the meaning of (/>) and (//>)
@@ -49,10 +45,9 @@ let nonblocking () =
   puts_concurrent "4 - Non-Blocking"  //>
   puts_concurrent "5 - Computations"
 
-
 let main =
-  puts "Blocking example: " () />
-  blocking />
+  puts "Blocking example: " ()  />
+  blocking                      />
   puts "Non-blocking example: " />
   nonblocking
 
