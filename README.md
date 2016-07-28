@@ -8,7 +8,8 @@ OCaml projects.
 Introduction
 ------------
 
-Learn the basics of [OCaml Sugar](https://dl.dropboxusercontent.com/u/9364054/OCaml/OCaml_Sugar.pdf) in the introduction slides. A somewhat deep explanation of some of its concepts are
+Learn the basics of [OCaml Sugar](https://dl.dropboxusercontent.com/u/9364054/OCaml/OCaml_Sugar.pdf)
+in the introduction slides. A somewhat deep explanation of some of its concepts are
 available [here](https://dl.dropboxusercontent.com/u/9364054/OCaml/Bindings_Condicionais.pdf).
 
 
@@ -31,7 +32,8 @@ To use Sugar, you need to do 2 things:
 2. Generate a ```Result``` module using your "error module".
 3. Open the recently created modules.
 
-Notice the hinting for function return types. We're using ```'a result``` instead of  ```('a, error) result Lwt.t``` for convenience.
+Notice the hinting for function return types. We're using ```'a result```
+instead of  ```('a, error) result Lwt.t``` for convenience.
 
 
 ```ocaml
@@ -70,7 +72,8 @@ let computation_chain: unit result =
 Use Idiomatic Semicolons
 -------------------------
 
-To simplify chaind expressions that return a unit result, Sugar introduces two operators that act as monadic semicolons: ```/>``` (blocking) and ```//>``` (non-blocking).
+To simplify chaind expressions that resolves to *non-useful values*, Sugar
+introduces two operators that act as monadic semicolons: ```/>``` and ```//>``` (blocking and non-blocking, respectively).
 
 #### Expressing blocking operations
 
@@ -101,11 +104,13 @@ let main =
 
 #### Expressing non-blocking operations
 
-If *computations that resolves to unit* can be called out of order,
-you can use the non-blocking semicolon ```//>``` as a separator. It will tie the termination of an
-expression to the next result in the chain.
+If your expressions don't return anything meaningful and can be called out of
+order, you can run them concurrently using  ```//>``` as a separator. It will
+tie the termination of an expression to the next result in the chain.
 
-In the example bellow, the messages are likely to be printed out of order. The ```main``` function will only be resolved when all non-blocking operations are terminated.
+In the example bellow, the messages are likely to be printed out of order.
+Notice that ```main``` will only be resolved when all concurrent operations
+are terminated.
 
 ```ocaml
 let puts str =
@@ -113,7 +118,7 @@ let puts str =
   lwt () = Lwt_log.notice str in
   commit ()
 
-let main () =
+let main =
   puts "message 1" //>
   puts "message 2" //>
   puts "message 3" //>
@@ -126,6 +131,9 @@ let main () =
 Assynchronous Suport
 --------------------
 
-Sugar is extensible. It comes with a generic monad interface that makes Sugar work with any monadic threading library. It already comes with Lwt and Async support.
+Sugar is extensible. It comes with a generic monad interface that makes Sugar
+work with any monadic threading library. It already comes with Lwt and Async
+support.
 
-In order to avoid confusion, Sugar does not overlap ```>>=``` and ```return```. To use those, you have to open the specific threading library module.
+In order to avoid confusion, Sugar does not overlap ```>>=``` and ```return```.
+To use those, you have to open the specific threading library module.
