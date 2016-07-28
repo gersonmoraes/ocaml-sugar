@@ -13,8 +13,6 @@ module type Monad = sig
   type 'a monad
   val return: 'a -> 'a monad
   val (>>=): 'a monad -> ('a -> 'b monad) -> 'b monad
-
-  (* val semicolon: 'a monad -> 'b monad -> 'b monad *)
 end
 
 (** Minimalistic Error interface *)
@@ -108,10 +106,13 @@ module type Result = sig
   module Monad : Monad
 end
 
-
+(** Module that represents an assynchronous error aware computation. *)
 module type Promise = sig
   include Result
 
   type 'a state
+  (** A successful or error value *)
+
   type 'a promise
+  (** Type that is translated to specific threading library's monad *)
 end
