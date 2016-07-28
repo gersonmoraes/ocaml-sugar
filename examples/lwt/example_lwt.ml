@@ -5,10 +5,6 @@ open Sugar.Types
  *
  * It uses a parametrized module to build sugar syntatic and useful functions
  * that only make sense in your project.
- *
- * We're hinting the functions result to make clear what's going on. But you
- * can effectively remove them, because we're also using a concise result type
- * for computations: ('a result).
  *)
 
 
@@ -21,8 +17,6 @@ struct
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-(* module MyResult = Result.Make(MyError) *)
-(* Sugar_lwt *)
 module MyResult = Sugar_lwt.Result.Make(MyError)
 
 (* Start using them *)
@@ -33,27 +27,27 @@ open MyResult
  *
  *  Notes
  *    - Notice the specific Lwt type hinting.
- *    - It is just the full form of the type "unit result"
+ *    - It is just the full form of the type "unit promise"
  *)
-let print_message m: unit state Lwt.t =
+let print_message m: unit result Lwt.t =
   Lwt_unix.sleep (Random.float 3.)
   >>= fun () ->
   Lwt_log.notice m
   >>= commit
 
 (* Do some computation and return a list, if it is successful *)
-let load_list n: int list result =
+let load_list n: int list promise =
   let l = [1; 2; 3] in
   let new_list = List.map (fun v -> v * n) l in
   commit new_list
 
 
-let error_handler e: string result =
+let error_handler e: string promise =
   match e with
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let main (): unit result =
+let main (): unit promise =
   print_message "1 - Concurrent threads" //>
   print_message "2 - Concurrent threads" //>
   print_message "3 - Concurrent threads" //>
