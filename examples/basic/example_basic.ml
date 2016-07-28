@@ -44,15 +44,15 @@ let error_handler e: string result =
   | _ -> throw e
 
 let _ =
-  print_message "We are extensively using a user defined result type" />
+  print_message "We are extensively using a user defined result type" //>
   load_list 10
   &&| List.length
   &&= fun len ->
   throw (Unexpected (sprintf "List length invalid: %d" len))
   ||= error_handler
   &&= (fun recovered ->
-         print_message "This will NOT be printed"        />
-         print_message "The previous error_handler"      />
+         print_message "This will NOT be printed"        //>
+         print_message "The previous error_handler"      //>
          print_message "can't catch 'Unexpected' errors"
       )
   ||= fun e ->

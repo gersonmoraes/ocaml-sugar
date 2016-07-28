@@ -39,8 +39,7 @@ open MyResult
  let logger =
   Log.create `Info [Log.Output.stdout ()] `Raise
 
-
-let flush_logger () =
+let flush_logger () : unit result =
   Log.flushed logger
   >>= fun () ->
   commit ()
@@ -49,8 +48,8 @@ let print_message m: unit state Deferred.t =
   after (Core.Time.Span.of_sec (Random.float 3.))
   >>= fun _ ->
   Log.info logger "%s" m;
-  flush_logger ()
-  /> commit ()
+  flush_logger () />
+  commit
 
 
 (* Do some computation and return a list, if it is successful *)
@@ -67,11 +66,11 @@ let error_handler e: string result =
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let main_handler: unit state Deferred.t =
-  print_message "1 - Concurrent threads" />
-  print_message "2 - Concurrent threads" />
-  print_message "3 - Concurrent threads" />
-  print_message "4 - Concurrent threads" />
+let main_handler (): unit state Deferred.t =
+  print_message "1 - Concurrent threads" //>
+  print_message "2 - Concurrent threads" //>
+  print_message "3 - Concurrent threads" //>
+  print_message "4 - Concurrent threads" //>
   load_list 10
   &&| List.length
   &&= computation_failed
@@ -84,5 +83,5 @@ let main_handler: unit state Deferred.t =
 
 let _ =
   Random.self_init ();
-  let _ = Deferred.bind main_handler (fun _ -> exit 0) in
+  let _ = Deferred.bind (main_handler ()) (fun _ -> exit 0) in
   Core.Std.never_returns (Scheduler.go ())

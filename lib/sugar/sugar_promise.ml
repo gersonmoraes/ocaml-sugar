@@ -42,7 +42,9 @@ struct
   let (&&=) = bind_if
   let (||=) = bind_unless
   let (&&|) = map
-  let (/>) x y  = semicolon x y
+  
+  let (/>) x y = bind_if x y
+  let (//>) x y = x &&= fun _ -> y
 
   module Monad : Sugar_types.Monad
     with type 'a monad = 'a result =

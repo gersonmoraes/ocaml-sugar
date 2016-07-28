@@ -9,10 +9,13 @@ module Result = struct
         let return = Deferred.return
         let (>>=) = Deferred.bind
 
-        let semicolon x y =
+
+        (* let semicolon x y =
           Deferred.both x y
           >>= fun (_x, y) ->
-          return y
+          return y *)
+        (* let semicolon x y =
+          x >>= fun _ -> y *)
       end)
       (UserError)
 

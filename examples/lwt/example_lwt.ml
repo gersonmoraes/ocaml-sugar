@@ -53,11 +53,11 @@ let error_handler e: string result =
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let main: unit result =
-  print_message "1 - Concurrent threads" />
-  print_message "2 - Concurrent threads" />
-  print_message "3 - Concurrent threads" />
-  print_message "4 - Concurrent threads" />
+let main (): unit result =
+  print_message "1 - Concurrent threads" //>
+  print_message "2 - Concurrent threads" //>
+  print_message "3 - Concurrent threads" //>
+  print_message "4 - Concurrent threads" //>
   load_list 10
   &&| List.length
   &&= fun _len ->
@@ -70,4 +70,4 @@ let main: unit result =
 
 let _ =
   Random.self_init ();
-  Lwt_main.run (main)
+  Lwt_main.run (main ())

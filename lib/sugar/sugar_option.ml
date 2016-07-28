@@ -34,7 +34,8 @@ let (&&=) = bind_if
 let (||=) = bind_unless
 let (&&|) = map
 
-let (/>) x y =
+let (/>) = bind_if
+let (//>) x y =
   match x, y with
   | None, _ -> None
   | _ -> y

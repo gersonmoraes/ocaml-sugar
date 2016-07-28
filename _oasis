@@ -85,3 +85,12 @@ Executable "example_async"
   MainIs:         example_async.ml
   CompiledObject: best
   BuildDepends:   async, async_unix, async_kernel, sugar, sugar.async
+
+
+Executable "example_semicolon"
+  Build$:         flag(example) && flag(lwt)
+  Install:        false
+  Path:           examples/semicolon
+  MainIs:         example_semicolon.ml
+  CompiledObject: best
+  BuildDepends:   lwt, lwt.unix, sugar, sugar.lwt
