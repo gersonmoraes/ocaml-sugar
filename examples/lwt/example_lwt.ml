@@ -1,5 +1,4 @@
 open Lwt
-open Sugar.Types
 
 (* Example of basic usage of Sugar to build an Error Handling Layer
  *
