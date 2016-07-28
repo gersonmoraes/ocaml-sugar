@@ -42,7 +42,7 @@ struct
   let (&&=) = bind_if
   let (||=) = bind_unless
   let (&&|) = map
-  
+
   let (/>) x y = bind_if x y
   let (//>) x y = x &&= fun _ -> y
 
@@ -52,6 +52,5 @@ struct
     type 'a monad = 'a result
     let return = commit
     let (>>=) = bind_if
-    let semicolon = (/>)
   end
 end

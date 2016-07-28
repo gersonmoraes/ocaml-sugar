@@ -39,7 +39,7 @@ instead of  ```('a, error) result Lwt.t``` for convenience.
 ```ocaml
 module MyError =
 struct
-  type error = ()
+  type error = unit
 end
 
 module MyResult = Sugar_lwt.Result.Make(MyError)
@@ -73,7 +73,8 @@ Use Idiomatic Semicolons
 -------------------------
 
 To simplify chaind expressions that resolves to *non-useful values*, Sugar
-introduces two operators that act as monadic semicolons: ```/>``` and ```//>``` (blocking and non-blocking, respectively).
+introduces two operators that act as monadic semicolons: ```/>``` and ```//>```
+(blocking and non-blocking, respectively).
 
 #### Expressing blocking operations
 
@@ -126,9 +127,7 @@ let main =
 ```
 
 
-
-
-Assynchronous Suport
+Asynchronous Suport
 --------------------
 
 Sugar is extensible. It comes with a generic monad interface that makes Sugar
@@ -137,3 +136,28 @@ support.
 
 In order to avoid confusion, Sugar does not overlap ```>>=``` and ```return```.
 To use those, you have to open the specific threading library module.
+
+
+#### Standard monadic interface
+
+If you want to use the standard monad interface, you can still use the generated
+module ```Result.Monad```. In the example bellow, ```return``` is an alias
+for ```commit``` and ```>>=``` is an alias for ```&&=```.
+
+
+```ocaml
+module MyError =
+struct
+  type error = unit
+end
+
+module MyResult = Sugar_lwt.Result.Make(MyError)
+
+open MyResult
+open MyResult.Monad
+
+let main : string result =
+  return "Hello"
+  >>= fun msg ->
+  return (msg ^ " World")
+```
