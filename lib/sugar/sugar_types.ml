@@ -1,10 +1,10 @@
 (**
  * This module defines minimalistic interfaces for all Sugar modules
  *)
-
-type ('a, 'b) std_result =
+(*
+type ('a, 'b) Pervasives.result =
   | Ok of 'a
-  | Error of 'b
+  | Error of 'b *)
  (** This should be refactored to the default result in OCaml >= 4.03  *)
 
 
@@ -27,10 +27,10 @@ module type Error = sig
 end
 
 module type Result = sig
-  include Error
+  type error
 
-  type 'a result
-  (*type 'a result = ('a, error) std_result*)
+  (* type 'a result *)
+  type 'a result = ('a, error) Pervasives.result
 
   val bind_if:  'a result -> ('a -> 'b result) -> 'b result
   (**
@@ -102,17 +102,96 @@ module type Result = sig
    *     puts "Computations"
    *)
 
-  (** Idiomatic monad interface for the result type *)
-  module Monad : Monad
+  (* Idiomatic monad interface for the result type *)
+  (* module Monad : Monad *)
 end
 
 (** Module that represents an assynchronous error aware computation. *)
 module type Promise = sig
-  include Result
 
-  type 'a state
+  type error
+
+  type 'a result = ('a, error) Pervasives.result
+  (* Core result type *)
+
+  type 'a monad
+  (** Type that is translated to specific threading library's monad *)
+
+  type 'a promise = 'a result monad
+  (** High level result type *)
+
+  val bind_if:  'a promise -> ('a -> 'b promise) -> 'b promise
+  (**
+   * Apply the binding only if the computation was successful.
+   * You can use the operator (&&=) instead of this function for syntatic sugar
+   *)
+
+  val bind_unless: 'a promise -> (error -> 'a promise) -> 'a promise
+  (**
+   * Apply the binding only if the computation failed.
+   *
+   * Notice that an error handler must be provided, and this handler
+   * must throw an error or provide an equivalent for the promise type of the
+   * previous computation.
+   *
+   * You can use the operator (||=) instead of this function for syntatic sugar
+   *)
+
+  val map:  'a promise -> ('a -> 'b) -> 'b promise
+  (**
+   * Apply a function to the wraped value if the promise is successful
+   *)
+
+  val commit: 'a -> 'a promise
+  (** Indicate a successful computation *)
+
+  (** Indicate a failure in a computation *)
+  val throw: error -> 'a promise
+
+  val (&&=): 'a promise -> ('a -> 'b promise) -> 'b promise
+  (** Conditional binding operator AND *)
+
+  val (||=): 'a promise -> (error -> 'a promise) -> 'a promise
+  (** Conditional binding operator OR *)
+
+  val (&&|): 'a promise -> ('a -> 'b) -> 'b promise
+  (** Conditional binding operator MAP *)
+
+  val (/>): unit promise -> (unit -> 'b promise) -> 'b promise
+  (**
+   * Blocking semicolon operator.
+   * It waits for the evaluation of unit promise and ignore imediately ignore it.
+   * The right-hand-side must be a thunk (a function that expects unit).
+   *
+   * It can be used to chain thunks in a meaningful way like:
+   *   let puts s () =
+   *     print_endline s;
+   *     commit ()
+   *
+   *   let main =
+   *     puts "Hello" ()     />
+   *     puts "Blocking"     />
+   *     puts "Computations"
+   *)
+
+  val (//>): unit promise -> 'a promise -> 'a promise
+  (**
+   * Non blocking semicolon operator.
+   * It chains the completion of unit promise with the next in the sequence.
+   *
+   * It can be used to chain thunks in a meaningful way like:
+   *   let puts s =
+   *     assynchronous_puts s
+   *     >>= commit
+   *
+   *   let main =
+   *     puts "Hello"         //>
+   *     puts "Non-blocking"  //>
+   *     puts "Computations"
+   *)
+
+  (* type 'a state *)
   (** A successful or error value *)
 
-  type 'a promise
-  (** Type that is translated to specific threading library's monad *)
+
 end

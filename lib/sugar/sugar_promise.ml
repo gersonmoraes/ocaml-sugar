@@ -3,16 +3,15 @@ open Sugar_types
 module Make  (UserMonad:Sugar_types.Monad)  (UserError:Sugar_types.Error) : Sugar_types.Promise
   with
     type error := UserError.error
-    and type 'a promise := 'a UserMonad.monad
-    and type 'a state = ('a, UserError.error) std_result
-    and type 'a result = (('a, UserError.error) std_result) UserMonad.monad
+    and type 'a monad := 'a UserMonad.monad
+    and type 'a result = ('a, UserError.error) Pervasives.result
 =
 struct
   include UserError
-  type 'a promise = 'a UserMonad.monad
 
-  type 'a state = ('a, error) std_result
-  type 'a result = 'a state promise
+  type 'a monad = 'a UserMonad.monad
+  type 'a result = ('a, UserError.error) Pervasives.result
+  type 'a promise = 'a result monad
 
   open UserMonad
 
@@ -43,12 +42,12 @@ struct
 
   let (/>) x y = bind_if x y
   let (//>) x y = x &&= fun _ -> y
-
+(*
   module Monad : Sugar_types.Monad
     with type 'a monad = 'a result =
   struct
     type 'a monad = 'a result
     let return = commit
     let (>>=) = bind_if
-  end
+  end *)
 end

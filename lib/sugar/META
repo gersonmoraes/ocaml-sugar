@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: c7faf6b5a2e3630ddea2963a6ea6ca90)
+# DO NOT EDIT (digest: e0036d0fdae2151210a978afbf53ff8b)
 version = "0.1"
 description =
 "A library to bring sugar syntatic to your error handling layer."
@@ -8,5 +8,28 @@ archive(byte, plugin) = "sugar.cma"
 archive(native) = "sugar.cmxa"
 archive(native, plugin) = "sugar.cmxs"
 exists_if = "sugar.cma"
+package "lwt" (
+ version = "0.1"
+ description =
+ "A library to bring sugar syntatic to your error handling layer."
+ requires = "lwt lwt.unix lwt.syntax lwt sugar"
+ archive(byte) = "sugar-lwt.cma"
+ archive(byte, plugin) = "sugar-lwt.cma"
+ archive(native) = "sugar-lwt.cmxa"
+ archive(native, plugin) = "sugar-lwt.cmxs"
+ exists_if = "sugar-lwt.cma"
+)
+
+package "async" (
+ version = "0.1"
+ description =
+ "A library to bring sugar syntatic to your error handling layer."
+ requires = "threads async sugar"
+ archive(byte) = "sugar-async.cma"
+ archive(byte, plugin) = "sugar-async.cma"
+ archive(native) = "sugar-async.cmxa"
+ archive(native, plugin) = "sugar-async.cmxs"
+ exists_if = "sugar-async.cma"
+)
 # OASIS_STOP
 

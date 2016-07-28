@@ -8,57 +8,52 @@ Plugins:     META (0.4), DevFiles (0.4)
 BuildTools:  ocamlbuild
 
 
-# Flags
-# ------------------------------------------------------------------
-
-Flag example
-  Description:   Build the examples
-  Default:       true
-
-Flag lwt
-  Description:   Build the Lwt library
-  Default:       false
-
-Flag async
-  Description:   Build the Async library
-  Default:       false
-
-
-# Libraries
-# ------------------------------------------------------------------
-
 Library "sugar"
   FindlibName:      sugar
   Path:             lib/sugar
-  Modules:          Sugar, Sugar_promise
-  InternalModules:  Sugar_types, Sugar_option, Sugar_result
+  Modules:          Sugar, Sugar_promise, Sugar_types, Sugar_option, Sugar_result
+  CompiledObject:   best
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
 
-Library "sugar_lwt"
+Flag all
+  Description: build everything that is possible
+  Default:     false
+
+Flag lwt
+  Description:   Build the Lwt library
+  Default$:      flag(all)
+
+Library "sugar-lwt"
   Build$:           flag(lwt)
   Install$:         flag(lwt)
   FindlibName:      lwt
   FindlibParent:    sugar
   Path:             lib/lwt
+  CompiledObject: best
   Modules:          Sugar_lwt
   BuildDepends:     lwt, lwt.unix, lwt.syntax, lwt, sugar
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
+Flag async
+  Description:   Build the Async library
+  Default$:      flag(all)
 
-Library "sugar_async"
+Library "sugar-async"
   Build$:           flag(async)
   Install$:         flag(async)
   FindlibName:      async
   FindlibParent:    sugar
   Path:             lib/async
   Modules:          Sugar_async
-  BuildDepends:     threads, async, async_unix, sugar
+  CompiledObject: best
+  BuildDepends:     threads, async, sugar
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
 
-# Examples
-# ------------------------------------------------------------------
+Flag example
+  Description:   Build the examples
+  Default:       true
 
 Executable "example_basic"
   Build$:         flag(example)
@@ -84,7 +79,7 @@ Executable "example_async"
   Path:           examples/async
   MainIs:         example_async.ml
   CompiledObject: best
-  BuildDepends:   async, async_unix, async_kernel, sugar, sugar.async
+  BuildDepends:   async, async_unix, sugar, sugar.async
 
 
 Executable "example_semicolon"

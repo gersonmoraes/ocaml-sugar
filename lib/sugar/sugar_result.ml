@@ -14,7 +14,7 @@ end *)
 module Make (UserError:Error) : Sugar_types.Result
   with type error := UserError.error =
 struct
-  type 'a result = ('a, UserError.error) std_result
+  type 'a result = ('a, UserError.error) Pervasives.result
 
   let commit v = Ok v
   let throw e = Error e

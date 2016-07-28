@@ -1,6 +1,6 @@
 open Sugar_types
 
-type error = ()
+type error = unit
 type 'a result = 'a option
 
 let commit v = Some v

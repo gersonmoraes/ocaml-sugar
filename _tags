@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 566c108c341c8036604d786224f33388)
+# DO NOT EDIT (digest: 41b958cff1e0f653156c6d3d38863d3a)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -15,10 +15,52 @@ true: annot, bin_annot
 "_darcs": -traverse
 "_darcs": not_hygienic
 # Library sugar
-"lib/sugar.cmxs": use_sugar
+"lib/sugar/sugar.cmxs": use_sugar
+# Library sugar-lwt
+"lib/lwt/sugar-lwt.cmxs": use_sugar-lwt
+<lib/lwt/*.ml{,i,y}>: pkg_lwt
+<lib/lwt/*.ml{,i,y}>: pkg_lwt.syntax
+<lib/lwt/*.ml{,i,y}>: pkg_lwt.unix
+<lib/lwt/*.ml{,i,y}>: use_sugar
+# Library sugar-async
+"lib/async/sugar-async.cmxs": use_sugar-async
+<lib/async/*.ml{,i,y}>: pkg_async
+<lib/async/*.ml{,i,y}>: pkg_threads
+<lib/async/*.ml{,i,y}>: use_sugar
 # Executable example_basic
-<examples/example_basic.{native,byte}>: use_sugar
-# Executable example_monadic
-<examples/example_monadic.{native,byte}>: use_sugar
-<examples/*.ml{,i,y}>: use_sugar
+<examples/basic/example_basic.{native,byte}>: use_sugar
+<examples/basic/*.ml{,i,y}>: use_sugar
+# Executable example_lwt
+<examples/lwt/example_lwt.{native,byte}>: pkg_lwt
+<examples/lwt/example_lwt.{native,byte}>: pkg_lwt.syntax
+<examples/lwt/example_lwt.{native,byte}>: pkg_lwt.unix
+<examples/lwt/example_lwt.{native,byte}>: use_sugar
+<examples/lwt/example_lwt.{native,byte}>: use_sugar-lwt
+<examples/lwt/*.ml{,i,y}>: pkg_lwt
+<examples/lwt/*.ml{,i,y}>: pkg_lwt.syntax
+<examples/lwt/*.ml{,i,y}>: pkg_lwt.unix
+<examples/lwt/*.ml{,i,y}>: use_sugar
+<examples/lwt/*.ml{,i,y}>: use_sugar-lwt
+# Executable example_async
+<examples/async/example_async.{native,byte}>: pkg_async
+<examples/async/example_async.{native,byte}>: pkg_async_unix
+<examples/async/example_async.{native,byte}>: pkg_threads
+<examples/async/example_async.{native,byte}>: use_sugar
+<examples/async/example_async.{native,byte}>: use_sugar-async
+<examples/async/*.ml{,i,y}>: pkg_async
+<examples/async/*.ml{,i,y}>: pkg_async_unix
+<examples/async/*.ml{,i,y}>: pkg_threads
+<examples/async/*.ml{,i,y}>: use_sugar
+<examples/async/*.ml{,i,y}>: use_sugar-async
+# Executable example_semicolon
+<examples/semicolon/example_semicolon.{native,byte}>: pkg_lwt
+<examples/semicolon/example_semicolon.{native,byte}>: pkg_lwt.syntax
+<examples/semicolon/example_semicolon.{native,byte}>: pkg_lwt.unix
+<examples/semicolon/example_semicolon.{native,byte}>: use_sugar
+<examples/semicolon/example_semicolon.{native,byte}>: use_sugar-lwt
+<examples/semicolon/*.ml{,i,y}>: pkg_lwt
+<examples/semicolon/*.ml{,i,y}>: pkg_lwt.syntax
+<examples/semicolon/*.ml{,i,y}>: pkg_lwt.unix
+<examples/semicolon/*.ml{,i,y}>: use_sugar
+<examples/semicolon/*.ml{,i,y}>: use_sugar-lwt
 # OASIS_STOP
