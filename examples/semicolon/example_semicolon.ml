@@ -21,9 +21,10 @@ open MyResult
 open Lwt
 
 let puts str () =
-  lwt () = Lwt_unix.sleep (Random.float 0.1) in
-  lwt () = Lwt_log.notice str in
-  commit ()
+  Lwt_unix.sleep (Random.float 0.1)
+  >>= fun () ->
+  Lwt_log.notice str
+  >>= commit
 
 let puts_concurrent str =
   puts str ()

@@ -137,6 +137,29 @@ support.
 In order to avoid confusion, Sugar does not overlap ```>>=``` and ```return```.
 To use those, you have to open the specific threading library module.
 
+#### Integration with Threading libraries
+
+Sugar results can be extracted using ```unwrap``` or ```unwrap_or``` methods.
+This is useful if you are working with different libraries. The example bellow
+show this integration with asynchronous results:
+
+```ocaml
+module MyError = struct
+  type error = Unexpected
+end
+module MyResult = Sugar_lwt.Result.Make(MyError)
+
+open Lwt
+open MyResult
+
+let load_unsafe (): string Lwt.t =
+  unwrap ( commit "Hello" )
+  >>= return
+
+let load_safe () : string Lwt.t =
+  unwrap_or ( throw MyError.Unexpected ) (fun err -> "recovered")
+  >>= return
+```
 
 #### Standard monadic interface
 
