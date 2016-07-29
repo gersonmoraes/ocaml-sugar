@@ -44,6 +44,20 @@ struct
     | (Error e, _) -> Error e
     | _ -> y
 
+  let unwrap = function
+    | Ok r -> r
+    | Error _ -> invalid_arg "Could not unwrap value from result"
+
+  let unwrap_or r f =
+    match r with
+    | Ok r -> r
+    | Error e -> f e
+
+  let expect r msg =
+    match r with
+    | Ok r -> r
+    | Error _ -> invalid_arg msg
+
   module Monad : Sugar_types.Monad
     with type 'a monad = 'a result =
   struct

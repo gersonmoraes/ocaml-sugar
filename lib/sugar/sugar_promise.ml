@@ -5,6 +5,7 @@ module Make  (UserMonad:Sugar_types.Monad)  (UserError:Sugar_types.Error) : Suga
     type error := UserError.error
     and type 'a monad := 'a UserMonad.monad
     and type 'a result = ('a, UserError.error) Pervasives.result
+    and type 'a promise = ('a, UserError.error) result UserMonad.monad
 =
 struct
   include UserError
@@ -42,6 +43,25 @@ struct
 
   let (/>) x y = bind_if x y
   let (//>) x y = x &&= fun _ -> y
+
+  let unwrap r =
+    r
+    >>= function
+    | Ok v -> return v
+    | Error e -> invalid_arg "Could not unwrap result"
+
+  let unwrap_or r f =
+    r
+    >>= function
+    | Ok v -> return v
+    | Error e -> f e
+
+  let expect r msg =
+    r
+    >>= function
+    | Ok v -> return v
+    | Error e -> invalid_arg msg
+
 (*
   module Monad : Sugar_types.Monad
     with type 'a monad = 'a result =

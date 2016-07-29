@@ -40,6 +40,24 @@ let (//>) x y =
   | None, _ -> None
   | _ -> y
 
+let wrap f =
+  try Some (f ()) with
+  | e -> None
+
+let unwrap = function
+  | Some r -> r
+  | None -> invalid_arg "Could not unwrap value from result"
+
+let unwrap_or r f =
+  match r with
+  | Some r -> r
+  | None -> f ()
+
+let expect r msg =
+  match r with
+  | Some r -> r
+  | None -> invalid_arg msg
+
 (* This module implements a monadic interface for the option type
  * Notice though, that is is composed with aliases for other functions.
  *)
@@ -50,3 +68,17 @@ struct
   let return = commit
   let (>>=) = bind_if
 end
+
+
+module List = struct
+  let find ~f l =
+    try
+      Some (StdLabels.List.find ~f l)
+    with
+      Not_found -> None
+end
+
+module OpaqueError = struct
+    type error = unit
+end
+module Result = Sugar_result.Make(OpaqueError)

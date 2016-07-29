@@ -104,6 +104,10 @@ module type Result = sig
 
   (* Idiomatic monad interface for the result type *)
   (* module Monad : Monad *)
+
+  val unwrap: 'a result -> 'a
+  val unwrap_or: 'a result -> (error -> 'a) -> 'a
+  val expect: 'a result -> string -> 'a
 end
 
 (** Module that represents an assynchronous error aware computation. *)
@@ -193,5 +197,8 @@ module type Promise = sig
   (* type 'a state *)
   (** A successful or error value *)
 
-
+  (** TODO: É necessário adicionar suporte a exceções via Monad *)
+  val unwrap: 'a result monad -> 'a monad
+  val unwrap_or: 'a result monad -> (error -> 'a monad) -> 'a monad
+  val expect: 'a result monad -> string -> 'a monad
 end
