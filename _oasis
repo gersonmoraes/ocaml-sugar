@@ -55,8 +55,7 @@ Library "sugar_async"
 Library "sugar"
   FindlibName:      sugar
   Path:             lib/sugar
-  InternalModules:  Sugar_promise, Sugar_types, Sugar_option, Sugar_result
-  Modules:          Sugar
+  Modules:          Sugar_promise, Sugar_types, Sugar_option, Sugar_result, Sugar
   CompiledObject:   best
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
@@ -78,7 +77,7 @@ Executable "example_lwt"
   Path:           examples/lwt
   MainIs:         example_lwt.ml
   CompiledObject: best
-  BuildDepends:   threads, lwt, lwt.unix, sugar, sugar.lwt
+  BuildDepends:   lwt, lwt.unix, sugar, sugar.lwt
 
 Executable "example_async"
   Build$:         flag(example) && flag(async)

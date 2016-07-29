@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 96718bd4228437ed5a34fb891fe8d3ae) *)
+(* DO NOT EDIT (digest: f01c9ae7596180bc8c55d88d7ca208f9) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -770,8 +770,8 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml =
        [
           ("sugar", ["lib/sugar"], []);
-          ("sugar-lwt", ["lib/lwt"], []);
-          ("sugar-async", ["lib/async"], [])
+          ("sugar_async", ["lib/async"], []);
+          ("sugar_lwt", ["lib/lwt"], [])
        ];
      lib_c = [];
      flags = [];
