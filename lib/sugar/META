@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: b16fcc9a910bbacff9cb54a052bfe515)
+# DO NOT EDIT (digest: 8eef1fd5689446e8884c077e84e716b6)
 version = "0.1"
 description =
 "A library to bring sugar syntatic to your error handling layer."
@@ -12,7 +12,7 @@ package "lwt" (
  version = "0.1"
  description =
  "A library to bring sugar syntatic to your error handling layer."
- requires = "lwt sugar"
+ requires = "threads lwt sugar"
  archive(byte) = "sugar_lwt.cma"
  archive(byte, plugin) = "sugar_lwt.cma"
  archive(native) = "sugar_lwt.cmxa"
@@ -24,7 +24,7 @@ package "async" (
  version = "0.1"
  description =
  "A library to bring sugar syntatic to your error handling layer."
- requires = "async sugar"
+ requires = "threads async sugar"
  archive(byte) = "sugar_async.cma"
  archive(byte, plugin) = "sugar_async.cma"
  archive(native) = "sugar_async.cmxa"

@@ -1,0 +1,65 @@
+# OASIS_START
+# DO NOT EDIT (digest: fe0daa45e1a12c2d593c368596363120)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
+# useless stuff for the build process
+true: annot, bin_annot
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library sugar
+"lib/sugar/sugar.cmxs": use_sugar
+# Library sugar_async
+"lib/async/sugar_async.cmxs": use_sugar_async
+<lib/async/*.ml{,i,y}>: pkg_async
+<lib/async/*.ml{,i,y}>: pkg_threads
+<lib/async/*.ml{,i,y}>: use_sugar
+# Library sugar_lwt
+"lib/lwt/sugar_lwt.cmxs": use_sugar_lwt
+<lib/lwt/*.ml{,i,y}>: pkg_lwt
+<lib/lwt/*.ml{,i,y}>: pkg_threads
+<lib/lwt/*.ml{,i,y}>: use_sugar
+# Executable example_basic
+<examples/basic/example_basic.{native,byte}>: use_sugar
+<examples/basic/*.ml{,i,y}>: use_sugar
+# Executable example_lwt
+<examples/lwt/example_lwt.{native,byte}>: pkg_lwt
+<examples/lwt/example_lwt.{native,byte}>: pkg_lwt.unix
+<examples/lwt/example_lwt.{native,byte}>: pkg_threads
+<examples/lwt/example_lwt.{native,byte}>: use_sugar
+<examples/lwt/example_lwt.{native,byte}>: use_sugar_lwt
+<examples/lwt/*.ml{,i,y}>: pkg_lwt
+<examples/lwt/*.ml{,i,y}>: pkg_lwt.unix
+<examples/lwt/*.ml{,i,y}>: pkg_threads
+<examples/lwt/*.ml{,i,y}>: use_sugar
+<examples/lwt/*.ml{,i,y}>: use_sugar_lwt
+# Executable example_async
+<examples/async/example_async.{native,byte}>: pkg_async
+<examples/async/example_async.{native,byte}>: pkg_async_unix
+<examples/async/example_async.{native,byte}>: pkg_threads
+<examples/async/example_async.{native,byte}>: use_sugar
+<examples/async/example_async.{native,byte}>: use_sugar_async
+<examples/async/*.ml{,i,y}>: pkg_async
+<examples/async/*.ml{,i,y}>: pkg_async_unix
+<examples/async/*.ml{,i,y}>: pkg_threads
+<examples/async/*.ml{,i,y}>: use_sugar
+<examples/async/*.ml{,i,y}>: use_sugar_async
+# Executable example_semicolon
+<examples/semicolon/example_semicolon.{native,byte}>: pkg_lwt
+<examples/semicolon/example_semicolon.{native,byte}>: pkg_lwt.unix
+<examples/semicolon/example_semicolon.{native,byte}>: pkg_threads
+<examples/semicolon/example_semicolon.{native,byte}>: use_sugar
+<examples/semicolon/example_semicolon.{native,byte}>: use_sugar_lwt
+<examples/semicolon/*.ml{,i,y}>: pkg_lwt
+<examples/semicolon/*.ml{,i,y}>: pkg_lwt.unix
+<examples/semicolon/*.ml{,i,y}>: pkg_threads
+<examples/semicolon/*.ml{,i,y}>: use_sugar
+<examples/semicolon/*.ml{,i,y}>: use_sugar_lwt
+# OASIS_STOP
