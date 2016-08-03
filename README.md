@@ -32,8 +32,8 @@ To use Sugar, you need to do 2 things:
 2. Generate a ```Result``` module using your "error module".
 3. Open the recently created modules.
 
-Notice the hinting for function return types. We're using ```'a result```
-instead of  ```('a, error) result Lwt.t``` for convenience.
+Notice the hinting for function return types. We're using ```'a promise```
+instead of  ```'a result Lwt.t``` for convenience. 
 
 
 ```ocaml
@@ -47,17 +47,17 @@ module MyResult = Sugar_lwt.Result.Make(MyError)
 open MyResult
 open MyError
 
-let load_list n: int list result =
+let load_list n: int list promise =
   let l = [1; 2; 3] in
   let new_list = List.map (fun v -> v * n) l in
   commit new_list
 
-let error_handler e: string result =
+let error_handler e: string promise =
   match e with
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
-let computation_chain: unit result =
+let computation_chain: unit promise =
   load_list 10
   &&= fun l ->
   &&| List.length
@@ -179,7 +179,7 @@ module MyResult = Sugar_lwt.Result.Make(MyError)
 open MyResult
 open MyResult.Monad
 
-let main : string result =
+let main : string result Lwt.t =
   return "Hello"
   >>= fun msg ->
   return (msg ^ " World")
