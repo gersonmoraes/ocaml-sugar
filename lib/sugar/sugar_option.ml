@@ -78,7 +78,4 @@ module List = struct
       Not_found -> None
 end
 
-module OpaqueError = struct
-    type error = unit
-end
-module Result = Sugar_result.Make(OpaqueError)
+module Result = Sugar_result.Make(struct type error = unit end)

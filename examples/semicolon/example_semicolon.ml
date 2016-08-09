@@ -1,22 +1,8 @@
 open Lwt
 open Sugar.Types
 
-(* Example of basic usage of Sugar to build an Error Handling Layer
- *
- * It uses a parametrized module to build sugar syntatic and useful functions
- * that only make sense in your project.
- *
- * We're hinting the functions result to make clear what's going on. But you
- * can effectively remove them, because we're also using a concise result type
- * for computations: ('a result).
- *)
- module MyError =
- struct
-   type error = unit
- end
-module MyResult = Sugar_lwt.Result.Make(MyError)
+module MyResult = Sugar_lwt.Result.Make(struct type error = unit end)
 
-(* Start using them *)
 open MyResult
 open Lwt
 
@@ -29,9 +15,6 @@ let puts str () =
 let puts_concurrent str =
   puts str ()
 
-(* TODO: We're creating a blocking operator for semicolon,
- *       with operator (//>). Later on, will invert the meaning of (/>) and (//>)
- *)
 let blocking () =
   puts "1 - Hello" ()     />
   puts "2 - World"        />
