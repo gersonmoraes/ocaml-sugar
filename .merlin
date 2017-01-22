@@ -1,4 +1,4 @@
-PKG yojson re2 threads lwt async cohttp cohttp.lwt cohttp.async
+PKG yojson threads lwt async
 EXT lwt
 S lib/**
 S examples/**
