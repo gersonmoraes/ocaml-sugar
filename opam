@@ -1,6 +1,6 @@
 opam-version: "1.2"
 name: "sugar"
-version: "0.1"
+version: "0.2.0"
 maintainer: "Gerson Moraes <gerson@digirati.com.br>"
 authors: "Gerson Moraes <gerson@digirati.com.br>"
 homepage: "https://github.com/gersonmoraes/ocaml-sugar"
@@ -16,3 +16,5 @@ remove: ["ocamlfind" "remove" "sugar"]
 depends: [
   "ocamlfind" {build}
 ]
+available: [ ocaml-version > "4.02.3" ]
+depopts: ["lwt" "async"]
