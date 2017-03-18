@@ -59,13 +59,13 @@ module type Result = sig
    *)
   val bind_unless: 'a result -> (error -> 'a result) -> 'a result
 
-  val map:  'a result -> ('a -> 'b) -> 'b result
   (**
      Apply a function to the wraped value if the result is successful
    *)
+  val map:  'a result -> ('a -> 'b) -> 'b result
 
-  val commit: 'a -> 'a result
   (** Indicate a successful computation *)
+  val commit: 'a -> 'a result
 
   (** Indicate a failure in a computation *)
   val throw: error -> 'a result
@@ -115,10 +115,31 @@ module type Result = sig
     </code>
    *)
   val (//>): unit result -> 'a result -> 'a result
-
+  
+  (**
+    Unwraps the successful result as a normal value in the threading monad.
+    If the value is not successful, it will raise an Invalid_arg exception.
+  *)
   val unwrap: 'a result -> 'a
-  val unwrap_or: 'a result -> (error -> 'a) -> 'a
+
+  (**
+    Unwraps the successful result as a value in the threading monad.
+    Different from [unwrap], you can assign an error handler to be
+    executed if the computation failed. Example:
+    <code>
+    let run () =
+      get_data ()
+      |> unwrap_or (fun _ -> "default")
+    </code>
+  *)
+  val unwrap_or: (error -> 'a) -> 'a result -> 'a
+
+  (**
+    Extracts a successful value from an computation, or raises and Invalid_arg
+    exception with the defined parameter.
+  *)
   val expect: 'a result -> string -> 'a
+
 end
 
 (**
@@ -220,14 +241,16 @@ module type Promise = sig
      The right-hand-side must be a thunk (a function that expects unit).
 
      It can be used to chain thunks in a meaningful way like:
-       let puts s () =
-         print_endline s;
-         commit ()
+     <code>
+     let puts s () =
+       print_endline s;
+       commit ()
 
-       let main =
-         puts "Hello" ()     />
-         puts "Blocking"     />
-         puts "Computations"
+     let main =
+       puts "Hello" ()     />
+       puts "Blocking"     />
+       puts "Computations"
+     </code>
    *)
    val (/>): unit promise -> (unit -> 'b promise) -> 'b promise
 
@@ -237,6 +260,7 @@ module type Promise = sig
      It chains the completion of unit promise with the next in the sequence.
 
      It can be used to chain thunks in a meaningful way like:
+     <code>
        let puts s =
          asynchronous_puts s
          >>= commit
@@ -245,10 +269,31 @@ module type Promise = sig
          puts "Hello"         //>
          puts "Non-blocking"  //>
          puts "Computations"
+       </code>
    *)
    val (//>): unit promise -> 'a promise -> 'a promise
 
+  (**
+    Unwraps the successful result as a normal value in the threading monad.
+    If the value is not successful, it will raise an Invalid_arg exception.
+  *)
   val unwrap: 'a result monad -> 'a monad
-  val unwrap_or: 'a result monad -> (error -> 'a monad) -> 'a monad
+
+  (**
+    Unwraps the successful result as a value in the threading monad.
+    Different from [unwrap], you can assign an error handler to be
+    executed if the computation failed. Example:
+    <code>
+    let run () =
+      get_data ()
+      |> unwrap_or (fun _ -> Lwt.return "default")
+    </code>
+  *)
+  val unwrap_or: (error -> 'a monad) -> 'a result monad -> 'a monad
+
+  (**
+    Extracts a successful value from an computation, or raises and Invalid_arg
+    exception with the defined parameter.
+  *)
   val expect: 'a result monad -> string -> 'a monad
 end

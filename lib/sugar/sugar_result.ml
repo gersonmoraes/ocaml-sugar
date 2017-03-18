@@ -11,7 +11,7 @@ struct
   type 'a result = ('a, UserError.error) Pervasives.result
 
   let commit v = Ok v
-  
+
   let throw e = Error e
 
   let bind_if r f =
@@ -46,7 +46,7 @@ struct
     | Ok r -> r
     | Error _ -> invalid_arg "Could not unwrap value from result"
 
-  let unwrap_or r f =
+  let unwrap_or f r =
     match r with
     | Ok r -> r
     | Error e -> f e

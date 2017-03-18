@@ -2,8 +2,7 @@ open Sugar_types
 
 (**
   A functor that implements the asynchronous interface.
-
-  This functors produces a module following the interface {!Sugar_types.Promise}.
+  The complete documentation can be found in {!Sugar_types.Promise}.
 *)
 module Make  (UserMonad:Sugar_types.Monad)  (UserError:Sugar_types.Error) : Sugar_types.Promise
   with
@@ -55,7 +54,7 @@ struct
     | Ok v -> return v
     | Error e -> invalid_arg "Could not unwrap result"
 
-  let unwrap_or r f =
+  let unwrap_or f r =
     r
     >>= function
     | Ok v -> return v
