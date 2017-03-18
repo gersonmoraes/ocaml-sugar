@@ -16,7 +16,7 @@ struct
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-module MyResult = Sugar_lwt.Result.Make(MyError)
+module MyResult = Sugar_lwt.MakeResult(MyError)
 
 (* Start using them *)
 open MyError

@@ -1,7 +1,7 @@
 open Lwt
 open Sugar.Types
 
-module MyResult = Sugar_lwt.Result.Make(struct type error = unit end)
+module MyResult = Sugar_lwt.MakeResult(struct type error = unit end)
 
 open MyResult
 open Lwt

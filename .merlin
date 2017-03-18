@@ -1,4 +1,4 @@
-PKG yojson threads lwt async
+PKG yojson threads lwt
 EXT lwt
 S lib/**
 S examples/**

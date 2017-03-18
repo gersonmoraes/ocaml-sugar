@@ -9,7 +9,7 @@ struct
     | Unexpected of string
 end
 
-module MyResult = Sugar_async.Result.Make(MyError)
+module MyResult = Sugar_async.MakeResult(MyError)
 
 open MyError
 open MyResult

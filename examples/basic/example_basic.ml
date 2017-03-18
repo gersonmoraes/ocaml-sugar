@@ -20,7 +20,7 @@ struct
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-module MyResult = Sugar.Result.Make(MyError)
+module MyResult = Sugar.MakeResult(MyError)
 
 (* Start using them *)
 open MyResult
@@ -50,11 +50,15 @@ let _ =
   &&= fun len ->
   throw (Unexpected (sprintf "List length invalid: %d" len))
   ||= error_handler
-  &&= (fun recovered ->
-         print_message "This will NOT be printed"        //>
-         print_message "The previous error_handler"      //>
-         print_message "can't catch 'Unexpected' errors"
-      )
-  ||= fun e ->
-  commit "Recover from any error"
+  &&=
+  ( fun recovered ->
+    print_message "This will NOT be printed"        //>
+    print_message "The previous error_handler"      //>
+    print_message "can't catch 'Unexpected' errors" //>
+    commit "for sure"
+  )
+  ||=
+  ( fun e ->
+    commit "Recover from any error"
+  )
   &&= print_message

@@ -1,22 +1,17 @@
 open Sugar_types
 
 (**
- * Difine a common result type. This definition is experimental.
- *
- * A functor for this types might be created.
- * When we adapt this module for OCaml 4.03, we'll use Core.Std.result type
- *)
-(* module Std = struct
-  type ('a, 'b) result = Ok of 'a | Error of 'b
-end *)
+  A functor that implements the blocking interface.
 
-
+  This functors produces a module following the interface {!Sugar_types.Result}.
+*)
 module Make (UserError:Error) : Sugar_types.Result
   with type error := UserError.error =
 struct
   type 'a result = ('a, UserError.error) Pervasives.result
 
   let commit v = Ok v
+  
   let throw e = Error e
 
   let bind_if r f =
@@ -35,10 +30,13 @@ struct
     | Ok v -> Ok (f v)
 
   let (&&=) = bind_if
+
   let (||=) = bind_unless
+
   let (&&|) = map
 
   let (/>) = bind_if
+
   let (//>) x y =
     match x, y with
     | (Error e, _) -> Error e

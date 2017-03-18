@@ -11,9 +11,6 @@ let bind_if r f =
   | None -> None
   | Some v -> f v
 
-(* This is an experimental function.
- * We still don't know if the second parameterer should be a thunk.
- *)
 let bind_unless r f =
   match r with
   | None -> f ()
@@ -24,12 +21,6 @@ let map r f =
   | None -> None
   | Some v -> Some (f v)
 
-(* Notice we are using these operators only with the option type.
- *
- * This means applications could use both types within a same module context.
- * This allows developers to use different result types between different
- * error handling layers.
- *)
 let (&&=) = bind_if
 let (||=) = bind_unless
 let (&&|) = map
@@ -58,8 +49,9 @@ let expect r msg =
   | Some r -> r
   | None -> invalid_arg msg
 
-(* This module implements a monadic interface for the option type
- * Notice though, that is is composed with aliases for other functions.
+(**
+  This module implements a monadic interface for the option type
+  Notice though, that is is composed with aliases for other functions.
  *)
 module Monad : Sugar_types.Monad
    with type 'a monad = 'a option =
@@ -68,14 +60,3 @@ struct
   let return = commit
   let (>>=) = bind_if
 end
-
-
-module List = struct
-  let find ~f l =
-    try
-      Some (StdLabels.List.find ~f l)
-    with
-      Not_found -> None
-end
-
-module Result = Sugar_result.Make(struct type error = unit end)
