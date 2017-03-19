@@ -9,6 +9,7 @@ module type Monad = sig
   val (>>=): 'a monad -> ('a -> 'b monad) -> 'b monad
 end
 
+
 (**
   Conventional module type to define the errors inside a project.
   This is how Sugar understands the error handling layer of a project.
@@ -34,16 +35,25 @@ module type Error = sig
   type error
 end
 
+
 (** Monadic interface for result types *)
 module type Result = sig
+
+  (**
+    Error definition from your project
+  *)
   type error
 
-  (* type 'a result *)
+
+  (**
+    An alias for the result type in the stdlib
+  *)
   type 'a result = ('a, error) Pervasives.result
+
 
   (**
     Apply the binding only if the computation was successful.
-    You can use the operator (&&=) instead of this function for syntatic sugar
+    You can use the operator {{!(&&=)} &&=} instead of this function for syntatic sugar
    *)
   val bind_if:  'a result -> ('a -> 'b result) -> 'b result
 
@@ -55,29 +65,182 @@ module type Result = sig
     must throw an error or provide an equivalent for the result type of the
     previous computation.
 
-    You can use the operator (||=) instead of this function for syntatic sugar
+    You can use the operator {{!(||=)} ||=} instead of this function for syntatic sugar
    *)
   val bind_unless: 'a result -> (error -> 'a result) -> 'a result
 
+
   (**
-     Apply a function to the wraped value if the result is successful
+     Apply a function to the result of a successful computation. This function
+     makes it ease to work with non error aware functions.
+
+     Example:
+     <code>
+      open Sugar.Option
+
+      let twenty =
+        map (Some 10) (fun n -> n + n)
+     </code>
+
+     You could also use the combinator {{!(&&|)} &&|} for syntatic sugar.
    *)
   val map:  'a result -> ('a -> 'b) -> 'b result
 
-  (** Indicate a successful computation *)
+  (**
+    Commit a successful computation.
+
+    The main reason for this function is to abstract the differences from the
+    internals of your result type. It provides a standard interface to create
+    successful values to both blocking and non-blocking computations. So, you
+    can make your computations asynchronous without refactoring a lot of code.
+    You could also change between the option and result types and keep large
+    parts of your code intact.
+
+    This function should be used with its counterpart, [throw]
+  *)
   val commit: 'a -> 'a result
 
-  (** Indicate a failure in a computation *)
+
+  (**
+    Return an error as the result of a computation.
+
+    Like the [commit] function, [throw] helps you hide the internals of your
+    result type and keep a clean code.
+
+    If you are still at the beginning of your project, and don't have your
+    errors defined yet, this function still is a great help. For example,
+    the code bellow have the same usage as the function [failwith], but is a lot
+    safer.
+
+    <code>
+      module MyResult = Sugar.MakeResult (struct error = string end)
+      open MyResult
+      let run (): int result =
+        if true then
+          commit 10
+        else
+          throw "something bad happend"
+    </code>
+
+    You could also not describe your errors at all for some time, and
+    use the {!Sugar.Option} module to create error aware computations, like:
+
+    <code>
+      open Sugar.Option
+      let run (): string result =
+        if true then
+          commit "hello world"
+        else
+          throw ()
+    </code>
+
+   *)
   val throw: error -> 'a result
 
-  (** Conditional binding operator AND *)
+
+  (**
+    Conditional binding operator AND. An alias for {{!bind_if} bind_if}.
+
+    This is the main reason Sugar can simplify the usage of error aware
+    expressions. For example, say you are working with a project with a lot of
+    error aware expressions, and between those, you have these functions:
+
+    <code>
+      let computation () =
+        let value = ... in
+        Ok value
+
+      let transform value =
+        let new_value = ... in
+        Ok new_value
+    </code>
+
+    There are various ways you could use the functions above in OCaml.
+    Someone could write this code in idiomatic OCaml:
+
+    <code>
+      let run () =
+        match computation () with
+        | Error e -> Error e
+        | Ok v ->
+          begin
+            match transform v with
+            | Error e -> Error e
+            | Ok v ->
+              begin
+                print_endline "everything ok";
+                Ok ()
+              end
+          end
+    </code>
+
+    But we believe this code is not very expressive. And as your code base grows
+    and you start using error aware expressions everywhere, it tends to bloat
+    your code with pattern matching. You could also avoid using the typesystem
+    to handle the errors and rely on exceptions, but exceptions literally bypass
+    compiler and may easily break your code at runtime.
+
+    If you are using Sugar, it is very likely your final version would look
+    like:
+
+    <code>
+      let run () =
+        computation ()
+        &&= transform
+        &&= fun v ->
+        print_endline "everything ok";
+        commit ()
+    </code>
+
+    For a more diverse example, look at the {!Sugar} module.
+  *)
   val (&&=): 'a result -> ('a -> 'b result) -> 'b result
 
-  (** Conditional binding operator OR *)
+
+  (**
+    Conditional binding operator OR. An alias for {{!bind_unless} bind_unless}.
+
+    This function lets you assign an error handler inside a chained error
+    aware expression.
+
+    For a more diverse example, look at the {!Sugar} module.
+  *)
   val (||=): 'a result -> (error -> 'a result) -> 'a result
 
-  (** Conditional binding operator MAP *)
+
+  (**
+    Conditional binding operator MAP
+
+    As its name sugests, this is an alias for the function {{!map} map}.
+    Its intended use is to help integrate with functions that are not error
+    aware.
+
+    For example, considere the function [let double x = x + x] in the code
+    fragments bellow:
+
+    <code>
+     open Sugar.Option
+
+     (* example without Sugar *)
+     let twenty =
+       match Some 10 with
+       | None -> None
+       | Some n -> double n
+
+      (* using the default &&= combinator *)
+      let twenty =
+       Some 10
+       &&= fun n ->
+       commit (double n)
+
+     (* using the map combinator *)
+     let twenty =
+       Some 10
+       &&| double
+    </code>
+  *)
   val (&&|): 'a result -> ('a -> 'b) -> 'b result
+
 
   (**
     Blocking semicolon operator.
@@ -98,6 +261,7 @@ module type Result = sig
    *)
   val (/>): unit result -> (unit -> 'b result) -> 'b result
 
+
   (**
     Non blocking semicolon operator.
     It chains the completion of unit result with the next in the sequence.
@@ -115,12 +279,14 @@ module type Result = sig
     </code>
    *)
   val (//>): unit result -> 'a result -> 'a result
-  
+
+
   (**
     Unwraps the successful result as a normal value in the threading monad.
     If the value is not successful, it will raise an Invalid_arg exception.
   *)
   val unwrap: 'a result -> 'a
+
 
   (**
     Unwraps the successful result as a value in the threading monad.
@@ -134,6 +300,7 @@ module type Result = sig
   *)
   val unwrap_or: (error -> 'a) -> 'a result -> 'a
 
+
   (**
     Extracts a successful value from an computation, or raises and Invalid_arg
     exception with the defined parameter.
@@ -141,6 +308,7 @@ module type Result = sig
   val expect: 'a result -> string -> 'a
 
 end
+
 
 (**
   This interface specifies an error handling layer for asynchronous.
@@ -179,6 +347,7 @@ module type Promise = sig
    *)
   type 'a monad
 
+
   (**
     High level result type, created to simplify type hinting.
     It hides two things: your choice of asynchronous library and the relation
@@ -197,41 +366,52 @@ module type Promise = sig
   *)
   type 'a promise = 'a result monad
 
+
   (**
-     Apply the binding only if the computation was successful.
-     You can use the operator (&&=) instead of this function for syntatic sugar
+     Similar to {{!Result.bind_if} Result.bind_if}
    *)
   val bind_if:  'a promise -> ('a -> 'b promise) -> 'b promise
 
+
   (**
-     Apply the binding only if the computation failed.
-
-     Notice that an error handler must be provided, and this handler
-     must throw an error or provide an equivalent for the promise type of the
-     previous computation.
-
-     You can use the operator (||=) instead of this function for syntatic sugar
+     Similar to {{!Result.bind_unless} Result.bind_unless}
    *)
   val bind_unless: 'a promise -> (error -> 'a promise) -> 'a promise
 
+
  (**
-    Apply a function to the wraped value if the promise is successful
+    Similar to {{!Result.map} Result.map}
   *)
   val map:  'a promise -> ('a -> 'b) -> 'b promise
 
-  (** Indicate a successful computation *)
+
+  (**
+     Similar to {{!Result.commit} Result.commit}
+  *)
   val commit: 'a -> 'a promise
 
-  (** Indicate a failure in a computation *)
+
+  (**
+    Similar to {{!Result.throw} Result.throw}
+  *)
   val throw: error -> 'a promise
 
- (** Conditional binding operator AND. *)
+
+ (**
+   Similar to {{!Result.(&&=)} Result.(&&=)}
+  *)
   val (&&=): 'a promise -> ('a -> 'b promise) -> 'b promise
 
-  (** Conditional binding operator OR *)
+
+  (**
+    Similar to {{!Result.(||=)} Result.(||=)}
+  *)
   val (||=): 'a promise -> (error -> 'a promise) -> 'a promise
 
-  (** Conditional binding operator MAP *)
+
+  (**
+    Similar to {{!Result.(&&|)} Result.(&&|)}
+  *)
   val (&&|): 'a promise -> ('a -> 'b) -> 'b promise
 
 
@@ -273,11 +453,13 @@ module type Promise = sig
    *)
    val (//>): unit promise -> 'a promise -> 'a promise
 
+
   (**
     Unwraps the successful result as a normal value in the threading monad.
     If the value is not successful, it will raise an Invalid_arg exception.
   *)
   val unwrap: 'a result monad -> 'a monad
+
 
   (**
     Unwraps the successful result as a value in the threading monad.
@@ -291,9 +473,11 @@ module type Promise = sig
   *)
   val unwrap_or: (error -> 'a monad) -> 'a result monad -> 'a monad
 
+
   (**
     Extracts a successful value from an computation, or raises and Invalid_arg
     exception with the defined parameter.
   *)
   val expect: 'a result monad -> string -> 'a monad
+
 end

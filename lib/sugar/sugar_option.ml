@@ -1,5 +1,35 @@
 open Sugar_types
 
+(**
+  An implementation of {{!Sugar_types.Result}  Sugar.Types.Result } interface
+  for the option type.
+
+  This is probably the easiest way to start using Sugar, as there is no need to
+  use describe errors or use functors. Still, because this module follows the
+  same API, when you need to start refactoring to more complex, non-blocking
+  results you get to keep the same clean API, making be transition
+  straightfoward.
+
+  Usage example:
+  <code>
+    open Sugar.option
+
+    let some_computation (): string result =
+      if true then
+        Some "you could use any option type"
+      else
+        throw ()
+
+    let run (): string result =
+      some_computation ()
+      ||= fun () ->
+      commit "recovered"
+  </code>
+
+  In case you are wondering, the evaluation of [run ()] in the example above,
+  will produce: [string option = Some "you could use any option type"].
+*)
+
 type error = unit
 type 'a result = 'a option
 
@@ -49,10 +79,6 @@ let expect r msg =
   | Some r -> r
   | None -> invalid_arg msg
 
-(**
-  This module implements a monadic interface for the option type
-  Notice though, that is is composed with aliases for other functions.
- *)
 module Monad : Sugar_types.Monad
    with type 'a monad = 'a option =
 struct

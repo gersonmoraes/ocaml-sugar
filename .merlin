@@ -1,7 +1,10 @@
 PKG yojson threads lwt
 EXT lwt
-S lib/**
+S lib/sugar
+S lib/lwt
+S lib/async
+S examples/
 
-S examples/**
-
-B _build/lib/**
+B _build/lib/sugar
+B _build/lib/lwt
+B _build/lib/async
