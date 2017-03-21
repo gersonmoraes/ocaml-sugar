@@ -908,4 +908,20 @@ let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
 # 910 "myocamlbuild.ml"
 (* OASIS_STOP *)
+
+
+(* Disabling unused tags warning *)
+let () =
+  [ "pkg_async"
+  ; "pkg_async_unix"
+  ; "pkg_lwt"
+  ; "pkg_lwt.unix"
+  ]
+  |> Tags.of_list
+  |> Tags.iter mark_tag_used;;
+
+
+  (* let open Ocamlbuild_plugin in
+    |> Tags.iter mark_tag_used;; *)
+
 Ocamlbuild_plugin.dispatch dispatch_default;;
