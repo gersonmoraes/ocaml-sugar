@@ -8,9 +8,7 @@ OCaml projects.
 Introduction
 ------------
 
-Learn the basics of [OCaml Sugar](https://dl.dropboxusercontent.com/u/9364054/OCaml/OCaml_Sugar.pdf)
-in the introduction slides. A somewhat deep explanation of some of its concepts are
-available [here](https://dl.dropboxusercontent.com/u/9364054/OCaml/Bindings_Condicionais.pdf).
+Learn the basics of [OCaml Sugar](https://dl.dropboxusercontent.com/u/9364054/OCaml/OCaml_Sugar.pdf).
 
 
 Conventions
