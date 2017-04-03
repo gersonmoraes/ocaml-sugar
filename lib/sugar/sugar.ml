@@ -62,3 +62,5 @@ module MakeResult = Sugar_result.Make
 
 (** A functor that implements the asynchronous interface  *)
 module MakePromise = Sugar_promise.Make
+
+module Machine = Sugar_machine

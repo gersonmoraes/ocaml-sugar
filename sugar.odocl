@@ -1,8 +1,10 @@
 # OASIS_START
-# DO NOT EDIT (digest: 4e35f176682d0cbb8224fc2ab1b2db23)
+# DO NOT EDIT (digest: ac51bcab870638317a1c5cb77b93bd64)
 lib/sugar/Sugar_promise
 lib/sugar/Sugar_types
 lib/sugar/Sugar_option
 lib/sugar/Sugar_result
 lib/sugar/Sugar
+lib/sugar/Sugar_generic
+lib/sugar/Sugar_machine
 # OASIS_STOP
