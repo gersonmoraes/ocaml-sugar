@@ -137,6 +137,7 @@ module type Result = sig
    *)
   val throw: error -> 'a result
 
+  module Infix : sig
 
   (**
     Conditional binding operator AND. An alias for {{!bind_if} bind_if}.
@@ -280,6 +281,10 @@ module type Result = sig
    *)
   val (//>): unit result -> 'a result -> 'a result
 
+  val (>>): 'a result -> 'b result -> 'b result
+
+  end
+
 
   (**
     Unwraps the successful result as a normal value in the threading monad.
@@ -397,6 +402,8 @@ module type Promise = sig
   val throw: error -> 'a promise
 
 
+  module Infix : sig
+
  (**
    Similar to {{!Result.(&&=)} Result.(&&=)}
   *)
@@ -435,8 +442,8 @@ module type Promise = sig
    val (/>): unit promise -> (unit -> 'b promise) -> 'b promise
 
 
-  (**
-     Non blocking semicolon operator.
+  (*
+     "Non blocking" semicolon operator.
      It chains the completion of unit promise with the next in the sequence.
 
      It can be used to chain thunks in a meaningful way like:
@@ -451,8 +458,11 @@ module type Promise = sig
          puts "Computations"
        </code>
    *)
-   val (//>): unit promise -> 'a promise -> 'a promise
+   (* val (//>): unit promise -> 'a promise -> 'a promise *)
 
+   val (>>): 'a promise -> 'b promise -> 'b promise
+
+  end
 
   (**
     Unwraps the successful result as a normal value in the threading monad.

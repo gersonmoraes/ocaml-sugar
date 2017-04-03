@@ -51,7 +51,7 @@ module Terminal = struct
     let puts s =
       Puts (s, id) |> lift
 
-    let get_line =
+    let get_line () =
       GetLine id |> lift
   end
 end
@@ -69,17 +69,16 @@ module Dsl = Terminal.Dsl (Env)
 
 (* open Env.Free.Infix *)
 open Dsl
-open MyResult
+open MyResult.Infix
 
 (* let (>>=) = Env.Free.(>>=) *)
 let (>>=) = (&&=)
 
 let program1 =
-  puts "What's your name?"
-  >>= fun () ->
-  get_line
+  puts "What's your name?" >>
+  get_line ()
   >>= fun name ->
   puts (name ^ ", have a nice day")
 
 let () =
-  Env.Free.iter Terminal.Runner.run (unwrap program1)
+  Env.Free.iter Terminal.Runner.run (MyResult.unwrap program1)

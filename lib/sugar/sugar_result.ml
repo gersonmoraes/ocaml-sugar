@@ -29,18 +29,24 @@ struct
     | Error e -> Error e
     | Ok v -> Ok (f v)
 
-  let (&&=) = bind_if
+  module Infix = struct
 
-  let (||=) = bind_unless
+    let (&&=) = bind_if
 
-  let (&&|) = map
+    let (||=) = bind_unless
 
-  let (/>) = bind_if
+    let (&&|) = map
 
-  let (//>) x y =
-    match x, y with
-    | (Error e, _) -> Error e
-    | _ -> y
+    let (/>) = bind_if
+
+    let (//>) x y =
+      match x, y with
+      | (Error e, _) -> Error e
+      | _ -> y
+
+    let (>>) x y = y
+
+    end
 
   let unwrap = function
     | Ok r -> r

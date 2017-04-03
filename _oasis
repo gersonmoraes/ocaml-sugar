@@ -89,14 +89,6 @@ Executable "free_error_aware"
   CompiledObject: best
   BuildDepends:   sugar
 
-Executable "example_lwt"
-  Build$:         flag(example) && flag(lwt)
-  Install:        false
-  Path:           examples
-  MainIs:         example_lwt.ml
-  CompiledObject: best
-  BuildDepends:   lwt, lwt.unix, sugar, sugar.lwt
-
 Executable "example_async"
   Build$:         flag(example) && flag(async)
   Install:        false

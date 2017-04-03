@@ -41,12 +41,14 @@ struct
     | Error e -> throw e
     | Ok v -> commit (f v)
 
-  let (&&=) = bind_if
-  let (||=) = bind_unless
-  let (&&|) = map
+  module Infix = struct
+    let (&&=) = bind_if
+    let (||=) = bind_unless
+    let (&&|) = map
 
-  let (/>) x y = bind_if x y
-  let (//>) x y = x &&= fun _ -> y
+    let (/>) x y = bind_if x y
+    let (>>) x y = x &&= fun _ -> y
+  end
 
   let unwrap r =
     r

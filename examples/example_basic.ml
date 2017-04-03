@@ -44,7 +44,8 @@ let error_handler e: string result =
   | _ -> throw e
 
 let _ =
-  print_message "We are extensively using a user defined result type" //>
+  let open MyResult.Infix in
+  print_message "We are extensively using a user defined result type" >>
   load_list 10
   &&| List.length
   &&= fun len ->
@@ -52,9 +53,9 @@ let _ =
   ||= error_handler
   &&=
   ( fun recovered ->
-    print_message "This will NOT be printed"        //>
-    print_message "The previous error_handler"      //>
-    print_message "can't catch 'Unexpected' errors" //>
+    print_message "This will NOT be printed"        >>
+    print_message "The previous error_handler"      >>
+    print_message "can't catch 'Unexpected' errors" >>
     commit "for sure"
   )
   ||=
