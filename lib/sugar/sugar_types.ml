@@ -283,7 +283,11 @@ module type Result = sig
 
   val (>>): 'a result -> 'b result -> 'b result
 
+  val (>>=): 'a result -> ('a -> 'b result) -> 'b result
+
   end
+
+  val (>>=): 'a result -> ('a -> 'b result) -> 'b result
 
 
   (**
@@ -401,6 +405,8 @@ module type Promise = sig
   *)
   val throw: error -> 'a promise
 
+  val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
+
 
   module Infix : sig
 
@@ -409,11 +415,13 @@ module type Promise = sig
   *)
   val (&&=): 'a promise -> ('a -> 'b promise) -> 'b promise
 
-
   (**
     Similar to {{!Result.(||=)} Result.(||=)}
   *)
   val (||=): 'a promise -> (error -> 'a promise) -> 'a promise
+
+
+  val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
 
 
   (**

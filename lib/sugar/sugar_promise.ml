@@ -42,6 +42,7 @@ struct
     | Ok v -> commit (f v)
 
   module Infix = struct
+    let (>>=) = bind_if
     let (&&=) = bind_if
     let (||=) = bind_unless
     let (&&|) = map
@@ -68,12 +69,5 @@ struct
     | Ok v -> return v
     | Error e -> invalid_arg msg
 
-(*
-  module Monad : Sugar_types.Monad
-    with type 'a monad = 'a result =
-  struct
-    type 'a monad = 'a result
-    let return = commit
-    let (>>=) = bind_if
-  end *)
+  let (>>=) = bind_if
 end

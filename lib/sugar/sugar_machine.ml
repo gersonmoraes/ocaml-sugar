@@ -68,17 +68,6 @@ end
 
 
 
-module SinglePlayer(L:Language) = struct
-  module Free = Generic.Free (L)
-  type 'a free   = 'a Free.t
-  type 'a free_f = 'a Free.f
-
-  include Id(L)
-
-  let return f = Free.return f
-  let lift f = Free.lift (translate f)
-end
-
 (* This is probably broken *)
 (* module ContextFor2(L:Language) : Context
   with type 'a src = 'a L.t
@@ -292,21 +281,38 @@ struct
 end (* end of Combine4 *)
 
 
-module type Runner = sig
+(* module type Runner = sig
   module Core : Language
+
+  val run : 'a Core.t -> 'a
+  val debug : 'a Core.t -> 'a
+end *)
+
+module type Runtime = sig
+  module Core : Language
+  module Spec : Spec with module Core = Core
+  (* module Runner : Runner with module Core = Core *)
 
   val run : 'a Core.t -> 'a
   val debug : 'a Core.t -> 'a
 end
 
-module type Runtime = sig
-  module Core : Language
-  module Spec : Spec with module Core = Core
-  module Runner : Runner with module Core = Core
+module ForLanguage(L:Language) = struct
+  module Free = Generic.Free (L)
+  type 'a free   = 'a Free.t
+  type 'a free_f = 'a Free.f
+
+  include Id(L)
+
+  let return f = Free.return f
+  let lift f = Free.lift (translate f)
+
+  let run runner program =
+    Free.iter runner program
 end
 
 module For(R:Runtime) = struct
-  include SinglePlayer(R.Core)
+  include ForLanguage(R.Core)
 end
 
 module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
@@ -319,17 +325,17 @@ module Assemble (R1:Runtime) (R2:Runtime) = struct
   module T1 = Merge.T1
   module T2 = Merge.T2
 
-  module Runner = struct
-    module Core = Core
+  (* module Runner = struct
+    module Core = Core *)
 
     let run = function
-      | Core.Branch1 v -> R1.Runner.run v
-      | Core.Branch2 v -> R2.Runner.run v
+      | Core.Branch1 v -> R1.run v
+      | Core.Branch2 v -> R2.run v
 
     let debug = function
-      | Core.Branch1 v -> R1.Runner.debug v
-      | Core.Branch2 v -> R2.Runner.debug v
-  end
+      | Core.Branch1 v -> R1.debug v
+      | Core.Branch2 v -> R2.debug v
+  (* end *)
 end
 
 (*

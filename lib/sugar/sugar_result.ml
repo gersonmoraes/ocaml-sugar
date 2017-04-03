@@ -29,7 +29,12 @@ struct
     | Error e -> Error e
     | Ok v -> Ok (f v)
 
+
+  let (>>=) = bind_if
+
   module Infix = struct
+
+    let (>>=) = bind_if
 
     let (&&=) = bind_if
 
