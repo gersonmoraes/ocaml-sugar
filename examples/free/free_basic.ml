@@ -34,7 +34,7 @@ module Terminal = struct
     let puts s =
       Puts (s, id) |> lift
 
-    let get_line =
+    let get_line () =
       GetLine id |> lift
   end
 end
@@ -53,7 +53,7 @@ open Dsl
 
 let program =
   puts "What's your name?" />
-  get_line
+  get_line ()
   >>= fun name ->
   puts (name ^ ", have a nice day.")
 
