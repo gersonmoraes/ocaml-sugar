@@ -1,16 +1,26 @@
 module Generic = Sugar_generic
 
+module Utils = struct
+  let id = fun x -> x
+  let ($) = (@@)
+  let (%) = (@@)
+  let (@) f g = fun v -> f (g v)
+  type 'f msg = string -> 'f
 
-let id = fun x -> x
-let ($) = (@@)
-let (@) f g = fun v -> f (g v)
-type 'f unrelated = unit -> 'f
-(* type ('a, 'f) then_unrelated = 'a -> unit -> 'f *)
+  type ('arg, 'f) next = 'arg -> 'f
 
-let is_some = function
-  | Some _ -> true
-  | None -> false
 
+  (* type 'f unrelated = unit -> 'f *)
+  type 'f unrelated = (unit, 'f) next
+
+  (* type ('a, 'f) then_unrelated = 'a -> unit -> 'f *)
+
+  let is_some = function
+    | Some _ -> true
+    | None -> false
+end
+
+open Utils
 
 (**
   A language is just a functor
@@ -70,7 +80,7 @@ module SinglePlayer(L:Language) = struct
 end
 
 (* This is probably broken *)
-module ContextFor(L:Language) : Context
+(* module ContextFor2(L:Language) : Context
   with type 'a src = 'a L.t
   =
 struct
@@ -82,7 +92,7 @@ struct
 
   let lift f = Free.lift (translate f)
   let return f = Free.return f
-end
+end *)
 
 module type Spec = sig
   module Core : Language
@@ -281,76 +291,53 @@ struct
     end)
 end (* end of Combine4 *)
 
-(* module Combine5 (L1:Language) (L2:Language) (L3:Language)
-                (L4:Language) (L5:Language) =
-struct
-  (* module Tmp = Combine4 (L1) (L2) (L3) (L4)
-  module Core = Combine (Tmp.Core) (L5) *)
 
-  module Tmp = Combine (L1) (L2)
-  module L = Combine4 (L3) (L4) (L5) (Tmp.Core)
+module type Runner = sig
+  module Core : Language
 
+  val run : 'a Core.t -> 'a
+  val debug : 'a Core.t -> 'a
+end
 
+module type Runtime = sig
+  module Core : Language
+  module Spec : Spec with module Core = Core
+  module Runner : Runner with module Core = Core
+end
 
-  (* module T1 = Core1.T1
-  module T2 = Core1.T2
-  module T3 = Core1.T3
+module For(R:Runtime) = struct
+  include SinglePlayer(R.Core)
+end
 
-  module T4 = Core2.T1
-  module T5 = Core2.T2 *)
-end *)
+module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
 
+module Assemble (R1:Runtime) (R2:Runtime) = struct
+  module Merge = Combine (R1.Core) (R2.Core)
 
-  module type Runner = sig
-    module Core : Language
+  module Core = Merge.Core
+  module Spec = SpecFor(Core)
+  module T1 = Merge.T1
+  module T2 = Merge.T2
 
-    val run : 'a Core.t -> 'a
-    val debug : 'a Core.t -> 'a
+  module Runner = struct
+    module Core = Core
+
+    let run = function
+      | Core.Branch1 v -> R1.Runner.run v
+      | Core.Branch2 v -> R2.Runner.run v
+
+    let debug = function
+      | Core.Branch1 v -> R1.Runner.debug v
+      | Core.Branch2 v -> R2.Runner.debug v
   end
+end
 
-  module type Runtime = sig
-    module Core : Language
-    module Spec : Spec with module Core = Core
-    module Runner : Runner with module Core = Core
-  end
+(*
+let (++) r1 r2 =
+  let module R1 = (val r1:Runtime) in
+  let module R2 = (val r2:Runtime) in
+  let module R3 = Assemble (R1) (R2) in
+  (module R3: Runtime) *)
 
-  (* module Append : functor(R1:Runtime) (R2:Runtime) -> sig
-  module Proxy : functor(T:S.ToMe) -> sig *)
-  (* end *)
-
-  (* module type Append = functor (R1:Runtime) (R2:Runtime) -> sig
-    include Runtime
-  end *)
-
-  module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
-
-
-  module Assemble (R1:Runtime) (R2:Runtime) = struct
-    module Merge = Combine (R1.Core) (R2.Core)
-
-    module Core = Merge.Core
-    module Spec = SpecFor(Core)
-    module T1 = Merge.T1
-    module T2 = Merge.T2
-
-    module Runner = struct
-      module Core = Core
-
-      let run = function
-        | Core.Branch1 v -> R1.Runner.run v
-        | Core.Branch2 v -> R2.Runner.run v
-
-      let debug = function
-        | Core.Branch1 v -> R1.Runner.debug v
-        | Core.Branch2 v -> R2.Runner.debug v
-    end
-  end
-
-  let (++) r1 r2 =
-    let module R1 = (val r1:Runtime) in
-    let module R2 = (val r2:Runtime) in
-    let module R3 = Assemble (R1) (R2) in
-    (module R3: Runtime)
-
-  let _ =
-    (module Assemble: Assembly)
+let _ =
+  (module Assemble: Assembly)

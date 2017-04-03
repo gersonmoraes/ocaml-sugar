@@ -73,6 +73,22 @@ Executable "example_basic"
   CompiledObject: best
   BuildDepends:   sugar
 
+Executable "free_basic"
+  Build$:         flag(example)
+  Install:        false
+  Path:           examples/free
+  MainIs:         free_basic.ml
+  CompiledObject: best
+  BuildDepends:   sugar
+
+Executable "free_error_aware"
+  Build$:         flag(example)
+  Install:        false
+  Path:           examples/free
+  MainIs:         free_error_aware.ml
+  CompiledObject: best
+  BuildDepends:   sugar
+
 Executable "example_lwt"
   Build$:         flag(example) && flag(lwt)
   Install:        false

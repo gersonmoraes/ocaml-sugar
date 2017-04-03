@@ -63,4 +63,16 @@ module MakeResult = Sugar_result.Make
 (** A functor that implements the asynchronous interface  *)
 module MakePromise = Sugar_promise.Make
 
+module Monadic(M:Sugar_generic.Monad) (E:Sugar_types.Error) = struct
+  module M =
+  (* : Sugar_types.Monad
+    with type 'a monad = 'a M.t = *)
+  struct
+    type 'a monad = 'a M.t
+    include M
+  end
+
+  include MakePromise(M) (E)
+end
+
 module Machine = Sugar_machine
