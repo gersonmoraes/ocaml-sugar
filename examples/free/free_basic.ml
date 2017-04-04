@@ -17,16 +17,18 @@ module Terminal = struct
 
   module Spec = Machine.SpecFor (Core)
 
-  let run = function
-    | Puts (s, f) -> print_endline s; f ()
-    | GetLine f -> f (read_line ())
+  module Runner = struct
+    let run = function
+      | Puts (s, f) -> print_endline s; f ()
+      | GetLine f -> f (read_line ())
 
-  let debug = function
-    | Puts (s, f) ->
-        printf "Puts: %s\n" s; f ()
-    | GetLine f ->
-        printf "GetLine: ";
-        f (read_line ())
+    let debug = function
+      | Puts (s, f) ->
+          printf "Puts: %s\n" s; f ()
+      | GetLine f ->
+          printf "GetLine: ";
+          f (read_line ())
+  end
 
   module Dsl (Ctx:Spec.S.Context) = struct
     open Ctx
@@ -60,4 +62,4 @@ let program =
 
 
 let () =
-  Env.run Terminal.run program
+  Env.run Terminal.Runner.run program

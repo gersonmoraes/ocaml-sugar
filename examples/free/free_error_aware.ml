@@ -29,18 +29,6 @@ module Terminal = struct
 
   module Spec = Machine.SpecFor (Core)
 
-  let run = function
-    | Puts (s, f) -> print_endline s; commit () |> f
-    | GetLine f -> read_line () |> commit |> f
-
-  let debug = function
-    | Puts (s, f) ->
-        printf "Puts: %s\n" s; commit () |> f
-    | GetLine f ->
-        printf "GetLine: ";
-        read_line () |> commit |> f
-
-
   module Dsl (Ctx:Spec.S.Context) = struct
     open Ctx
     module MyResult = Sugar.Monadic (Ctx.Free) (MyError)
@@ -51,13 +39,24 @@ module Terminal = struct
     let get_line () =
       GetLine id |> lift
   end
+
+  module Runner = struct
+    let run = function
+      | Puts (s, f) -> print_endline s; commit () |> f
+      | GetLine f -> read_line () |> commit |> f
+
+    let debug = function
+      | Puts (s, f) ->
+          printf "Puts: %s\n" s; commit () |> f
+      | GetLine f ->
+          printf "GetLine: ";
+          read_line () |> commit |> f
+  end
 end
 
 let _ =
   (module Terminal.Core:Machine.Language),
   (module Terminal:Machine.Runtime)
-
-
 
 
 
@@ -76,4 +75,4 @@ let program1 =
   puts (name ^ ", have a nice day")
 
 let () =
-  MyMachine.run Terminal.run (unwrap program1)
+  MyMachine.run Terminal.Runner.run (unwrap program1)

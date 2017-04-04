@@ -97,6 +97,17 @@ module type Spec = sig
       type 'a src
       val translate: 'a src -> 'a Core.t
     end
+
+    module type Runner = sig
+      (* module Core = Core *)
+
+      val run: 'a Core.t -> 'a
+      val debug: 'a Core.t -> 'a
+    end
+
+    (* module type Runner = Runner
+      with module Core := Core *)
+
   end  (* end of Specification.S *)
 
   module Proxy : functor(T:S.ToMe) -> sig
@@ -128,6 +139,15 @@ module SpecFor(L:Language) : Spec
     module type ToMe = sig
       type 'a src
       val translate: 'a src -> 'a L.t
+    (* module type Runner = sig
+      with module Core := Core *)
+    end
+
+
+    module type Runner = sig
+      (* module Core = Core *)
+      val run: 'a Core.t -> 'a
+      val debug: 'a Core.t -> 'a
     end
   end (* end of SpecFor.S *)
 
@@ -293,8 +313,10 @@ module type Runtime = sig
   module Spec : Spec with module Core = Core
   (* module Runner : Runner with module Core = Core *)
 
-  val run : 'a Core.t -> 'a
-  val debug : 'a Core.t -> 'a
+  module Runner : sig
+    val run : 'a Core.t -> 'a
+    val debug : 'a Core.t -> 'a
+  end
 end
 
 module ForLanguage(L:Language) = struct
@@ -328,14 +350,16 @@ module Assemble (R1:Runtime) (R2:Runtime) = struct
   (* module Runner = struct
     module Core = Core *)
 
+  module Runner : Spec.S.Runner = struct
     let run = function
-      | Core.Branch1 v -> R1.run v
-      | Core.Branch2 v -> R2.run v
+      | Core.Branch1 v -> R1.Runner.run v
+      | Core.Branch2 v -> R2.Runner.run v
 
     let debug = function
-      | Core.Branch1 v -> R1.debug v
-      | Core.Branch2 v -> R2.debug v
-  (* end *)
+      | Core.Branch1 v -> R1.Runner.debug v
+      | Core.Branch2 v -> R2.Runner.debug v
+  end
+
 end
 
 (*
