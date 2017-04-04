@@ -5,15 +5,20 @@ module Utils = struct
   let ($) = (@@)
   let (%) = (@@)
   let (@) f g = fun v -> f (g v)
-  type 'f msg = string -> 'f
+  (* type 'f msg = string -> 'f *)
 
-  type ('arg, 'f) next = 'arg -> 'f
+  (* type ('arg, 'f) next = 'arg -> 'f *)
 
 
   (* type 'f unrelated = unit -> 'f *)
-  type 'f unrelated = (unit, 'f) next
+  (* type 'f unrelated = (unit, 'f) next *)
+  (* type 'f unrelated = (unit, 'f) next *)
 
   (* type ('a, 'f) then_unrelated = 'a -> unit -> 'f *)
+
+  type ('f, 'args) continuation = 'args -> 'f
+  type ('f, 'args) next         = 'args -> 'f
+  type 'f unrelated = ('f, unit) next
 
   let is_some = function
     | Some _ -> true
@@ -181,11 +186,9 @@ end (* end of SpecFor *)
 module Combine (L1:Language) (L2:Language) = struct
 
   module Core = struct
-    type 'a tree =
+    type 'a t =
       | Branch1 of 'a L1.t
       | Branch2 of 'a L2.t
-
-    type 'a t = 'a tree
 
     let map f = function
       | Branch1 v -> Branch1 (L1.map f v)
@@ -196,11 +199,7 @@ module Combine (L1:Language) (L2:Language) = struct
   let lift_branch1 v = Branch1 v
   let lift_branch2 v = Branch2 v
 
-  module Spec = SpecFor
-    (struct
-      type 'a t = 'a tree
-      let map = map
-    end)
+  module Spec = SpecFor (Core)
 
   module T1 = Spec.Proxy
     (struct
@@ -217,12 +216,10 @@ end (* end of Machine.Combine *)
 
 module Combine3 (L1:Language) (L2:Language) (L3:Language) = struct
   module Core = struct
-    type 'a tree =
+    type 'a t =
       | Branch1 of 'a L1.t
       | Branch2 of 'a L2.t
       | Branch3 of 'a L3.t
-
-    type 'a t = 'a tree
 
     let map f = function
       | Branch1 v -> Branch1 (L1.map f v)

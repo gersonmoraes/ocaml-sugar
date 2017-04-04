@@ -7,7 +7,7 @@ module Terminal = struct
   module Core = struct
     type 'f t =
       | Puts of string * 'f unrelated
-      | GetLine of (string, 'f) next
+      | GetLine of ('f, string) next
 
     let map f = function
       | Puts (s, g) -> Puts (s, f @ g)
@@ -44,7 +44,6 @@ end
 let _ =
   (module Terminal.Core:Machine.Language),
   (module Terminal:Machine.Runtime)
-
 
 
 module Env = Machine.For(Terminal)

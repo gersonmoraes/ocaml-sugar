@@ -9,17 +9,12 @@ end
 module MyResult = Sugar.MakeResult (MyError)
 open MyResult
 
-(* We need to map Sugar result types over the continuation format *)
-(* type 'a result = 'a MyResult.result *)
-(* type 'f unrelated' = (unit result, 'f) next *)
-
-
 module Terminal = struct
 
   module Core = struct
     type 'f t =
-      | Puts of string * (unit result, 'f) next
-      | GetLine of (string result, 'f) next
+      | Puts of string * ('f, unit result) next
+      | GetLine of ('f, string result) next
 
     let map f = function
       | Puts (s, g) -> Puts (s, f @ g)
