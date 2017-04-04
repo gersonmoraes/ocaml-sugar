@@ -5,19 +5,41 @@ module Utils = struct
   let ($) = (@@)
   let (%) = (@@)
   let (@) f g = fun v -> f (g v)
-  (* type 'f msg = string -> 'f *)
-
-  (* type ('arg, 'f) next = 'arg -> 'f *)
-
-
-  (* type 'f unrelated = unit -> 'f *)
-  (* type 'f unrelated = (unit, 'f) next *)
-  (* type 'f unrelated = (unit, 'f) next *)
-
-  (* type ('a, 'f) then_unrelated = 'a -> unit -> 'f *)
 
   type ('f, 'args) continuation = 'args -> 'f
-  type ('f, 'args) next         = 'args -> 'f
+
+  (**
+    A specification for the "next continuation".
+
+    Each instruction in our language must specify the type for the next
+    continuation in the chain. Some instructions return "unit", some return
+    a function. In all cases, this need to be defined.
+
+    But the type "next" makes this trivial. The code bellow define an
+    instruction that returns a string option.
+    <code>
+      type 'f t =
+        GetData of ('f, string option) next
+    </code>
+
+    To use this expression, the developer needs to provide a function ['f] that
+    can handle a [string option].
+
+    If your continuation needs to be more complex and return, for example, a
+    string option, an int, and a float, this could be done with:
+    <code>
+      type 'f t =
+        GetData of ('f, string option -> int -> float) next
+    </code>
+  *)
+  type ('f, 'args) next = 'args -> 'f
+
+  (**
+    Specifies that the continuation ['f] is not related to the current
+    instruction.
+
+    This type is syntatic sugar for the type [next].
+  *)
   type 'f unrelated = ('f, unit) next
 
   let is_some = function
@@ -104,14 +126,9 @@ module type Spec = sig
     end
 
     module type Runner = sig
-      (* module Core = Core *)
-
       val run: 'a Core.t -> 'a
       val debug: 'a Core.t -> 'a
     end
-
-    (* module type Runner = Runner
-      with module Core := Core *)
 
   end  (* end of Specification.S *)
 
@@ -144,8 +161,6 @@ module SpecFor(L:Language) : Spec
     module type ToMe = sig
       type 'a src
       val translate: 'a src -> 'a L.t
-    (* module type Runner = sig
-      with module Core := Core *)
     end
 
 
@@ -196,21 +211,21 @@ module Combine (L1:Language) (L2:Language) = struct
   end
   open Core
 
-  let lift_branch1 v = Branch1 v
-  let lift_branch2 v = Branch2 v
+  let lift1 v = Branch1 v
+  let lift2 v = Branch2 v
 
   module Spec = SpecFor (Core)
 
   module T1 = Spec.Proxy
     (struct
       type 'a src = 'a L1.t
-      let translate = lift_branch1
+      let translate = lift1
     end)
 
   module T2 = Spec.Proxy
     (struct
       type 'a src = 'a L2.t
-      let translate = lift_branch2
+      let translate = lift2
     end)
 end (* end of Machine.Combine *)
 
@@ -228,38 +243,37 @@ module Combine3 (L1:Language) (L2:Language) (L3:Language) = struct
   end
   open Core
 
-  let lift_branch1 v = Branch1 v
-  let lift_branch2 v = Branch2 v
-  let lift_branch3 v = Branch3 v
+  let lift1 v = Branch1 v
+  let lift2 v = Branch2 v
+  let lift3 v = Branch3 v
 
   module Spec = SpecFor(Core)
 
   module T1 = Spec.Proxy
     (struct
       type 'a src = 'a L1.t
-      let translate = lift_branch1
+      let translate = lift1
     end)
 
   module T2 = Spec.Proxy
     (struct
       type 'a src = 'a L2.t
-      let translate = lift_branch2
+      let translate = lift2
     end)
 
   module T3 = Spec.Proxy
     (struct
       type 'a src = 'a L3.t
-      let translate = lift_branch3
+      let translate = lift3
     end)
 end (* end of Machine.Combine3 *)
 
 
 
-(* TODO:
-    - This is incomplete, since we created to seperate languages,
-      Core1 and Core2. The resulting translators would not be compatible to
-      L1, L2, L3 and L4.
-    - Should we try to combine them again?
+(**
+  Combine 4 languages.
+
+
 *)
 module Combine4 (L1:Language) (L2:Language)
                 (L3:Language) (L4:Language) =
@@ -275,41 +289,31 @@ struct
   module T1 = Spec.Proxy
     (struct
       type 'a src = 'a L1.t
-      let translate v = R.lift_branch1 (Core1_2.lift_branch1 v)
+      let translate v = R.lift1 (Core1_2.lift1 v)
     end)
 
   module T2 = Spec.Proxy
     (struct
       type 'a src = 'a L2.t
-      let translate v = R.lift_branch1 (Core1_2.lift_branch2 v)
+      let translate v = R.lift1 (Core1_2.lift2 v)
     end)
 
   module T3 = Spec.Proxy
     (struct
       type 'a src = 'a L3.t
-      let translate v = R.lift_branch2 (Core3_4.lift_branch1 v)
+      let translate v = R.lift2 (Core3_4.lift1 v)
     end)
 
   module T4 = Spec.Proxy
     (struct
       type 'a src = 'a L4.t
-      let translate v = R.lift_branch2 (Core3_4.lift_branch2 v)
+      let translate v = R.lift2 (Core3_4.lift2 v)
     end)
 end (* end of Combine4 *)
-
-
-(* module type Runner = sig
-  module Core : Language
-
-  val run : 'a Core.t -> 'a
-  val debug : 'a Core.t -> 'a
-end *)
 
 module type Runtime = sig
   module Core : Language
   module Spec : Spec with module Core = Core
-  (* module Runner : Runner with module Core = Core *)
-
   module Runner : sig
     val run : 'a Core.t -> 'a
     val debug : 'a Core.t -> 'a
@@ -344,9 +348,6 @@ module Assemble (R1:Runtime) (R2:Runtime) = struct
   module T1 = Merge.T1
   module T2 = Merge.T2
 
-  (* module Runner = struct
-    module Core = Core *)
-
   module Runner : Spec.S.Runner = struct
     let run = function
       | Core.Branch1 v -> R1.Runner.run v
@@ -356,7 +357,6 @@ module Assemble (R1:Runtime) (R2:Runtime) = struct
       | Core.Branch1 v -> R1.Runner.debug v
       | Core.Branch2 v -> R2.Runner.debug v
   end
-
 end
 
 (*
@@ -364,7 +364,8 @@ let (++) r1 r2 =
   let module R1 = (val r1:Runtime) in
   let module R2 = (val r2:Runtime) in
   let module R3 = Assemble (R1) (R2) in
-  (module R3: Runtime) *)
+  (module R3: Runtime)
+*)
 
 let _ =
   (module Assemble: Assembly)
