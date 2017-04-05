@@ -82,7 +82,7 @@ module type Result = sig
         map (Some 10) (fun n -> n + n)
      </code>
 
-     You could also use the combinator {{!(&&|)} &&|} for syntatic sugar.
+     You could also use the combinator {{!(>>|)} >>|} for syntatic sugar.
    *)
   val map:  'a result -> ('a -> 'b) -> 'b result
 
@@ -139,7 +139,11 @@ module type Result = sig
 
   module Infix : sig
 
-  (**
+
+
+  val (>---------): 'a result -> (error -> 'a result) -> 'a result
+
+  (*
     Conditional binding operator AND. An alias for {{!bind_if} bind_if}.
 
     This is the main reason Sugar can simplify the usage of error aware
@@ -195,10 +199,10 @@ module type Result = sig
 
     For a more diverse example, look at the {!Sugar} module.
   *)
-  val (&&=): 'a result -> ('a -> 'b result) -> 'b result
+  (* val (&&=): 'a result -> ('a -> 'b result) -> 'b result *)
 
 
-  (**
+  (*
     Conditional binding operator OR. An alias for {{!bind_unless} bind_unless}.
 
     This function lets you assign an error handler inside a chained error
@@ -206,7 +210,7 @@ module type Result = sig
 
     For a more diverse example, look at the {!Sugar} module.
   *)
-  val (||=): 'a result -> (error -> 'a result) -> 'a result
+  (* val (||=): 'a result -> (error -> 'a result) -> 'a result *)
 
 
   (**
@@ -237,33 +241,13 @@ module type Result = sig
      (* using the map combinator *)
      let twenty =
        Some 10
-       &&| double
+       >>| double
     </code>
   *)
-  val (&&|): 'a result -> ('a -> 'b) -> 'b result
+  val (>>|): 'a result -> ('a -> 'b) -> 'b result
 
 
-  (**
-    Blocking semicolon operator.
-    It waits for the evaluation of unit result and ignore imediately ignore it.
-    The right-hand-side must be a thunk (a function that expects unit).
-
-    It can be used to chain thunks in a meaningful way like:
-    <code>
-    let puts s () =
-      print_endline s;
-      commit ()
-
-    let main =
-      puts "Hello" ()     />
-      puts "Blocking"     />
-      puts "Computations"
-    </code>
-   *)
-  val (/>): unit result -> (unit -> 'b result) -> 'b result
-
-
-  (**
+  (*
     Non blocking semicolon operator.
     It chains the completion of unit result with the next in the sequence.
 
@@ -279,7 +263,7 @@ module type Result = sig
       puts "Computations"
     </code>
    *)
-  val (//>): unit result -> 'a result -> 'a result
+  (* val (//>): unit result -> 'a result -> 'a result *)
 
   val (>>): 'a result -> 'b result -> 'b result
 
@@ -288,8 +272,6 @@ module type Result = sig
   end
 
   val (>>=): 'a result -> ('a -> 'b result) -> 'b result
-
-
   (**
     Unwraps the successful result as a normal value in the threading monad.
     If the value is not successful, it will raise an Invalid_arg exception.
@@ -315,6 +297,27 @@ module type Result = sig
     exception with the defined parameter.
   *)
   val expect: 'a result -> string -> 'a
+
+
+    (**
+      Blocking semicolon operator.
+      It waits for the evaluation of unit result and ignore imediately ignore it.
+      The right-hand-side must be a thunk (a function that expects unit).
+
+      It can be used to chain thunks in a meaningful way like:
+      <code>
+      let puts s () =
+        print_endline s;
+        commit ()
+
+      let main =
+        puts "Hello" ()     />
+        puts "Blocking"     />
+        puts "Computations"
+      </code>
+     *)
+    val (/>): unit result -> 'b result -> 'b result
+
 
 end
 
@@ -405,49 +408,16 @@ module type Promise = sig
   *)
   val throw: error -> 'a promise
 
-  val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
-
-
   module Infix : sig
 
- (**
-   Similar to {{!Result.(&&=)} Result.(&&=)}
-  *)
-  val (&&=): 'a promise -> ('a -> 'b promise) -> 'b promise
-
   (**
-    Similar to {{!Result.(||=)} Result.(||=)}
+    Similar to {{!Result.(>>|)} Result.(>>|)}
   *)
-  val (||=): 'a promise -> (error -> 'a promise) -> 'a promise
+  val (>>|): 'a promise -> ('a -> 'b) -> 'b promise
 
 
-  val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
 
-
-  (**
-    Similar to {{!Result.(&&|)} Result.(&&|)}
-  *)
-  val (&&|): 'a promise -> ('a -> 'b) -> 'b promise
-
-
-  (**
-     Blocking semicolon operator.
-     It waits for the evaluation of unit promise and ignore imediately ignore it.
-     The right-hand-side must be a thunk (a function that expects unit).
-
-     It can be used to chain thunks in a meaningful way like:
-     <code>
-     let puts s () =
-       print_endline s;
-       commit ()
-
-     let main =
-       puts "Hello" ()     />
-       puts "Blocking"     />
-       puts "Computations"
-     </code>
-   *)
-   val (/>): unit promise -> (unit -> 'b promise) -> 'b promise
+   val (>---------): 'a promise -> (error -> 'a promise) -> 'a promise
 
 
   (*
@@ -497,5 +467,11 @@ module type Promise = sig
     exception with the defined parameter.
   *)
   val expect: 'a result monad -> string -> 'a monad
+
+  val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
+
+
+ (* val (/>): unit promise -> (unit -> 'b promise) -> 'b promise *)
+ val ( /> ) : unit promise -> 'b promise -> 'b promise
 
 end

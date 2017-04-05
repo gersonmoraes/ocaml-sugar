@@ -42,8 +42,8 @@ module Terminal = struct
 end
 
 let _ =
-  (module Terminal.Core:Machine.Language),
-  (module Terminal:Machine.Runtime)
+  (module Terminal.Core : Machine.Language),
+  (module Terminal      : Machine.Runtime)
 
 
 module Env = Machine.For(Terminal)

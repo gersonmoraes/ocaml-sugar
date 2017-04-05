@@ -43,23 +43,28 @@ let error_handler e: string result =
   | Resource_not_found -> commit "recovered failure"
   | _ -> throw e
 
+open MyResult.Infix
+
+
 let _ =
-  let open MyResult.Infix in
-  print_message "We are extensively using a user defined result type" >>
+  print_message "We are extensively using a user defined result type" />
   load_list 10
-  &&| List.length
-  &&= fun len ->
+  >>| List.length
+  >>= fun len ->
   throw (Unexpected (sprintf "List length invalid: %d" len))
-  ||= error_handler
-  &&=
+  >---------
+  ( function
+    e -> error_handler e
+  )
+  >>=
   ( fun recovered ->
-    print_message "This will NOT be printed"        >>
-    print_message "The previous error_handler"      >>
-    print_message "can't catch 'Unexpected' errors" >>
+    print_message "This will NOT be printed"        />
+    print_message "The previous error_handler"      />
+    print_message "can't catch 'Unexpected' errors" />
     commit "for sure"
   )
-  ||=
+  >---------
   ( fun e ->
     commit "Recover from any error"
   )
-  &&= print_message
+  >>= print_message

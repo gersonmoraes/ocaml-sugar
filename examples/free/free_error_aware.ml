@@ -64,7 +64,7 @@ open MyResult
 open MyResult.Infix
 
 let program1 =
-  puts "What's your name?" >>
+  puts "What's your name?" />
   get_line ()
   >>= fun name ->
   puts (name ^ ", have a nice day")

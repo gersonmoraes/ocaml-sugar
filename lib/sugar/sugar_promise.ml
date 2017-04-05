@@ -43,12 +43,18 @@ struct
 
   module Infix = struct
     let (>>=) = bind_if
-    let (&&=) = bind_if
+    (* let (&&=) = bind_if
     let (||=) = bind_unless
-    let (&&|) = map
+    let (&&|) = map *)
 
-    let (/>) x y = bind_if x y
-    let (>>) x y = x &&= fun _ -> y
+    let (>>|) = map
+
+    let (>>) x y =
+      x
+      >>= fun _ ->
+      y
+
+    let (>---------) = bind_unless
   end
 
   let unwrap r =
@@ -70,4 +76,8 @@ struct
     | Error e -> invalid_arg msg
 
   let (>>=) = bind_if
+  let (/>) x y =
+    x
+    >>= fun () ->
+    y
 end

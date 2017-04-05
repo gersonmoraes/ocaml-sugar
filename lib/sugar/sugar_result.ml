@@ -30,28 +30,16 @@ struct
     | Ok v -> Ok (f v)
 
 
-  let (>>=) = bind_if
-
   module Infix = struct
-
     let (>>=) = bind_if
-
-    let (&&=) = bind_if
-
-    let (||=) = bind_unless
-
-    let (&&|) = map
-
-    let (/>) = bind_if
-
-    let (//>) x y =
+    let (>>|) = map
+    let (>>) x y =
       match x, y with
       | (Error e, _) -> Error e
       | _ -> y
 
-    let (>>) x y = y
-
-    end
+    let (>---------) = bind_unless
+  end
 
   let unwrap = function
     | Ok r -> r
@@ -66,6 +54,14 @@ struct
     match r with
     | Ok r -> r
     | Error _ -> invalid_arg msg
+
+
+  let (>>=) = bind_if
+
+  let (/>) x y =
+    x
+    >>= fun () ->
+    y
 
   module Monad : Sugar_types.Monad
     with type 'a monad = 'a result =
