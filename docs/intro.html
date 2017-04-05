@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+<textarea id="source">
+
+
+
+class: center, middle
+
+# Título da apresentação
+
+Um Subtítulo
+
+---
+
+# Agenda
+
+1. Assunto principal
+ 1. Sub tópico
+ 2. Sub tópico
+ 3. Sub tópico
+
+2. Assunto complementar
+ 1. Sub tópico
+ 2. Sub tópico
+ 3. Sub tópico
+
+3. Vantagens e desvantagens
+4. Conclusão
+
+---
+
+
+# Exemplos de código
+
+Trecho de código usando marcação markdown
+
+```ocaml
+module A = struct
+
+  let puts s =
+    print_endline s
+
+end
+```
+
+---
+
+# Formatação
+
+- **Negrito**
+- *Itálico*
+- ~~Taxado~~
+- <u>Underline</u>
+- `Código mono-espaçado`
+
+---
+
+# Notas ocultas de orador
+
+Essa página possui anotações privadas. Para visualizá-las, use o atalho **P**.
+
+<br/>
+
+**Não mostre para o público!**
+
+Clone a janela atual com **C**, e mova a cópia da janela para um monitor auxiliar. No seu monitor particular, abra as anotações com **P**. As duas janelas serão sincronizadas automaticamente.
+
+???
+
+## Qualquer anotação de orador
+
+Para visualizar:
+  - Clone a janela com "C"
+  - Alterne para o "modo de orador" na janela auxiliar com "P"
+
+
+---
+
+# Mais informações
+
+- [Remark](https://remarkjs.com/#1)
+  - Biblioteca JS para criar essas apresentações de slides
+- Plugins para integração com Atom:
+  - [LiveReload](https://atom.io/packages/livereload): ao ser ativado com `Ctrl-Shift-R`, ele sincroniza modificações com navegador.
+  - [Atom-Idle-Autosave](https://atom.io/packages/atom-idle-autosave): permite configurar um *intervalo de inatividade em milessegundos* para salvar o arquivo atual automaticamente
+
+
+---
+class: center, middle
+
+
+# Conclusão
+
+Sua frase de efeito.
+
+
+
+</textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+
+    <!--
+        Isso foi adicionado para compatibilidade com "LiveReload no Atom"
+        Inicie o servidor local com Ctrl-Shift-R.
+        Nota:
+        Pode ser necessário atualizar a porta indicada na barra de status.
+    -->
+    <script src="http://localhost:35729/livereload.js">
+    </script>
+  </body>
+</html>

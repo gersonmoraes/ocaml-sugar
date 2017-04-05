@@ -87,7 +87,27 @@ end *)
 
 
 
-(* TODO: this interface lacks an Infix module *)
+(**
+  A translation context for DSLs writers.
+
+  This signature specifies a contract describing
+  the minimum requirements to instanciate a module
+  containing all helper functions associated to an
+  algebra.
+  
+  The requirements are:
+    - An instanciated FreeMonad
+    - A natural transformation to this FreeMonad
+    - A lift function tied to the algebra (to chain an instruction)
+    - A return function to yield any OCaml value.
+
+  The translation of contexts does some cool things:
+    - As a DSL writer, you get a clean, typed view of the ?running environment?
+    - You don't need much to translate contexts. 
+    - All specification about compatibility is type safe and automated
+    - It is easy to compose a big DSL from smaller ones
+  
+*)
 module type Context = sig
   module Free : FreeMonad
 
@@ -102,45 +122,42 @@ module type Context = sig
 end
 
 
-
-(* This is probably broken *)
-(* module ContextFor2(L:Language) : Context
-  with type 'a src = 'a L.t
-  =
-struct
-  include Id(L)
-  module Free = Generic.Free (L)
-
-  type 'a free_f = 'a Free.f
-  type 'a free = 'a Free.t
-
-  let lift f = Free.lift (apply f)
-  let return f = Free.return f
-end *)
-
+(**
+  Minimum specification for a library.
+  
+  It contains:
+   - A functor `Core` describing an algebra
+   - A module `S` with useful interfaces for this algebra
+   - A context translator, called `Proxy`, to help other DSL writers
+     integrate with this library.
+  
+  This defines a base for all meta programming around
+  composability and application of our DSLs. This is why
+  FreeMonads are easy to use on OCaml.
+  
+  But this spec shouldn't be written manually. It can be derived
+  from any functor describing an algebra. OCaml can build this for us. 
+  This is why we have a SpecFor(...) module. 
+*)
 module type Spec = sig
   module Core : Functor
 
   module S : sig
-    module type From = Natural
-      with type 'a dst = 'a Core.t
-
-    module type NaturalToMe = sig
+    module type Natural = sig
       type 'a src
       val apply: 'a src -> 'a Core.t
     end
-
+    
     module type Context = Context
       with type 'a src = 'a Core.t
-
+      
     module type Runner = sig
       val run: 'a Core.t -> 'a
       val debug: 'a Core.t -> 'a
     end
+  end
 
-  end  (* end of Specification.S *)
-
-  module Proxy : functor(T:S.NaturalToMe) -> sig
+  module Proxy : functor(T:S.Natural) -> sig
     module For : functor(Ctx:S.Context) -> sig
       include Context with
         module Free = Ctx.Free
@@ -150,8 +167,14 @@ module type Spec = sig
         and type 'a dst = 'a Ctx.Free.f
     end
   end
-end (* end of Machine.Spec *)
+end (* Machine.Spec *)
 
+
+(**
+  Automates the generation of minimum specification 
+  for a library based on its algebra. 
+
+*)
 module SpecFor(L:Functor) : Spec
   with module Core = L
  = struct
@@ -159,14 +182,10 @@ module SpecFor(L:Functor) : Spec
   module Core = L
 
   module S = struct
-
     module type Context = Context
       with type 'a src = 'a L.t
 
-    module type From = Natural
-      with type 'a dst = 'a L.t
-
-    module type NaturalToMe = sig
+    module type Natural = sig
       type 'a src
       val apply: 'a src -> 'a L.t
     end
@@ -175,17 +194,15 @@ module SpecFor(L:Functor) : Spec
       val run: 'a Core.t -> 'a
       val debug: 'a Core.t -> 'a
     end
-  end (* end of SpecFor.S *)
+  end (* SpecFor.S *)
 
-  module Proxy(T:S.NaturalToMe) = struct
+  module Proxy(T:S.Natural) = struct
     module For(Ctx:S.Context) : Context
      with module Free = Ctx.Free
      with type 'a free  = 'a Ctx.Free.t
       and type 'a free_f = 'a Ctx.Free.f
       and type 'a src  = 'a T.src
-      and type 'a dst = 'a Ctx.Free.f
-
-    =
+      and type 'a dst = 'a Ctx.Free.f =
     struct
       type 'a src  = 'a T.src
       type 'a dst = 'a Ctx.dst
@@ -199,10 +216,10 @@ module SpecFor(L:Functor) : Spec
       let return f = Ctx.Free.return f
 
       module Free = Ctx.Free
-    end  (* end of Spec.Proxy.For *)
-  end (* end of Spec.Proxy *)
+    end  (* Spec.Proxy.For *)
+  end (* Spec.Proxy *)
 
-end (* end of SpecFor *)
+end (* SpecFor *)
 
 module Combine (F1:Functor) (F2:Functor) = struct
 
