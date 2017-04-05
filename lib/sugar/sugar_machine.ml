@@ -68,21 +68,21 @@ open Utils
 *)
 module type Natural = sig
   type 'a src
-  type 'a dest
-  val apply: 'a src -> 'a dest
+  type 'a dst
+  val apply: 'a src -> 'a dst
 end
 
-module Id(L:Functor) : Natural
+(* module Id(L:Functor) : Natural
   with type 'a src = 'a L.t
-   and type 'a dest = 'a L.t
+   and type 'a dst = 'a L.t
 =
 struct
   type 'a t = 'a L.t
   type 'a src = 'a L.t
-  type 'a dest = 'a t
+  type 'a dst = 'a t
 
   let apply = id
-end
+end *)
 
 
 
@@ -95,7 +95,7 @@ module type Context = sig
   type 'a free_f = 'a Free.f
 
   include Natural
-    with type 'a dest = 'a free_f
+    with type 'a dst = 'a free_f
 
   val lift: 'a src -> 'a Free.t
   val return : 'a -> 'a Free.t
@@ -122,16 +122,16 @@ module type Spec = sig
   module Core : Functor
 
   module S : sig
-    module type FromMe = Natural
-      with type 'a dest = 'a Core.t
+    module type From = Natural
+      with type 'a dst = 'a Core.t
 
-    module type Context = Context
-      with type 'a src = 'a Core.t
-
-    module type ToMe = sig
+    module type NaturalToMe = sig
       type 'a src
       val apply: 'a src -> 'a Core.t
     end
+
+    module type Context = Context
+      with type 'a src = 'a Core.t
 
     module type Runner = sig
       val run: 'a Core.t -> 'a
@@ -140,14 +140,14 @@ module type Spec = sig
 
   end  (* end of Specification.S *)
 
-  module Proxy : functor(T:S.ToMe) -> sig
+  module Proxy : functor(T:S.NaturalToMe) -> sig
     module For : functor(Ctx:S.Context) -> sig
       include Context with
         module Free = Ctx.Free
         and type 'a free  = 'a Ctx.Free.t
         and type 'a free_f = 'a Ctx.Free.f
         and type 'a src  = 'a T.src
-        and type 'a dest = 'a Ctx.Free.f
+        and type 'a dst = 'a Ctx.Free.f
     end
   end
 end (* end of Machine.Spec *)
@@ -160,37 +160,35 @@ module SpecFor(L:Functor) : Spec
 
   module S = struct
 
-    module type FromMe = Natural
-      with type 'a dest = 'a L.t
-
     module type Context = Context
       with type 'a src = 'a L.t
 
-    module type ToMe = sig
+    module type From = Natural
+      with type 'a dst = 'a L.t
+
+    module type NaturalToMe = sig
       type 'a src
       val apply: 'a src -> 'a L.t
     end
 
-
     module type Runner = sig
-      (* module Core = Core *)
       val run: 'a Core.t -> 'a
       val debug: 'a Core.t -> 'a
     end
   end (* end of SpecFor.S *)
 
-  module Proxy(T:S.ToMe) = struct
+  module Proxy(T:S.NaturalToMe) = struct
     module For(Ctx:S.Context) : Context
      with module Free = Ctx.Free
      with type 'a free  = 'a Ctx.Free.t
       and type 'a free_f = 'a Ctx.Free.f
       and type 'a src  = 'a T.src
-      and type 'a dest = 'a Ctx.Free.f
+      and type 'a dst = 'a Ctx.Free.f
 
     =
     struct
       type 'a src  = 'a T.src
-      type 'a dest = 'a Ctx.dest
+      type 'a dst = 'a Ctx.dst
 
       type 'a free   = 'a Ctx.Free.t
       type 'a free_f = 'a Ctx.Free.f
@@ -280,8 +278,6 @@ end (* end of Machine.Combine3 *)
 
 (**
   Combine 4 languages.
-
-
 *)
 module Combine4 (F1:Functor) (F2:Functor)
                 (F3:Functor) (F4:Functor) =
@@ -333,7 +329,11 @@ module ForLanguage(L:Functor) = struct
   type 'a free   = 'a Free.t
   type 'a free_f = 'a Free.f
 
-  include Id(L)
+  (* TODO: not used *)
+  type 'a t = 'a L.t
+  type 'a src = 'a L.t
+  type 'a dst = 'a t
+  let apply = id
 
   let return f = Free.return f
   let lift f = Free.lift (apply f)

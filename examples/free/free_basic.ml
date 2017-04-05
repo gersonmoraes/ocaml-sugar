@@ -59,6 +59,5 @@ let program =
   puts (name ^ ", have a nice day.")
 
 
-
 let () =
   Env.run Terminal.Runner.run program
