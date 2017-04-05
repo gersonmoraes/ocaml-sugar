@@ -90,23 +90,18 @@ end *)
 (**
   A translation context for DSLs writers.
 
-  This signature specifies a contract describing
-  the minimum requirements to instanciate a module
-  containing all helper functions associated to an
-  algebra.
-  
-  The requirements are:
-    - An instanciated FreeMonad
+  This signature specifies the minimum requirements to instanciate a module
+  containing all helper functions associated to an algebra. They requirements are:
+    - A FreeMonad
     - A natural transformation to this FreeMonad
     - A lift function tied to the algebra (to chain an instruction)
     - A return function to yield any OCaml value.
 
   The translation of contexts does some cool things:
-    - As a DSL writer, you get a clean, typed view of the ?running environment?
-    - You don't need much to translate contexts. 
+    - As a DSL writer, you get a clean, typed view of the "running environment"
+    - You don't need much to translate contexts of the DSL you use.
     - All specification about compatibility is type safe and automated
     - It is easy to compose a big DSL from smaller ones
-  
 *)
 module type Context = sig
   module Free : FreeMonad
@@ -124,20 +119,19 @@ end
 
 (**
   Minimum specification for a library.
-  
+
   It contains:
    - A functor `Core` describing an algebra
    - A module `S` with useful interfaces for this algebra
    - A context translator, called `Proxy`, to help other DSL writers
      integrate with this library.
-  
-  This defines a base for all meta programming around
-  composability and application of our DSLs. This is why
-  FreeMonads are easy to use on OCaml.
-  
-  But this spec shouldn't be written manually. It can be derived
-  from any functor describing an algebra. OCaml can build this for us. 
-  This is why we have a SpecFor(...) module. 
+
+  This defines a base for all meta programming around our DSLs.
+  This is why FreeMonads are easy to use on OCaml.
+
+  Note: This spec shouldn't be written manually. It can be derived
+  from any functor describing an algebra. This is why we have a SpecFor(...)
+  module.
 *)
 module type Spec = sig
   module Core : Functor
@@ -147,10 +141,10 @@ module type Spec = sig
       type 'a src
       val apply: 'a src -> 'a Core.t
     end
-    
+
     module type Context = Context
       with type 'a src = 'a Core.t
-      
+
     module type Runner = sig
       val run: 'a Core.t -> 'a
       val debug: 'a Core.t -> 'a
@@ -171,9 +165,8 @@ end (* Machine.Spec *)
 
 
 (**
-  Automates the generation of minimum specification 
-  for a library based on its algebra. 
-
+  Automates the generation of minimum specification
+  for a library based on its algebra.
 *)
 module SpecFor(L:Functor) : Spec
   with module Core = L
@@ -250,7 +243,7 @@ module Combine (F1:Functor) (F2:Functor) = struct
       type 'a src = 'a F2.t
       let apply = return2
     end)
-end (* end of Machine.Combine *)
+end (* Combine *)
 
 module Combine3 (F1:Functor) (F2:Functor) (F3:Functor) = struct
   module Core = struct
@@ -289,7 +282,7 @@ module Combine3 (F1:Functor) (F2:Functor) (F3:Functor) = struct
       type 'a src = 'a F3.t
       let apply = return3
     end)
-end (* end of Machine.Combine3 *)
+end (* Combine3 *)
 
 
 
@@ -330,7 +323,7 @@ struct
       type 'a src = 'a F4.t
       let apply v = R.return2 (Core3_4.return2 v)
     end)
-end (* end of Combine4 *)
+end (* Combine4 *)
 
 module type Runtime = sig
   module Core : Functor
