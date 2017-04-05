@@ -1,12 +1,20 @@
-module Generic = Sugar_generic
+(* module Generic = Sugar_generic *)
+open Sugar_generic
 
 module Utils = struct
   let id = fun x -> x
-  let ($) = (@@)
+  (* let ($) = (@@) *)
   let (%) = (@@)
+
+  (** Function composition *)
   let (@) f g = fun v -> f (g v)
 
-  type ('f, 'args) continuation = 'args -> 'f
+  (* this is an alias for function composition *)
+  (* let (%) = (@) *)
+
+  (* let ($) f a = (@@) *)
+
+  (* type ('f, 'args) continuation = 'args -> 'f *)
 
   (**
     A specification for the "next continuation".
@@ -52,19 +60,19 @@ open Utils
 (**
   A language is just a functor
 *)
-module type Language = Generic.Functor
+(* module type Language = Generic.Functor *)
 
 (**
-  Translation is an injective operation between two languages.
+  Natural Transformation.
+  It represents a translation from a functor to another.
 *)
-module type Translation = sig
+module type Natural = sig
   type 'a src
   type 'a dest
-  val translate: 'a src -> 'a dest
+  val apply: 'a src -> 'a dest
 end
 
-
-module Id(L:Language) : Translation
+module Id(L:Functor) : Natural
   with type 'a src = 'a L.t
    and type 'a dest = 'a L.t
 =
@@ -73,7 +81,7 @@ struct
   type 'a src = 'a L.t
   type 'a dest = 'a t
 
-  let translate = id
+  let apply = id
 end
 
 
@@ -81,12 +89,12 @@ end
 
 (* TODO: this interface lacks an Infix module *)
 module type Context = sig
-  module Free : Generic.FreeMonad
+  module Free : FreeMonad
 
   type 'a free   = 'a Free.t
   type 'a free_f = 'a Free.f
 
-  include Translation
+  include Natural
     with type 'a dest = 'a free_f
 
   val lift: 'a src -> 'a Free.t
@@ -106,15 +114,15 @@ struct
   type 'a free_f = 'a Free.f
   type 'a free = 'a Free.t
 
-  let lift f = Free.lift (translate f)
+  let lift f = Free.lift (apply f)
   let return f = Free.return f
 end *)
 
 module type Spec = sig
-  module Core : Language
+  module Core : Functor
 
   module S : sig
-    module type FromMe = Translation
+    module type FromMe = Natural
       with type 'a dest = 'a Core.t
 
     module type Context = Context
@@ -122,7 +130,7 @@ module type Spec = sig
 
     module type ToMe = sig
       type 'a src
-      val translate: 'a src -> 'a Core.t
+      val apply: 'a src -> 'a Core.t
     end
 
     module type Runner = sig
@@ -144,7 +152,7 @@ module type Spec = sig
   end
 end (* end of Machine.Spec *)
 
-module SpecFor(L:Language) : Spec
+module SpecFor(L:Functor) : Spec
   with module Core = L
  = struct
 
@@ -152,7 +160,7 @@ module SpecFor(L:Language) : Spec
 
   module S = struct
 
-    module type FromMe = Translation
+    module type FromMe = Natural
       with type 'a dest = 'a L.t
 
     module type Context = Context
@@ -160,7 +168,7 @@ module SpecFor(L:Language) : Spec
 
     module type ToMe = sig
       type 'a src
-      val translate: 'a src -> 'a L.t
+      val apply: 'a src -> 'a L.t
     end
 
 
@@ -187,9 +195,9 @@ module SpecFor(L:Language) : Spec
       type 'a free   = 'a Ctx.Free.t
       type 'a free_f = 'a Ctx.Free.f
 
-      let translate v = Ctx.translate (T.translate v)
+      let apply v = Ctx.apply (T.apply v)
 
-      let lift f = Ctx.Free.lift (translate f)
+      let lift f = Ctx.Free.lift (apply f)
       let return f = Ctx.Free.return f
 
       module Free = Ctx.Free
@@ -198,73 +206,73 @@ module SpecFor(L:Language) : Spec
 
 end (* end of SpecFor *)
 
-module Combine (L1:Language) (L2:Language) = struct
+module Combine (F1:Functor) (F2:Functor) = struct
 
   module Core = struct
     type 'a t =
-      | Branch1 of 'a L1.t
-      | Branch2 of 'a L2.t
+      | Case1 of 'a F1.t
+      | Case2 of 'a F2.t
 
     let map f = function
-      | Branch1 v -> Branch1 (L1.map f v)
-      | Branch2 v -> Branch2 (L2.map f v)
+      | Case1 v -> Case1 (F1.map f v)
+      | Case2 v -> Case2 (F2.map f v)
   end
   open Core
 
-  let lift1 v = Branch1 v
-  let lift2 v = Branch2 v
+  let return1 v = Case1 v
+  let return2 v = Case2 v
 
   module Spec = SpecFor (Core)
 
   module T1 = Spec.Proxy
     (struct
-      type 'a src = 'a L1.t
-      let translate = lift1
+      type 'a src = 'a F1.t
+      let apply = return1
     end)
 
   module T2 = Spec.Proxy
     (struct
-      type 'a src = 'a L2.t
-      let translate = lift2
+      type 'a src = 'a F2.t
+      let apply = return2
     end)
 end (* end of Machine.Combine *)
 
-module Combine3 (L1:Language) (L2:Language) (L3:Language) = struct
+module Combine3 (F1:Functor) (F2:Functor) (F3:Functor) = struct
   module Core = struct
     type 'a t =
-      | Branch1 of 'a L1.t
-      | Branch2 of 'a L2.t
-      | Branch3 of 'a L3.t
+      | Case1 of 'a F1.t
+      | Case2 of 'a F2.t
+      | Case3 of 'a F3.t
 
     let map f = function
-      | Branch1 v -> Branch1 (L1.map f v)
-      | Branch2 v -> Branch2 (L2.map f v)
-      | Branch3 v -> Branch3 (L3.map f v)
+      | Case1 v -> Case1 (F1.map f v)
+      | Case2 v -> Case2 (F2.map f v)
+      | Case3 v -> Case3 (F3.map f v)
   end
   open Core
 
-  let lift1 v = Branch1 v
-  let lift2 v = Branch2 v
-  let lift3 v = Branch3 v
+  let return1 v = Case1 v
+  let return2 v = Case2 v
+  let return3 v = Case3 v
 
   module Spec = SpecFor(Core)
 
   module T1 = Spec.Proxy
     (struct
-      type 'a src = 'a L1.t
-      let translate = lift1
+      type 'a src = 'a F1.t
+      let apply = return1
     end)
 
   module T2 = Spec.Proxy
     (struct
-      type 'a src = 'a L2.t
-      let translate = lift2
+      type 'a src = 'a F2.t
+      let apply = return2
     end)
 
   module T3 = Spec.Proxy
     (struct
-      type 'a src = 'a L3.t
-      let translate = lift3
+      type 'a src = 'a F3.t
+      let apply = return3
     end)
 end (* end of Machine.Combine3 *)
 
@@ -275,11 +283,11 @@ end (* end of Machine.Combine3 *)
 
 
 *)
-module Combine4 (L1:Language) (L2:Language)
-                (L3:Language) (L4:Language) =
+module Combine4 (F1:Functor) (F2:Functor)
+                (F3:Functor) (F4:Functor) =
 struct
-  module Core1_2 = Combine (L1) (L2)
-  module Core3_4 = Combine (L3) (L4)
+  module Core1_2 = Combine (F1) (F2)
+  module Core3_4 = Combine (F3) (F4)
 
   module R = Combine (Core1_2.Core) (Core3_4.Core)
 
@@ -288,31 +296,31 @@ struct
 
   module T1 = Spec.Proxy
     (struct
-      type 'a src = 'a L1.t
-      let translate v = R.lift1 (Core1_2.lift1 v)
+      type 'a src = 'a F1.t
+      let apply v = R.return1 (Core1_2.return1 v)
     end)
 
   module T2 = Spec.Proxy
     (struct
-      type 'a src = 'a L2.t
-      let translate v = R.lift1 (Core1_2.lift2 v)
+      type 'a src = 'a F2.t
+      let apply v = R.return1 (Core1_2.return2 v)
     end)
 
   module T3 = Spec.Proxy
     (struct
-      type 'a src = 'a L3.t
-      let translate v = R.lift2 (Core3_4.lift1 v)
+      type 'a src = 'a F3.t
+      let apply v = R.return2 (Core3_4.return1 v)
     end)
 
   module T4 = Spec.Proxy
     (struct
-      type 'a src = 'a L4.t
-      let translate v = R.lift2 (Core3_4.lift2 v)
+      type 'a src = 'a F4.t
+      let apply v = R.return2 (Core3_4.return2 v)
     end)
 end (* end of Combine4 *)
 
 module type Runtime = sig
-  module Core : Language
+  module Core : Functor
   module Spec : Spec with module Core = Core
   module Runner : sig
     val run : 'a Core.t -> 'a
@@ -320,15 +328,15 @@ module type Runtime = sig
   end
 end
 
-module ForLanguage(L:Language) = struct
-  module Free = Generic.Free (L)
+module ForLanguage(L:Functor) = struct
+  module Free = MakeFree (L)
   type 'a free   = 'a Free.t
   type 'a free_f = 'a Free.f
 
   include Id(L)
 
   let return f = Free.return f
-  let lift f = Free.lift (translate f)
+  let lift f = Free.lift (apply f)
 
   let run runner program =
     Free.iter runner program
@@ -350,12 +358,12 @@ module Assemble (R1:Runtime) (R2:Runtime) = struct
 
   module Runner : Spec.S.Runner = struct
     let run = function
-      | Core.Branch1 v -> R1.Runner.run v
-      | Core.Branch2 v -> R2.Runner.run v
+      | Core.Case1 v -> R1.Runner.run v
+      | Core.Case2 v -> R2.Runner.run v
 
     let debug = function
-      | Core.Branch1 v -> R1.Runner.debug v
-      | Core.Branch2 v -> R2.Runner.debug v
+      | Core.Case1 v -> R1.Runner.debug v
+      | Core.Case2 v -> R2.Runner.debug v
   end
 end
 

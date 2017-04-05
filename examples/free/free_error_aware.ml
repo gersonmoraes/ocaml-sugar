@@ -49,9 +49,9 @@ module Terminal = struct
   end
 end
 
-let _ =
+(* let _ =
   (module Terminal.Core:Machine.Language),
-  (module Terminal:Machine.Runtime)
+  (module Terminal:Machine.Runtime) *)
 
 
 

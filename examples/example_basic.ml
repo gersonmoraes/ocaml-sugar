@@ -45,6 +45,42 @@ let error_handler e: string result =
 
 open MyResult.Infix
 
+let (<$>) f m =
+  map m f
+
+(* implementing it in order, later we do it in parallel *)
+let (<*>) fab fa =
+  fab
+  >>= fun f ->
+  fa
+  >>= fun a ->
+  commit (f a)
+
+let _ =
+  print_endline "Hello World"
+
+
+let _ =
+  print_message "We are extensively using a user defined result type" />
+  ( List.length <$> load_list 10)
+  >>= fun len ->
+  throw (Unexpected (sprintf "List length invalid: %d" len))
+  >---------
+  ( function
+    e -> error_handler e
+  )
+  >>=
+  ( fun recovered ->
+    print_message "This will NOT be printed"        />
+    print_message "The previous error_handler"      />
+    print_message "can't catch 'Unexpected' errors" />
+    commit "for sure"
+  )
+  >---------
+  ( fun e ->
+    commit "Recover from any error"
+  )
+  >>= print_message
 
 let _ =
   print_message "We are extensively using a user defined result type" />

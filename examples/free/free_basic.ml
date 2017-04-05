@@ -41,9 +41,9 @@ module Terminal = struct
   end
 end
 
-let _ =
-  (module Terminal.Core : Machine.Language),
-  (module Terminal      : Machine.Runtime)
+(* let _ =
+  (module Terminal.Core : Generic.Functor),
+  (module Terminal      : Machine.Runtime) *)
 
 
 module Env = Machine.For(Terminal)

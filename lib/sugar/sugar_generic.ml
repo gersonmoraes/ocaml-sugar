@@ -37,7 +37,7 @@ module type FreeMonad = sig
   end
 end
 
-module Free (F : Functor) : FreeMonad with type 'a f = 'a F.t = struct
+module MakeFree (F : Functor) : FreeMonad with type 'a f = 'a F.t = struct
   type 'a f = 'a F.t
 
   type 'a t =
