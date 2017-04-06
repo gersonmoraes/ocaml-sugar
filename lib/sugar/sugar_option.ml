@@ -80,9 +80,9 @@ let expect r msg =
   | None -> invalid_arg msg
 
 module Monad : Sugar_types.Monad
-   with type 'a monad = 'a option =
+   with type 'a t = 'a option =
 struct
-  type 'a monad = 'a option
+  type 'a t = 'a option
   let return = commit
   let (>>=) = bind_if
 end

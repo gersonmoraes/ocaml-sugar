@@ -3,11 +3,25 @@
  *)
 
 (** Common monadic signature *)
-module type Monad = sig
+(* module type Monad = sig
   type 'a monad
   val return: 'a -> 'a monad
   val (>>=): 'a monad -> ('a -> 'b monad) -> 'b monad
+end *)
+
+module type Monad = sig
+  type 'a t
+  val return: 'a -> 'a t
+  val (>>=): 'a t -> ('a -> 'b t) -> 'b t
 end
+
+
+(*
+module type Monad = sig
+  type 'a t
+  val return: 'a -> 'a t
+  val (>>=): 'a t -> ('a -> 'b t) -> 'b t
+end *)
 
 
 (**
@@ -33,6 +47,160 @@ module type Error = sig
     This could be any type, including strings or unit.
   *)
   type error
+end
+
+(**
+  This interface specifies an error handling layer for asynchronous.
+  computations.
+
+  Sugar works with any concurrent threadling library. The most basic functor
+  to create an asynchronous computation might be used like this
+  <code>
+    module MyMonad = struct
+      type 'a monad = 'a Lwt.t
+      let return = Lwt.return
+      let (>>=) = Lwt.bind
+    end
+    module MyResult = Sugar.MakePromise (MyMonad) (MyError)
+  </code>
+
+  If you install Sugar with opam, and you have Lwt or Async are installed, you
+  you will get sugar sub-libraries, respectively "sugar.lwt" and "sugar.async".
+  With one of these libraries, you can use a shorter version:
+  <code>
+    module MyResult = Sugar_lwt.MakeResult   (MyError)
+    module MyResult = Sugar_async.MakeResult (MyError)
+  </code>
+*)
+module type Promise = sig
+
+  (** Error definition imported from your project *)
+  type error
+
+  (** Low level result type *)
+  type 'a result = ('a, error) Pervasives.result
+
+  (**
+    This is a virtual type that will be translated to your asynchronous
+    library's main type.
+   *)
+  type 'a monad
+
+
+  (**
+    High level result type, created to simplify type hinting.
+    It hides two things: your choice of asynchronous library and the relation
+    with your project's error definition.
+
+    For example, considere this function:
+    <code>
+      let run () : unit promise =
+        commit ()
+    </code>
+
+    The actual could be something like:
+    <code>
+      (unit, error) Pervasives.result Lwt.t
+    </code>
+  *)
+  type 'a promise = 'a result monad
+
+
+  (**
+     Similar to {{!Result.bind_if} Result.bind_if}
+   *)
+  val bind_if:  'a promise -> ('a -> 'b promise) -> 'b promise
+
+
+  (**
+     Similar to {{!Result.bind_unless} Result.bind_unless}
+   *)
+  val bind_unless: 'a promise -> (error -> 'a promise) -> 'a promise
+
+
+ (**
+    Similar to {{!Result.map} Result.map}
+  *)
+  val map:  'a promise -> ('a -> 'b) -> 'b promise
+
+
+  (**
+     Similar to {{!Result.commit} Result.commit}
+  *)
+  val commit: 'a -> 'a promise
+
+
+  (**
+    Similar to {{!Result.throw} Result.throw}
+  *)
+  val throw: error -> 'a promise
+
+  module Infix : sig
+
+  (**
+    Similar to {{!Result.(>>|)} Result.(>>|)}
+  *)
+  val (>>|): 'a promise -> ('a -> 'b) -> 'b promise
+
+
+
+   val (>---------): 'a promise -> (error -> 'a promise) -> 'a promise
+
+
+  (*
+     "Non blocking" semicolon operator.
+     It chains the completion of unit promise with the next in the sequence.
+
+     It can be used to chain thunks in a meaningful way like:
+     <code>
+       let puts s =
+         asynchronous_puts s
+         >>= commit
+
+       let main =
+         puts "Hello"         //>
+         puts "Non-blocking"  //>
+         puts "Computations"
+       </code>
+   *)
+   (* val (//>): unit promise -> 'a promise -> 'a promise *)
+
+   val (>>): 'a promise -> 'b promise -> 'b promise
+
+  end
+
+  (**
+    Unwraps the successful result as a normal value in the threading monad.
+    If the value is not successful, it will raise an Invalid_arg exception.
+  *)
+  val unwrap: 'a result monad -> 'a monad
+
+
+  (**
+    Unwraps the successful result as a value in the threading monad.
+    Different from [unwrap], you can assign an error handler to be
+    executed if the computation failed. Example:
+    <code>
+    let run () =
+      get_data ()
+      |> unwrap_or (fun _ -> Lwt.return "default")
+    </code>
+  *)
+  val unwrap_or: (error -> 'a monad) -> 'a result monad -> 'a monad
+
+
+  (**
+    Extracts a successful value from an computation, or raises and Invalid_arg
+    exception with the defined parameter.
+  *)
+  val expect: 'a result monad -> string -> 'a monad
+
+  val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
+
+
+ (* val (/>): unit promise -> (unit -> 'b promise) -> 'b promise *)
+ val ( /> ) : unit promise -> 'b promise -> 'b promise
+
 end
 
 
@@ -318,160 +486,8 @@ module type Result = sig
      *)
     val (/>): unit result -> 'b result -> 'b result
 
-
-end
-
-
-(**
-  This interface specifies an error handling layer for asynchronous.
-  computations.
-
-  Sugar works with any concurrent threadling library. The most basic functor
-  to create an asynchronous computation might be used like this
-  <code>
-    module MyMonad = struct
-      type 'a monad = 'a Lwt.t
-      let return = Lwt.return
-      let (>>=) = Lwt.bind
-    end
-    module MyResult = Sugar.MakePromise (MyMonad) (MyError)
-  </code>
-
-  If you install Sugar with opam, and you have Lwt or Async are installed, you
-  you will get sugar sub-libraries, respectively "sugar.lwt" and "sugar.async".
-  With one of these libraries, you can use a shorter version:
-  <code>
-    module MyResult = Sugar_lwt.MakeResult   (MyError)
-    module MyResult = Sugar_async.MakeResult (MyError)
-  </code>
-*)
-module type Promise = sig
-
-  (** Error definition imported from your project *)
-  type error
-
-  (** Low level result type *)
-  type 'a result = ('a, error) Pervasives.result
-
-  (**
-    This is a virtual type that will be translated to your asynchronous
-    library's main type.
-   *)
-  type 'a monad
-
-
-  (**
-    High level result type, created to simplify type hinting.
-    It hides two things: your choice of asynchronous library and the relation
-    with your project's error definition.
-
-    For example, considere this function:
-    <code>
-      let run () : unit promise =
-        commit ()
-    </code>
-
-    The actual could be something like:
-    <code>
-      (unit, error) Pervasives.result Lwt.t
-    </code>
-  *)
-  type 'a promise = 'a result monad
-
-
-  (**
-     Similar to {{!Result.bind_if} Result.bind_if}
-   *)
-  val bind_if:  'a promise -> ('a -> 'b promise) -> 'b promise
-
-
-  (**
-     Similar to {{!Result.bind_unless} Result.bind_unless}
-   *)
-  val bind_unless: 'a promise -> (error -> 'a promise) -> 'a promise
-
-
- (**
-    Similar to {{!Result.map} Result.map}
-  *)
-  val map:  'a promise -> ('a -> 'b) -> 'b promise
-
-
-  (**
-     Similar to {{!Result.commit} Result.commit}
-  *)
-  val commit: 'a -> 'a promise
-
-
-  (**
-    Similar to {{!Result.throw} Result.throw}
-  *)
-  val throw: error -> 'a promise
-
-  module Infix : sig
-
-  (**
-    Similar to {{!Result.(>>|)} Result.(>>|)}
-  *)
-  val (>>|): 'a promise -> ('a -> 'b) -> 'b promise
-
-
-
-   val (>---------): 'a promise -> (error -> 'a promise) -> 'a promise
-
-
-  (*
-     "Non blocking" semicolon operator.
-     It chains the completion of unit promise with the next in the sequence.
-
-     It can be used to chain thunks in a meaningful way like:
-     <code>
-       let puts s =
-         asynchronous_puts s
-         >>= commit
-
-       let main =
-         puts "Hello"         //>
-         puts "Non-blocking"  //>
-         puts "Computations"
-       </code>
-   *)
-   (* val (//>): unit promise -> 'a promise -> 'a promise *)
-
-   val (>>): 'a promise -> 'b promise -> 'b promise
-
-  end
-
-  (**
-    Unwraps the successful result as a normal value in the threading monad.
-    If the value is not successful, it will raise an Invalid_arg exception.
-  *)
-  val unwrap: 'a result monad -> 'a monad
-
-
-  (**
-    Unwraps the successful result as a value in the threading monad.
-    Different from [unwrap], you can assign an error handler to be
-    executed if the computation failed. Example:
-    <code>
-    let run () =
-      get_data ()
-      |> unwrap_or (fun _ -> Lwt.return "default")
-    </code>
-  *)
-  val unwrap_or: (error -> 'a monad) -> 'a result monad -> 'a monad
-
-
-  (**
-    Extracts a successful value from an computation, or raises and Invalid_arg
-    exception with the defined parameter.
-  *)
-  val expect: 'a result monad -> string -> 'a monad
-
-  val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
-
-
- (* val (/>): unit promise -> (unit -> 'b promise) -> 'b promise *)
- val ( /> ) : unit promise -> 'b promise -> 'b promise
+    module For : functor (UserMonad:Monad) -> Promise
+      with type error := error
+      and type 'a monad := 'a UserMonad.t
 
 end

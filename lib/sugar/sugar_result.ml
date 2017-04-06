@@ -64,11 +64,15 @@ struct
     y
 
   module Monad : Sugar_types.Monad
-    with type 'a monad = 'a result =
+    with type 'a t = 'a result =
   struct
-    type 'a monad = 'a result
+    type 'a t = 'a result
 
     let return = commit
     let (>>=) = bind_if
+  end
+
+  module For(M: Sugar_types.Monad) = struct
+    include Sugar_promise.Make (M) (UserError)
   end
 end
