@@ -58,11 +58,6 @@ end
 open Utils
 
 (**
-  A language is just a functor
-*)
-(* module type Language = Generic.Functor *)
-
-(**
   Natural Transformation.
   It represents a translation from a functor to another.
 *)
@@ -71,21 +66,6 @@ module type Natural = sig
   type 'a dst
   val apply: 'a src -> 'a dst
 end
-
-(* module Id(L:Functor) : Natural
-  with type 'a src = 'a L.t
-   and type 'a dst = 'a L.t
-=
-struct
-  type 'a t = 'a L.t
-  type 'a src = 'a L.t
-  type 'a dst = 'a t
-
-  let apply = id
-end *)
-
-
-
 
 (**
   A translation context for DSLs writers.
