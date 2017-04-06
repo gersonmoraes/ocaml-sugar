@@ -93,6 +93,8 @@ module type Context = sig
     with type 'a dst = 'a free_f
 
   val lift: 'a src -> 'a Free.t
+  
+  (* an interesting place to *)
   val return : 'a -> 'a Free.t
 end
 
@@ -205,25 +207,18 @@ module Combine (F1:Functor) (F2:Functor) = struct
       | Case1 v -> Case1 (F1.map f v)
       | Case2 v -> Case2 (F2.map f v)
   end
+  module Spec = SpecFor (Core)
+  
   open Core
+  open Spec
 
   module Natural = struct
     let apply1 v = Case1 v
     let apply2 v = Case2 v
+    
+    module Proxy1 = Proxy(struct type 'a src = 'a F1.t let apply = apply1 end)
+    module Proxy2 = Proxy(struct type 'a src = 'a F2.t let apply = apply2 end)
   end
-
-  module Spec = SpecFor (Core)
-  module T1 = Spec.Proxy
-    (struct
-      type 'a src = 'a F1.t
-      let apply = Natural.apply1
-    end)
-
-  module T2 = Spec.Proxy
-    (struct
-      type 'a src = 'a F2.t
-      let apply = Natural.apply2
-    end)
 end (* Combine *)
 
 module Combine3 (F1:Functor) (F2:Functor) (F3:Functor) = struct
@@ -238,36 +233,21 @@ module Combine3 (F1:Functor) (F2:Functor) (F3:Functor) = struct
       | Case2 v -> Case2 (F2.map f v)
       | Case3 v -> Case3 (F3.map f v)
   end
+  module Spec = SpecFor(Core)
+  
   open Core
+  open Spec
 
   module Natural = struct
     let apply1 v = Case1 v
     let apply2 v = Case2 v
     let apply3 v = Case3 v
+
+    module Proxy1 = Proxy(struct type 'a src = 'a F1.t let apply = apply1 end)
+    module Proxy2 = Proxy(struct type 'a src = 'a F2.t let apply = apply2 end)
+    module Proxy3 = Proxy(struct type 'a src = 'a F3.t let apply = apply3 end)
   end
-  open Natural
 
-  module Spec = SpecFor(Core)
-
-  module MyTranslators = struct
-  module T1 = Spec.Proxy
-    (struct
-      type 'a src = 'a F1.t
-      let apply = apply1
-    end)
-
-  module T2 = Spec.Proxy
-    (struct
-      type 'a src = 'a F2.t
-      let apply = apply2
-    end)
-
-  module T3 = Spec.Proxy
-    (struct
-      type 'a src = 'a F3.t
-      let apply = apply3
-    end)
-  end
 end (* Combine3 *)
 
 
@@ -280,43 +260,26 @@ module Combine4 (F1:Functor) (F2:Functor)
 struct
   module Core1_2 = Combine (F1) (F2)
   module Core3_4 = Combine (F3) (F4)
-
   module R = Combine (Core1_2.Core) (Core3_4.Core)
 
   module Core = R.Core
   module Spec = R.Spec
+  
+  open Spec
 
   module Natural = struct
     let apply1 v = R.Natural.apply1 (Core1_2.Natural.apply1 v)
     let apply2 v = R.Natural.apply1 (Core1_2.Natural.apply2 v)
     let apply3 v = R.Natural.apply2 (Core3_4.Natural.apply1 v)
     let apply4 v = R.Natural.apply2 (Core3_4.Natural.apply2 v)
+
+    module Proxy1 = Proxy(struct type 'a src = 'a F1.t let apply = apply1 end)
+    module Proxy2 = Proxy(struct type 'a src = 'a F2.t let apply = apply2 end)
+    module Proxy3 = Proxy(struct type 'a src = 'a F3.t let apply = apply3 end)
+    module Proxy4 = Proxy(struct type 'a src = 'a F4.t let apply = apply4 end)
   end
-  open Natural
   
-  module T1 = Spec.Proxy
-    (struct
-      type 'a src = 'a F1.t
-      let apply = apply1
-    end)
-
-  module T2 = Spec.Proxy
-    (struct
-      type 'a src = 'a F2.t
-      let apply = apply2
-    end)
-
-  module T3 = Spec.Proxy
-    (struct
-      type 'a src = 'a F3.t
-      let apply = apply3
-    end)
-
-  module T4 = Spec.Proxy
-    (struct
-      type 'a src = 'a F4.t
-      let apply = apply4
-    end)
+  
 end (* Combine4 *)
 
 module type Runtime = sig
