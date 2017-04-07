@@ -20,8 +20,8 @@ struct
 
   open UserMonad
 
-  let commit v = return (Ok v)
-  let throw e = return (Error e)
+  let return v = UserMonad.return (Ok v)
+  let throw e = UserMonad.return (Error e)
 
   let bind_if r f =
     r
@@ -33,13 +33,13 @@ struct
     r
     >>= function
     | Error e -> f e
-    | Ok v -> commit v
+    | Ok v -> return v
 
   let map r f =
     r
     >>= function
     | Error e -> throw e
-    | Ok v -> commit (f v)
+    | Ok v -> return (f v)
 
   module Infix = struct
     let (>>=) = bind_if
@@ -60,19 +60,19 @@ struct
   let unwrap r =
     r
     >>= function
-    | Ok v -> return v
+    | Ok v -> UserMonad.return v
     | Error e -> invalid_arg "Could not unwrap result"
 
   let unwrap_or f r =
     r
     >>= function
-    | Ok v -> return v
+    | Ok v -> UserMonad.return v
     | Error e -> f e
 
   let expect r msg =
     r
     >>= function
-    | Ok v -> return v
+    | Ok v -> UserMonad.return v
     | Error e -> invalid_arg msg
 
   let (>>=) = bind_if

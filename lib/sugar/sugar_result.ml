@@ -6,11 +6,12 @@ open Sugar_types
   This functors produces a module following the interface {!Sugar_types.Result}.
 *)
 module Make (UserError:Error) : Sugar_types.Result
-  with type error := UserError.error =
+  with type error = UserError.error =
 struct
   type 'a result = ('a, UserError.error) Pervasives.result
+  type error = UserError.error
 
-  let commit v = Ok v
+  let return v = Ok v
 
   let throw e = Error e
 
@@ -68,7 +69,7 @@ struct
   struct
     type 'a t = 'a result
 
-    let return = commit
+    let return = return
     let (>>=) = bind_if
   end
 

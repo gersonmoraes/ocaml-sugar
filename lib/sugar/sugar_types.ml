@@ -95,7 +95,7 @@ module type Promise = sig
     For example, considere this function:
     <code>
       let run () : unit promise =
-        commit ()
+        return ()
     </code>
 
     The actual could be something like:
@@ -125,9 +125,9 @@ module type Promise = sig
 
 
   (**
-     Similar to {{!Result.commit} Result.commit}
+     Similar to {{!Result.return} Result.return}
   *)
-  val commit: 'a -> 'a promise
+  val return: 'a -> 'a promise
 
 
   (**
@@ -155,7 +155,7 @@ module type Promise = sig
      <code>
        let puts s =
          asynchronous_puts s
-         >>= commit
+         >>= return
 
        let main =
          puts "Hello"         //>
@@ -266,13 +266,13 @@ module type Result = sig
 
     This function should be used with its counterpart, [throw]
   *)
-  val commit: 'a -> 'a result
+  val return: 'a -> 'a result
 
 
   (**
     Return an error as the result of a computation.
 
-    Like the [commit] function, [throw] helps you hide the internals of your
+    Like the [return] function, [throw] helps you hide the internals of your
     result type and keep a clean code.
 
     If you are still at the beginning of your project, and don't have your
@@ -285,7 +285,7 @@ module type Result = sig
       open MyResult
       let run (): int result =
         if true then
-          commit 10
+          return 10
         else
           throw "something bad happend"
     </code>
@@ -297,7 +297,7 @@ module type Result = sig
       open Sugar.Option
       let run (): string result =
         if true then
-          commit "hello world"
+          return "hello world"
         else
           throw ()
     </code>
@@ -362,7 +362,7 @@ module type Result = sig
         &&= transform
         &&= fun v ->
         print_endline "everything ok";
-        commit ()
+        return ()
     </code>
 
     For a more diverse example, look at the {!Sugar} module.
@@ -404,7 +404,7 @@ module type Result = sig
       let twenty =
        Some 10
        &&= fun n ->
-       commit (double n)
+       return (double n)
 
      (* using the map combinator *)
      let twenty =
@@ -423,7 +423,7 @@ module type Result = sig
     <code>
     let puts s =
       asynchronous_puts s
-      >>= commit
+      >>= return
 
     let main =
       puts "Hello"         //>
@@ -476,7 +476,7 @@ module type Result = sig
       <code>
       let puts s () =
         print_endline s;
-        commit ()
+        return ()
 
       let main =
         puts "Hello" ()     />

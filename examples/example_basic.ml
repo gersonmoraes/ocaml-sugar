@@ -30,17 +30,17 @@ open Printf
 (* We're only printing messages to the screen here *)
 let print_message m: unit result =
   print_endline m;
-  commit ()
+  return ()
 
 (* Do some computation and return a list, if it is successful *)
 let load_list n: int list result =
   let l = [1; 2; 3] in
   let new_list = List.map (fun v -> v * n) l in
-  commit new_list
+  return new_list
 
 let error_handler e: string result =
   match e with
-  | Resource_not_found -> commit "recovered failure"
+  | Resource_not_found -> return "recovered failure"
   | _ -> throw e
 
 open MyResult.Infix
@@ -54,7 +54,7 @@ let (<*>) fab fa =
   >>= fun f ->
   fa
   >>= fun a ->
-  commit (f a)
+  return (f a)
 
 let _ =
   print_endline "Hello World"
@@ -74,11 +74,11 @@ let _ =
     print_message "This will NOT be printed"        />
     print_message "The previous error_handler"      />
     print_message "can't catch 'Unexpected' errors" />
-    commit "for sure"
+    return "for sure"
   )
   >---------
   ( fun e ->
-    commit "Recover from any error"
+    return "Recover from any error"
   )
   >>= print_message
 
@@ -97,10 +97,10 @@ let _ =
     print_message "This will NOT be printed"        />
     print_message "The previous error_handler"      />
     print_message "can't catch 'Unexpected' errors" />
-    commit "for sure"
+    return "for sure"
   )
   >---------
   ( fun e ->
-    commit "Recover from any error"
+    return "Recover from any error"
   )
   >>= print_message

@@ -57,6 +57,19 @@ end
 
 open Utils
 
+module type Language = sig
+  include Functor
+
+  (* module Error : Sugar_types.Error *)
+
+  (* type error *)
+
+  module Result : Sugar_types.Result
+    (* with type error := error *)
+
+  (* module Result : Sugar_types.Result *)
+end
+
 (**
   Natural Transformation.
   It represents a translation from a functor to another.
@@ -93,7 +106,7 @@ module type Context = sig
     with type 'a dst = 'a free_f
 
   val lift: 'a src -> 'a Free.t
-  
+
   (* an interesting place to *)
   val return : 'a -> 'a Free.t
 end
@@ -116,7 +129,7 @@ end
   module.
 *)
 module type Spec = sig
-  module Core : Functor
+  module Core : Language
 
   module S : sig
     module type Natural = sig
@@ -150,7 +163,7 @@ end (* Machine.Spec *)
   Automates the generation of minimum specification
   for a library based on its algebra.
 *)
-module SpecFor(L:Functor) : Spec
+module SpecFor(L:Language) : Spec
   with module Core = L
  = struct
 
@@ -196,7 +209,7 @@ module SpecFor(L:Functor) : Spec
 
 end (* SpecFor *)
 
-module Combine (F1:Functor) (F2:Functor) = struct
+module Combine (F1:Language) (F2:Language) = struct
 
   module Core = struct
     type 'a t =
@@ -206,22 +219,29 @@ module Combine (F1:Functor) (F2:Functor) = struct
     let map f = function
       | Case1 v -> Case1 (F1.map f v)
       | Case2 v -> Case2 (F2.map f v)
+
+    module Result = Sugar.MakeResult (struct
+      type error
+        = Error1 of F1.Result.error
+        | Error2 of F2.Result.error
+    end)
   end
   module Spec = SpecFor (Core)
-  
+
   open Core
   open Spec
 
   module Natural = struct
     let apply1 v = Case1 v
     let apply2 v = Case2 v
-    
+
     module Proxy1 = Proxy(struct type 'a src = 'a F1.t let apply = apply1 end)
     module Proxy2 = Proxy(struct type 'a src = 'a F2.t let apply = apply2 end)
   end
 end (* Combine *)
 
-module Combine3 (F1:Functor) (F2:Functor) (F3:Functor) = struct
+module Combine3 (F1:Language) (F2:Language) (F3:Language) = struct
+
   module Core = struct
     type 'a t =
       | Case1 of 'a F1.t
@@ -232,9 +252,16 @@ module Combine3 (F1:Functor) (F2:Functor) (F3:Functor) = struct
       | Case1 v -> Case1 (F1.map f v)
       | Case2 v -> Case2 (F2.map f v)
       | Case3 v -> Case3 (F3.map f v)
+
+    module Result = Sugar.MakeResult (struct
+      type error
+        = Error1 of F1.Result.error
+        | Error2 of F2.Result.error
+        | Error3 of F3.Result.error
+    end)
   end
   module Spec = SpecFor(Core)
-  
+
   open Core
   open Spec
 
@@ -255,8 +282,8 @@ end (* Combine3 *)
 (**
   Combine 4 languages.
 *)
-module Combine4 (F1:Functor) (F2:Functor)
-                (F3:Functor) (F4:Functor) =
+module Combine4 (F1:Language) (F2:Language)
+                (F3:Language) (F4:Language) =
 struct
   module Core1_2 = Combine (F1) (F2)
   module Core3_4 = Combine (F3) (F4)
@@ -264,7 +291,7 @@ struct
 
   module Core = R.Core
   module Spec = R.Spec
-  
+
   open Spec
 
   module Natural = struct
@@ -278,12 +305,10 @@ struct
     module Proxy3 = Proxy(struct type 'a src = 'a F3.t let apply = apply3 end)
     module Proxy4 = Proxy(struct type 'a src = 'a F4.t let apply = apply4 end)
   end
-  
-  
 end (* Combine4 *)
 
 module type Runtime = sig
-  module Core : Functor
+  module Core : Language
   module Spec : Spec with module Core = Core
   module Runner : sig
     val run : 'a Core.t -> 'a
@@ -291,7 +316,7 @@ module type Runtime = sig
   end
 end
 
-module ForLanguage(L:Functor) = struct
+module ForLanguage(L:Language) = struct
   module Free = MakeFree (L)
   type 'a free   = 'a Free.t
   type 'a free_f = 'a Free.f
@@ -302,7 +327,12 @@ module ForLanguage(L:Functor) = struct
   type 'a dst = 'a t
   let apply = id
 
+  (* TODO:
+      The implementation of this function may change, to better
+      integrate with error aware computations. Or not.
+  *)
   let return f = Free.return f
+
   let lift f = Free.lift (apply f)
 
   let run runner program =
@@ -316,21 +346,18 @@ end
 module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
 
 module Assemble (R1:Runtime) (R2:Runtime) = struct
-  module Merge = Combine (R1.Core) (R2.Core)
-
-  module Core = Merge.Core
-  module Spec = SpecFor(Core)
-  module T1 = Merge.T1
-  module T2 = Merge.T2
+  include Combine (R1.Core) (R2.Core)
 
   module Runner : Spec.S.Runner = struct
+    open Core
+
     let run = function
-      | Core.Case1 v -> R1.Runner.run v
-      | Core.Case2 v -> R2.Runner.run v
+      | Case1 v -> R1.Runner.run v
+      | Case2 v -> R2.Runner.run v
 
     let debug = function
-      | Core.Case1 v -> R1.Runner.debug v
-      | Core.Case2 v -> R2.Runner.debug v
+      | Case1 v -> R1.Runner.debug v
+      | Case2 v -> R2.Runner.debug v
   end
 end
 

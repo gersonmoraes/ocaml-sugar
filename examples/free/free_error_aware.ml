@@ -7,10 +7,6 @@ open Printf
 
 module Terminal = struct
 
-  module Error = struct
-    type error = unit
-  end
-
   (* module Computation = Sugar.MakeResult
     (struct
       type error = unit
@@ -21,9 +17,12 @@ module Terminal = struct
      combine modules as well, right?
   *)
   module Core = struct
-
+    module Error = struct
+      type error = string
+    end
     (* Our new convention *)
-    include Sugar.MakeResult (Error)
+    module Result = Sugar.MakeResult (Error)
+    open Result
 
     type 'f t =
       | Puts of string * ('f, unit result) next
@@ -39,7 +38,7 @@ module Terminal = struct
 
   module Dsl (Ctx:Spec.S.Context) = struct
     open Ctx
-    module Result = For(Free)
+    module Result = Result.For(Free)
 
     let puts s =
       Puts (s, id) |> lift
@@ -49,16 +48,18 @@ module Terminal = struct
   end
 
   module Runner = struct
+    open Core.Result
+
     let run = function
-      | Puts (s, f) -> print_endline s; commit () |> f
-      | GetLine f -> read_line () |> commit |> f
+      | Puts (s, f) -> print_endline s; return () |> f
+      | GetLine f -> read_line () |> return |> f
 
     let debug = function
       | Puts (s, f) ->
-          printf "Puts: %s\n" s; commit () |> f
+          printf "Puts: %s\n" s; return () |> f
       | GetLine f ->
           printf "GetLine: ";
-          read_line () |> commit |> f
+          read_line () |> return |> f
   end
 end
 (*
