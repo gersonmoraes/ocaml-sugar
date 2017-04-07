@@ -36,9 +36,9 @@ module Terminal = struct
 
   module Spec = Machine.SpecFor (Core)
 
-  module Dsl (Ctx:Spec.S.Context) = struct
+  module Dsl (Ctx:Spec.S.Context) (Error:Spec.S.NaturalError) = struct
     open Ctx
-    module Result = Result.For(Free)
+    module Result = Result.For(Free) (Error)
 
     let puts s =
       Puts (s, id) |> lift
