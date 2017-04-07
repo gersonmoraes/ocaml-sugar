@@ -119,6 +119,25 @@ module type Context = sig
   val return : 'a -> 'a Free.t
 end
 
+module type ErrorAwareContext = sig
+  module Free : FreeMonad
+
+  type 'a free   = 'a Free.t
+  type 'a free_f = 'a Free.f
+
+  type error
+  type 'a result = ('a, error) Pervasive.result
+
+  include Natural
+    with type 'a dst = 'a free_f
+
+  val lift: 'a src -> 'a Free.t
+
+  (* an interesting place to *)
+  val return : 'a -> 'a result Free.t
+  val throw: error -> 'a result Free.t
+end
+
 
 (**
   Minimum specification for a library.
@@ -146,10 +165,18 @@ module type Spec = sig
     end
 
     module type Error = sig
+      type src
+      val apply: src -> Core.Result.error
+      val reverse: Core.Result.error -> src option
+    end
+    
+    module type ContextError = sig
       type dst
       val apply: Core.Result.error -> dst
       val reverse: dst -> Core.Result.error option
     end
+    
+    
     (* module type Error = NaturalError
       with type src = Core.Result.error *)
 
@@ -194,7 +221,13 @@ module SpecFor(L:Language) : Spec
       val apply: 'a src -> 'a L.t
     end
 
-    module type Error = sig
+    module type ProxyError = sig
+      type src
+      val apply: src -> Core.Result.error
+      val reverse: Core.Result.error -> src option
+    end
+    
+    module type ContextError = sig
       type dst
       val apply: Core.Result.error -> dst
       val reverse: dst -> Core.Result.error option
@@ -231,6 +264,23 @@ module SpecFor(L:Language) : Spec
       module Free = Ctx.Free
     end  (* Spec.Proxy.For *)
   end (* Spec.Proxy *)
+  
+  module MergeErrors (E:ProxyError) (Ctx:ContextError) = struct
+      type src = E.src
+      type dst = Ctx.dst
+      
+      let apply v = Ctx.apply (E.apply v)
+      let reverse v =
+        match Ctx.reverse v with
+        | Some e -> E.reverse e
+        | _ -> None 
+  end
+    
+  module Error(Proxy:ProxyError) = struct
+    module For(Ctx:ContextError) = struct
+      include MergeErrors (Proxy) (Ctx)
+    end
+  end
 
 end (* SpecFor *)
 

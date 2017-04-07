@@ -5,7 +5,7 @@ open Machine.Utils
 open Printf
 
 
-module Terminal = struct
+module X = struct
 
   module Error = struct
     type error = unit
@@ -66,16 +66,12 @@ let _ =
 
 
 
-module Terminal2 = struct
+module Y = struct
 
   module Error = struct
     type error = string
   end
 
-  (*
-     If we add errors and results to the Core module, we can figure them out on
-     combine modules as well, right?
-  *)
   module Core = struct
 
     (* Our new convention *)
@@ -124,25 +120,72 @@ let _ =
   (module Terminal:Machine.Runtime) *)
 
 
-module Terminals = struct
-  module R = Machine.Combine (Terminal.Core) (Terminal2.Core)
+module X_and_Y = struct
+  module R = Machine.Combine (X.Core) (Y.Core)
 
   module Error = struct
     type error
-      = Terminal_error of Terminal.Core.Result.error
-      | Terminal2_error of Terminal2.Core.Result.error
+      = X_error of X.Core.Result.error
+      | Y_error of Y.Core.Result.error
   end
 
   module Core = struct
     type 'a t = 'a R.Core.t
     let map = R.Core.map
-
     module Result = Sugar_result.Make(Error)
   end
   module Spec = Machine.SpecFor(Core)
+  
+  module Natural = struct 
+    module ProxyX = R.Natural.Proxy1 
+    module ProxyY = R.Natural.Proxy2
+    
+    (* TODO:
+         We need refined signatures to merge errors.
+         We can only create a merge operation between 
+         Natural transformations of errors if the two 
+         Modules are related to the current language.
+    *)
+    
+    (* This pattern needs to be simplified *)
+    module ErrorX = Spec.Error (struct
+      type src = X.Error.error
+      let apply e = X_error e
+      let reverse v = function 
+        | X_error e = Some e
+        | _ -> None
+    end)
+    
+    module ErrorY = Spec.Error(struct
+      type src = Y.Error.error
+      let apply e = Y_error e
+      let reverse v = function
+        | Y_error e = Some e
+        | _ -> None
+    end)
+    end
 
-  module Dsl(Ctx: Spec.S.Context) (E:Spec.S.Error) = struct
+  module Dsl(Ctx: Spec.S.Context) (E:Spec.S.ContextError) = struct
     module Result = Core.Result.With (Ctx.Free) (E)
+    
+    (* Conversion tools *)
+    open Natural
+    
+    (* TODO: Can we include the context error inside the translation context? *)
+
+    module X = X.Dsl (ProxyX.For(Ctx)) (ErrorX.For(E))
+    module Y = Y.Dsl (ProxyY.For(Ctx)) (ErrorY.For(E))
+    
+    open Result
+    
+    (* Play time *)
+    let todo () =
+      X.puts "x: hello" />
+      Y.puts "y: hello" />
+      X.get_line ()
+      >>= fun line ->
+      Y.puts ("y: line returned from x:" ^ line) />
+      throw (X_error ())
   end
 end
 
