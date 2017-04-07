@@ -80,6 +80,14 @@ module type Natural = sig
   val apply: 'a src -> 'a dst
 end
 
+module type NaturalError = sig
+  type src
+  type dst
+
+  val apply: src -> dst
+  val reverse: dst -> src option
+end
+
 (**
   A translation context for DSLs writers.
 
@@ -137,6 +145,14 @@ module type Spec = sig
       val apply: 'a src -> 'a Core.t
     end
 
+    module type Error = sig
+      type dst
+      val apply: Core.Result.error -> dst
+      val reverse: dst -> Core.Result.error option
+    end
+    (* module type Error = NaturalError
+      with type src = Core.Result.error *)
+
     module type Context = Context
       with type 'a src = 'a Core.t
 
@@ -177,6 +193,15 @@ module SpecFor(L:Language) : Spec
       type 'a src
       val apply: 'a src -> 'a L.t
     end
+
+    module type Error = sig
+      type dst
+      val apply: Core.Result.error -> dst
+      val reverse: dst -> Core.Result.error option
+    end
+
+    (* module type Error = NaturalError
+      with type src = Core.Result.error *)
 
     module type Runner = sig
       val run: 'a Core.t -> 'a
@@ -332,9 +357,7 @@ module ForLanguage(L:Language) = struct
       integrate with error aware computations. Or not.
   *)
   let return f = Free.return f
-
   let lift f = Free.lift (apply f)
-
   let run runner program =
     Free.iter runner program
 end

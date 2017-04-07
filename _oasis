@@ -57,7 +57,9 @@ Library "sugar"
   FindlibName:      sugar
   Path:             lib/sugar
   Modules:          Sugar_promise, Sugar_types, Sugar_option, Sugar_result, Sugar,
-                    Sugar_generic, Sugar_machine, Sugar_machine_error_aware
+                    Sugar_generic, Sugar_machine, Sugar_machine_error_aware,
+                    Sugar_monadic_with_natural
+
   CompiledObject:   best
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
@@ -86,6 +88,14 @@ Executable "free_error_aware"
   Install:        false
   Path:           examples/free
   MainIs:         free_error_aware.ml
+  CompiledObject: best
+  BuildDepends:   sugar
+
+Executable "free_error_aware_combined"
+  Build$:         flag(example)
+  Install:        false
+  Path:           examples/free
+  MainIs:         free_error_aware_combined.ml
   CompiledObject: best
   BuildDepends:   sugar
 

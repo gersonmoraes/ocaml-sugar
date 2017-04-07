@@ -908,7 +908,6 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
 # 911 "myocamlbuild.ml"
-(* OASIS_STOP *)
 
 (* Disabling unused tags warning *)
 let () =
@@ -920,4 +919,5 @@ let () =
   |> Tags.of_list
   |> Tags.iter mark_tag_used;;
 
+(* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch dispatch_default;;

@@ -1,4 +1,6 @@
 open Sugar
+
+module Machine = Sugar_machine_error_aware
 open Machine.Utils
 open Printf
 
@@ -16,7 +18,8 @@ module Terminal = struct
   module Core = struct
 
     (* Our new convention *)
-    include Sugar.MakeResult (Error)
+    module Result = Sugar.MakeResult (Error)
+    open Result
 
     type 'f t =
       | Puts of string * ('f, unit result) next
@@ -30,10 +33,10 @@ module Terminal = struct
 
   module Spec = Machine.SpecFor (Core)
 
-  module Dsl (Ctx:Spec.S.Context) = struct
+  module Dsl(Ctx: Spec.S.Context) (E:Spec.S.Error) = struct
+    module Result = Core.Result.With (Ctx.Free) (E)
     open Ctx
-    module Result = For(Free)
-
+  
     let puts s =
       Puts (s, id) |> lift
 
@@ -42,16 +45,18 @@ module Terminal = struct
   end
 
   module Runner = struct
+    open Core.Result
+
     let run = function
-      | Puts (s, f) -> print_endline s; commit () |> f
-      | GetLine f -> read_line () |> commit |> f
+      | Puts (s, f) -> print_endline s; return () |> f
+      | GetLine f -> read_line () |> return |> f
 
     let debug = function
       | Puts (s, f) ->
-          printf "Puts: %s\n" s; commit () |> f
+          printf "Puts: %s\n" s; return () |> f
       | GetLine f ->
           printf "GetLine: ";
-          read_line () |> commit |> f
+          read_line () |> return |> f
   end
 end
 (*
@@ -74,8 +79,8 @@ module Terminal2 = struct
   module Core = struct
 
     (* Our new convention *)
-    include Sugar.MakeResult (Error)
-
+    module Result = Sugar.MakeResult (Error)
+    open Result
     type 'f t =
       | Puts2 of string * ('f, unit result) next
       | GetLine2 of ('f, string result) next
@@ -88,9 +93,9 @@ module Terminal2 = struct
 
   module Spec = Machine.SpecFor (Core)
 
-  module Dsl (Ctx:Spec.S.Context) = struct
+  module Dsl(Ctx: Spec.S.Context) (E:Spec.S.Error) = struct
+    module Result = Core.Result.With (Ctx.Free) (E)
     open Ctx
-    module Result = For(Free)
 
     let puts s =
       Puts2 (s, id) |> lift
@@ -100,16 +105,17 @@ module Terminal2 = struct
   end
 
   module Runner = struct
+    open Result
     let run = function
-      | Puts2 (s, f) -> print_endline s; commit () |> f
-      | GetLine2 f -> read_line () |> commit |> f
+      | Puts2 (s, f) -> print_endline s; return () |> f
+      | GetLine2 f -> read_line () |> return |> f
 
     let debug = function
       | Puts2 (s, f) ->
-          printf "Puts: %s\n" s; commit () |> f
+          printf "Puts: %s\n" s; return () |> f
       | GetLine2 f ->
           printf "GetLine: ";
-          read_line () |> commit |> f
+          read_line () |> return |> f
   end
 end
 (*
@@ -119,7 +125,25 @@ let _ =
 
 
 module Terminals = struct
-  include Machine.Combine (Terminal.Core) (Terminal2.Core)
+  module R = Machine.Combine (Terminal.Core) (Terminal2.Core)
+
+  module Error = struct
+    type error
+      = Terminal_error of Terminal.Core.Result.error
+      | Terminal2_error of Terminal2.Core.Result.error
+  end
+
+  module Core = struct
+    type 'a t = 'a R.Core.t
+    let map = R.Core.map
+
+    module Result = Sugar_result.Make(Error)
+  end
+  module Spec = Machine.SpecFor(Core)
+
+  module Dsl(Ctx: Spec.S.Context) (E:Spec.S.Error) = struct
+    module Result = Core.Result.With (Ctx.Free) (E)
+  end
 end
 
 (* module Terminals. *)

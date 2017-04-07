@@ -16,10 +16,12 @@ module Terminal = struct
      If we add errors and results to the Core module, we can figure them out on
      combine modules as well, right?
   *)
+
+  module Error = struct
+    type error = string
+  end
+
   module Core = struct
-    module Error = struct
-      type error = string
-    end
     (* Our new convention *)
     module Result = Sugar.MakeResult (Error)
     open Result
@@ -36,9 +38,12 @@ module Terminal = struct
 
   module Spec = Machine.SpecFor (Core)
 
-  module Dsl (Ctx:Spec.S.Context) (Error:Spec.S.NaturalError) = struct
+  (* module Dsl (Ctx:Spec.S.Context) (Error:Spec.S.NaturalError) = struct *)
+  module Dsl (Ctx:Spec.S.Context) = struct
     open Ctx
-    module Result = Result.For(Free) (Error)
+
+    (* module Result = Result.For(Free) (Error) *)
+    module Result = Result.For(Free)
 
     let puts s =
       Puts (s, id) |> lift

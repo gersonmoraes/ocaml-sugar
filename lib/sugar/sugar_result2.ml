@@ -5,8 +5,9 @@ open Sugar_types
 
   This functors produces a module following the interface {!Sugar_types.Result}.
 *)
-module Make (UserError:Error) : Sugar_types.Result
-  with type error = UserError.error =
+module Make (UserError:Error)
+(* : Sugar_types.Result
+  with type error = UserError.error = *) =
 struct
   type 'a result = ('a, UserError.error) Pervasives.result
   type error = UserError.error
@@ -40,15 +41,6 @@ struct
       | _ -> y
 
     let (>---------) = bind_unless
-
-    let (<*>) f x =
-      f
-      >>= fun f' ->
-      x
-      >>= fun x' ->
-      return (f' x')
-
-    let (<$>) f x = map x f
   end
 
   let unwrap = function
@@ -85,33 +77,4 @@ struct
   module For(M: Sugar_types.Monad) = struct
     include Sugar_promise.Make (M) (UserError)
   end
-
-  module type NaturalError = sig
-    type dst
-    val apply: error -> dst
-    val reverse: dst -> error option
-  end
-
-  module With(M: Sugar_types.Monad) (Natural:NaturalError) = struct
-    module CompleteNatural = struct
-      type src = error
-      include Natural
-    end
-    include Sugar_monadic_with_natural.Make (M) (CompleteNatural)
-  end
 end
-
-
-(* module type NaturalError = sig
-  type src
-  type dst
-
-  val apply: src -> dst
-  val reverse: dst -> src
-end
-
-module MakeWith(Natural: NaturalError) = struct
-  module Error = struct
-    type error = Natural.dst
-  end
-end *)
