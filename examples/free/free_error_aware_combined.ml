@@ -112,7 +112,7 @@ module X_and_Y = struct
 end
 
 
-module Context = Sugar_free.CreateContext(X_and_Y.Core)
+module Context = Sugar_free.ContextFor(X_and_Y.Core)
 module Result = Sugar_free.CoreResult.For(Context.Free)
 
 open Result

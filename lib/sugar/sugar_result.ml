@@ -85,20 +85,6 @@ struct
   module For(M: Sugar_types.Monad) = struct
     include Sugar_promise.Make (M) (UserError)
   end
-
-  module type NaturalError = sig
-    type dst
-    val apply: error -> dst
-    val reverse: dst -> error option
-  end
-
-  module With(M: Sugar_types.Monad) (Natural:NaturalError) = struct
-    module CompleteNatural = struct
-      type src = error
-      include Natural
-    end
-    include Sugar_monadic_with_natural.Make (M) (CompleteNatural)
-  end
 end
 
 

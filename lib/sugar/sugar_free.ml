@@ -310,7 +310,7 @@ module type Runtime = sig
   end
 end
 
-module CreateContext(L:Functor) = struct
+module ContextFor(L:Functor) = struct
   module Free = MakeFree (L)
   type 'a free   = 'a Free.t
   type 'a free_f = 'a Free.f
@@ -328,8 +328,8 @@ module CreateContext(L:Functor) = struct
     Free.iter runner program
 end
 
-module For(R:Runtime) = struct
-  include CreateContext(R.Core)
+module ContextForRuntime(R:Runtime) = struct
+  include ContextFor(R.Core)
 end
 
 module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
