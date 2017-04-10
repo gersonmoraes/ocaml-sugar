@@ -4,7 +4,7 @@ open Sugar.Types
 
 module MyError =
 struct
-  type error =
+  type t =
     | Resource_not_found
     | Unexpected of string
 end

@@ -6,16 +6,16 @@ open Sugar_types
 *)
 module Make  (UserMonad:Sugar_types.Monad)  (UserError:Sugar_types.Error) : Sugar_types.Promise
   with
-    type error := UserError.error
+    type error := UserError.t
     and type 'a monad := 'a UserMonad.t
-    and type 'a result = ('a, UserError.error) Pervasives.result
-    and type 'a promise = ('a, UserError.error) result UserMonad.t
+    and type 'a result = ('a, UserError.t) Pervasives.result
+    and type 'a promise = ('a, UserError.t) result UserMonad.t
 =
 struct
   include UserError
 
   type 'a monad = 'a UserMonad.t
-  type 'a result = ('a, UserError.error) Pervasives.result
+  type 'a result = ('a, UserError.t) Pervasives.result
   type 'a promise = 'a result monad
 
   open UserMonad

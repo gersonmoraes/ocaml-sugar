@@ -14,8 +14,8 @@ open Sugar.Types
 (* Create a module with your own "error" type *)
 module MyError =
 struct
-  type error =
-    | Resource_not_found
+  type t
+    = Resource_not_found
     | Unexpected of string
 end
 

@@ -10,9 +10,12 @@ open Result
 module X = struct
 
   (* it could be less annoying if this was defined by the user *)
-  module Error = struct
-    type Machine.Error.error += X_Error of unit
+  module Errors = struct
+    type t = Issue1 | Issue2
   end
+  
+  type Machine.Error.t += Error of Errors.t
+
   module Core = struct
     type 'f t =
       | Puts of string * ('f, unit result) next
@@ -50,9 +53,11 @@ end
 module Y = struct
 
   (* it could be less annoying if this was defined by the user *)
-  module Error = struct
-    type Machine.Error.error += Y_Error of unit
+  module Errors = struct
+    type t = Issue1 | Issue2
   end
+  
+  type Machine.Error.t += Error of Errors.t
 
   module Core = struct
     type 'f t =
@@ -67,7 +72,7 @@ module Y = struct
   module Spec = Machine.SpecFor (Core)
 
   module Dsl (Ctx:Spec.S.Context) = struct
-    module Result = Result.For(Ctx.Free)
+    (* The result module should be already inside the context *)
     let puts s = Puts (s, id) |> Ctx.lift
     let get_line () = GetLine id |> Ctx.lift
   end
@@ -109,8 +114,6 @@ module CustomDsl = struct
     | L.Core.Case2 cmd -> Y.Runner.debug cmd
 
   module MyMachine = Machine.ForLanguage(L.Core)
-
-  module Result = Result.For(MyMachine.Free)
   module X = X.Dsl (L.T1.For(MyMachine))
   module Y = Y.Dsl (L.T2.For(MyMachine))
 end
@@ -135,8 +138,14 @@ let program1 =
   Y.puts "Let's test some errors?! Type something."
   >---------
   ( function
-    _e -> return ()
-  ) >>>
+    | X.Error e ->
+      ( match e with
+        | X.Errors.Issue1 -> return ()
+        | X.Errors.Issue2 -> return () 
+      )
+    | Y.Error e -> return ()
+    | _ -> assert false
+  ) >>
   X.get_line ()
   >---------
   ( fun _ ->

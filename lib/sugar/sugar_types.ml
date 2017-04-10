@@ -52,7 +52,7 @@ module type Error = sig
     You should implement this type according to your project.
     This could be any type, including strings or unit.
   *)
-  type error
+  type t
 end
 
 (**
