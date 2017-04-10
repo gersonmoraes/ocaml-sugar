@@ -206,9 +206,6 @@ module SpecFor(L:Functor) : Spec
 
       let lift f = Ctx.Free.lift (apply f)
 
-      (* this should be related to the result module *)
-      (* let return v = Ctx.Free.return v *)
-
       module Free = Ctx.Free
 
       module Result = CoreResult.For (Ctx.Free)
@@ -217,74 +214,60 @@ module SpecFor(L:Functor) : Spec
 
 end (* SpecFor *)
 
-module Combine (F1:Functor) (F2:Functor) = struct
+module Combine (L1:Functor) (L2:Functor) = struct
 
   module Core = struct
     type 'a t =
-      | Case1 of 'a F1.t
-      | Case2 of 'a F2.t
+      | Case1 of 'a L1.t
+      | Case2 of 'a L2.t
 
     let map f = function
-      | Case1 v -> Case1 (F1.map f v)
-      | Case2 v -> Case2 (F2.map f v)
+      | Case1 v -> Case1 (L1.map f v)
+      | Case2 v -> Case2 (L2.map f v)
   end
-  open Core
-
-  let return1 v = Case1 v
-  let return2 v = Case2 v
 
   module Spec = SpecFor (Core)
 
-  module T1 = Spec.Proxy
-    (struct
-      type 'a src = 'a F1.t
-      let apply = return1
-    end)
+  module Natural = struct
+    open Core
+    open Spec
 
-  module T2 = Spec.Proxy
-    (struct
-      type 'a src = 'a F2.t
-      let apply = return2
-    end)
+    let apply1 v = Case1 v
+    let apply2 v = Case2 v
+
+    module Proxy1 = Proxy(struct type 'a src = 'a L1.t let apply = apply1 end)
+    module Proxy2 = Proxy(struct type 'a src = 'a L2.t let apply = apply2 end)
+  end
+
 end (* Combine *)
 
-module Combine3 (F1:Functor) (F2:Functor) (F3:Functor) = struct
+module Combine3 (L1:Functor) (L2:Functor) (L3:Functor) = struct
   module Core = struct
     type 'a t =
-      | Case1 of 'a F1.t
-      | Case2 of 'a F2.t
-      | Case3 of 'a F3.t
+      | Case1 of 'a L1.t
+      | Case2 of 'a L2.t
+      | Case3 of 'a L3.t
 
     let map f = function
-      | Case1 v -> Case1 (F1.map f v)
-      | Case2 v -> Case2 (F2.map f v)
-      | Case3 v -> Case3 (F3.map f v)
+      | Case1 v -> Case1 (L1.map f v)
+      | Case2 v -> Case2 (L2.map f v)
+      | Case3 v -> Case3 (L3.map f v)
   end
-  open Core
-
-  let return1 v = Case1 v
-  let return2 v = Case2 v
-  let return3 v = Case3 v
 
   module Spec = SpecFor(Core)
 
-  module T1 = Spec.Proxy
-    (struct
-      type 'a src = 'a F1.t
-      let apply = return1
-    end)
+  module Natural = struct
+    open Core
+    open Spec
 
-  module T2 = Spec.Proxy
-    (struct
-      type 'a src = 'a F2.t
-      let apply = return2
-    end)
+    let apply1 v = Case1 v
+    let apply2 v = Case2 v
+    let apply3 v = Case3 v
 
-  module T3 = Spec.Proxy
-    (struct
-      type 'a src = 'a F3.t
-      let apply = return3
-    end)
+    module Proxy1 = Proxy(struct type 'a src = 'a L1.t let apply = apply1 end)
+    module Proxy2 = Proxy(struct type 'a src = 'a L2.t let apply = apply2 end)
+    module Proxy3 = Proxy(struct type 'a src = 'a L3.t let apply = apply3 end)
+  end
 end (* Combine3 *)
 
 
@@ -292,40 +275,30 @@ end (* Combine3 *)
 (**
   Combine 4 languages.
 *)
-module Combine4 (F1:Functor) (F2:Functor)
-                (F3:Functor) (F4:Functor) =
+module Combine4 (L1:Functor) (L2:Functor)
+                (L3:Functor) (L4:Functor) =
 struct
-  module Core1_2 = Combine (F1) (F2)
-  module Core3_4 = Combine (F3) (F4)
+  module Core_A = Combine (L1) (L2)
+  module Core_B = Combine (L3) (L4)
 
-  module R = Combine (Core1_2.Core) (Core3_4.Core)
+  module R = Combine (Core_A.Core) (Core_B.Core)
 
   module Core = R.Core
   module Spec = R.Spec
 
-  module T1 = Spec.Proxy
-    (struct
-      type 'a src = 'a F1.t
-      let apply v = R.return1 (Core1_2.return1 v)
-    end)
+  module Natural = struct
+    open Spec
 
-  module T2 = Spec.Proxy
-    (struct
-      type 'a src = 'a F2.t
-      let apply v = R.return1 (Core1_2.return2 v)
-    end)
+    let apply1 v = R.Natural.apply1 (Core_A.Natural.apply1 v)
+    let apply2 v = R.Natural.apply1 (Core_A.Natural.apply2 v)
+    let apply3 v = R.Natural.apply2 (Core_B.Natural.apply1 v)
+    let apply4 v = R.Natural.apply2 (Core_B.Natural.apply2 v)
 
-  module T3 = Spec.Proxy
-    (struct
-      type 'a src = 'a F3.t
-      let apply v = R.return2 (Core3_4.return1 v)
-    end)
-
-  module T4 = Spec.Proxy
-    (struct
-      type 'a src = 'a F4.t
-      let apply v = R.return2 (Core3_4.return2 v)
-    end)
+    module Proxy1 = Proxy(struct type 'a src = 'a L1.t let apply = apply1 end)
+    module Proxy2 = Proxy(struct type 'a src = 'a L2.t let apply = apply2 end)
+    module Proxy3 = Proxy(struct type 'a src = 'a L3.t let apply = apply3 end)
+    module Proxy4 = Proxy(struct type 'a src = 'a L4.t let apply = apply4 end)
+  end
 end (* Combine4 *)
 
 module type Runtime = sig
@@ -342,10 +315,8 @@ module CreateContext(L:Functor) = struct
   type 'a free   = 'a Free.t
   type 'a free_f = 'a Free.f
 
-  (* TODO: not used *)
-  type 'a t = 'a L.t
   type 'a src = 'a L.t
-  type 'a dst = 'a t
+  type 'a dst = 'a L.t
   let apply = id
 
   let return f = Free.return f
@@ -364,21 +335,18 @@ end
 module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
 
 module Assemble (R1:Runtime) (R2:Runtime) = struct
-  module Merge = Combine (R1.Core) (R2.Core)
-
-  module Core = Merge.Core
-  module Spec = SpecFor(Core)
-  module T1 = Merge.T1
-  module T2 = Merge.T2
+  include Combine (R1.Core) (R2.Core)
 
   module Runner : Spec.S.Runner = struct
+    open Core
+
     let run = function
-      | Core.Case1 v -> R1.Runner.run v
-      | Core.Case2 v -> R2.Runner.run v
+      | Case1 v -> R1.Runner.run v
+      | Case2 v -> R2.Runner.run v
 
     let debug = function
-      | Core.Case1 v -> R1.Runner.debug v
-      | Core.Case2 v -> R2.Runner.debug v
+      | Case1 v -> R1.Runner.debug v
+      | Case2 v -> R2.Runner.debug v
   end
 end
 

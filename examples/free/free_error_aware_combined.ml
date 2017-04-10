@@ -106,8 +106,8 @@ module X_and_Y = struct
   end
 
   module Api (Ctx: Spec.S.Context) = struct
-    module X = X.Api (T1.For(Ctx))
-    module Y = Y.Api (T2.For(Ctx))
+    module X = X.Api (Natural.Proxy1.For(Ctx))
+    module Y = Y.Api (Natural.Proxy2.For(Ctx))
   end
 end
 
