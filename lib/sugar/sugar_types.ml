@@ -174,7 +174,7 @@ module type Promise = sig
    *)
    (* val (//>): unit promise -> 'a promise -> 'a promise *)
 
-   val (>>): 'a promise -> 'b promise -> 'b promise
+   val (>>>): 'a promise -> 'b promise -> 'b promise
 
   end
 
@@ -208,7 +208,7 @@ module type Promise = sig
 
 
  (* val (/>): unit promise -> (unit -> 'b promise) -> 'b promise *)
- val ( /> ) : unit promise -> 'b promise -> 'b promise
+ val ( >> ) : unit promise -> 'b promise -> 'b promise
 
 end
 
@@ -332,7 +332,7 @@ module type NaturalPromise = sig
    *)
    (* val (//>): unit promise -> 'a promise -> 'a promise *)
 
-   val (>>): 'a promise -> 'b promise -> 'b promise
+   val (>>>): 'a promise -> 'b promise -> 'b promise
 
   end
 
@@ -366,7 +366,7 @@ module type NaturalPromise = sig
 
 
  (* val (/>): unit promise -> (unit -> 'b promise) -> 'b promise *)
- val ( /> ) : unit promise -> 'b promise -> 'b promise
+ val ( >> ) : unit promise -> 'b promise -> 'b promise
 
 end
 
@@ -600,7 +600,7 @@ module type Result = sig
    *)
   (* val (//>): unit result -> 'a result -> 'a result *)
 
-  val (>>): 'a result -> 'b result -> 'b result
+  val (>>>): 'a result -> 'b result -> 'b result
 
   val (>>=): 'a result -> ('a -> 'b result) -> 'b result
 
@@ -655,7 +655,7 @@ module type Result = sig
         puts "Computations"
       </code>
      *)
-    val (/>): unit result -> 'b result -> 'b result
+    val (>>): unit result -> 'b result -> 'b result
 
     module For : functor (UserMonad:Monad) -> Promise
       with type error := error

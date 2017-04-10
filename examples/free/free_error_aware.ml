@@ -1,6 +1,6 @@
 (* open Sugar *)
 
-module Machine = Sugar_machine_error_aware
+module Machine = Sugar_machine
 open Machine.Utils
 open Printf
 
@@ -81,7 +81,7 @@ open TerminalDsl
 open Result
 
 let program1 =
-  puts "What's your name?" />
+  puts "What's your name?" >>
   get_line ()
   >>= fun name ->
   puts (name ^ ", have a nice day")

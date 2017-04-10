@@ -34,7 +34,7 @@ struct
   module Infix = struct
     let (>>=) = bind_if
     let (>>|) = map
-    let (>>) x y =
+    let (>>>) x y =
       match x, y with
       | (Error e, _) -> Error e
       | _ -> y
@@ -68,7 +68,7 @@ struct
 
   let (>>=) = bind_if
 
-  let (/>) x y =
+  let (>>) x y =
     x
     >>= fun () ->
     y

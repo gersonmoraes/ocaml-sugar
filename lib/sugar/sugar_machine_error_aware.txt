@@ -126,7 +126,7 @@ module type ErrorAwareContext = sig
   type 'a free_f = 'a Free.f
 
   type error
-  type 'a result = ('a, error) Pervasive.result
+  type 'a result = ('a, error) Pervasives.result
 
   include Natural
     with type 'a dst = 'a free_f
@@ -169,14 +169,14 @@ module type Spec = sig
       val apply: src -> Core.Result.error
       val reverse: Core.Result.error -> src option
     end
-    
+
     module type ContextError = sig
       type dst
       val apply: Core.Result.error -> dst
       val reverse: dst -> Core.Result.error option
     end
-    
-    
+
+
     (* module type Error = NaturalError
       with type src = Core.Result.error *)
 
@@ -226,7 +226,7 @@ module SpecFor(L:Language) : Spec
       val apply: src -> Core.Result.error
       val reverse: Core.Result.error -> src option
     end
-    
+
     module type ContextError = sig
       type dst
       val apply: Core.Result.error -> dst
@@ -264,18 +264,18 @@ module SpecFor(L:Language) : Spec
       module Free = Ctx.Free
     end  (* Spec.Proxy.For *)
   end (* Spec.Proxy *)
-  
+
   module MergeErrors (E:ProxyError) (Ctx:ContextError) = struct
       type src = E.src
       type dst = Ctx.dst
-      
+
       let apply v = Ctx.apply (E.apply v)
       let reverse v =
         match Ctx.reverse v with
         | Some e -> E.reverse e
-        | _ -> None 
+        | _ -> None
   end
-    
+
   module Error(Proxy:ProxyError) = struct
     module For(Ctx:ContextError) = struct
       include MergeErrors (Proxy) (Ctx)

@@ -1,30 +1,22 @@
-open Sugar
+(* open Sugar *)
 
-module Machine = Sugar_machine_error_aware
+module Machine = Sugar_machine_with_shared_errors
 open Machine.Utils
 open Printf
 
+module Result = Sugar.MakeResult (Machine.Error)
+open Result
 
 module X = struct
 
+  (* it could be less annoying if this was defined by the user *)
   module Error = struct
-    type error = unit
+    type Machine.Error.error += X_Error of unit
   end
-
-  (*
-     If we add errors and results to the Core module, we can figure them out on
-     combine modules as well, right?
-  *)
   module Core = struct
-
-    (* Our new convention *)
-    module Result = Sugar.MakeResult (Error)
-    open Result
-
     type 'f t =
       | Puts of string * ('f, unit result) next
       | GetLine of ('f, string result) next
-
     let map f = function
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
@@ -33,176 +25,127 @@ module X = struct
 
   module Spec = Machine.SpecFor (Core)
 
-  module Dsl(Ctx: Spec.S.Context) (E:Spec.S.Error) = struct
-    module Result = Core.Result.With (Ctx.Free) (E)
-    open Ctx
-  
-    let puts s =
-      Puts (s, id) |> lift
-
-    let get_line () =
-      GetLine id |> lift
+  module Dsl (Ctx:Spec.S.Context) = struct
+    module Result = Result.For(Ctx.Free)
+    let puts s = Puts (s, id) |> Ctx.lift
+    let get_line () = GetLine id |> Ctx.lift
   end
 
   module Runner = struct
-    open Core.Result
-
     let run = function
       | Puts (s, f) -> print_endline s; return () |> f
       | GetLine f -> read_line () |> return |> f
-
     let debug = function
       | Puts (s, f) ->
-          printf "Puts: %s\n" s; return () |> f
+          printf "X.Puts: %s\n" s; return () |> f
       | GetLine f ->
-          printf "GetLine: ";
+          printf "X.GetLine: ";
+          (* throw (Error.X_Error ()) |> f *)
           read_line () |> return |> f
   end
 end
-(*
-let _ =
-  (module Terminal.Core:Machine.Language),
-  (module Terminal:Machine.Runtime) *)
 
 
 
 module Y = struct
 
+  (* it could be less annoying if this was defined by the user *)
   module Error = struct
-    type error = string
+    type Machine.Error.error += Y_Error of unit
   end
 
   module Core = struct
-
-    (* Our new convention *)
-    module Result = Sugar.MakeResult (Error)
-    open Result
     type 'f t =
-      | Puts2 of string * ('f, unit result) next
-      | GetLine2 of ('f, string result) next
-
+      | Puts of string * ('f, unit result) next
+      | GetLine of ('f, string result) next
     let map f = function
-      | Puts2 (s, g) -> Puts2 (s, f @ g)
-      | GetLine2 g -> GetLine2 (f @ g)
+      | Puts (s, g) -> Puts (s, f @ g)
+      | GetLine g -> GetLine (f @ g)
   end
   open Core
 
   module Spec = Machine.SpecFor (Core)
 
-  module Dsl(Ctx: Spec.S.Context) (E:Spec.S.Error) = struct
-    module Result = Core.Result.With (Ctx.Free) (E)
-    open Ctx
-
-    let puts s =
-      Puts2 (s, id) |> lift
-
-    let get_line () =
-      GetLine2 id |> lift
+  module Dsl (Ctx:Spec.S.Context) = struct
+    module Result = Result.For(Ctx.Free)
+    let puts s = Puts (s, id) |> Ctx.lift
+    let get_line () = GetLine id |> Ctx.lift
   end
 
   module Runner = struct
-    open Result
     let run = function
-      | Puts2 (s, f) -> print_endline s; return () |> f
-      | GetLine2 f -> read_line () |> return |> f
-
+      | Puts (s, f) -> print_endline s; return () |> f
+      | GetLine f -> read_line () |> return |> f
     let debug = function
-      | Puts2 (s, f) ->
-          printf "Puts: %s\n" s; return () |> f
-      | GetLine2 f ->
-          printf "GetLine: ";
-          read_line () |> return |> f
-  end
-end
-(*
-let _ =
-  (module Terminal.Core:Machine.Language),
-  (module Terminal:Machine.Runtime) *)
-
-
-module X_and_Y = struct
-  module R = Machine.Combine (X.Core) (Y.Core)
-
-  module Error = struct
-    type error
-      = X_error of X.Core.Result.error
-      | Y_error of Y.Core.Result.error
-  end
-
-  module Core = struct
-    type 'a t = 'a R.Core.t
-    let map = R.Core.map
-    module Result = Sugar_result.Make(Error)
-  end
-  module Spec = Machine.SpecFor(Core)
-  
-  module Natural = struct 
-    module ProxyX = R.Natural.Proxy1 
-    module ProxyY = R.Natural.Proxy2
-    
-    (* TODO:
-         We need refined signatures to merge errors.
-         We can only create a merge operation between 
-         Natural transformations of errors if the two 
-         Modules are related to the current language.
-    *)
-    
-    (* This pattern needs to be simplified *)
-    module ErrorX = Spec.Error (struct
-      type src = X.Error.error
-      let apply e = X_error e
-      let reverse v = function 
-        | X_error e = Some e
-        | _ -> None
-    end)
-    
-    module ErrorY = Spec.Error(struct
-      type src = Y.Error.error
-      let apply e = Y_error e
-      let reverse v = function
-        | Y_error e = Some e
-        | _ -> None
-    end)
-    end
-
-  module Dsl(Ctx: Spec.S.Context) (E:Spec.S.ContextError) = struct
-    module Result = Core.Result.With (Ctx.Free) (E)
-    
-    (* Conversion tools *)
-    open Natural
-    
-    (* TODO: Can we include the context error inside the translation context? *)
-
-    module X = X.Dsl (ProxyX.For(Ctx)) (ErrorX.For(E))
-    module Y = Y.Dsl (ProxyY.For(Ctx)) (ErrorY.For(E))
-    
-    open Result
-    
-    (* Play time *)
-    let todo () =
-      X.puts "x: hello" />
-      Y.puts "y: hello" />
-      X.get_line ()
-      >>= fun line ->
-      Y.puts ("y: line returned from x:" ^ line) />
-      throw (X_error ())
+      | Puts (s, f) ->
+          printf "Y.Puts: %s\n" s; throw (Error.Y_Error ()) |> f
+          (* printf "Puts: %s\n" s; return () |> f *)
+      | GetLine f ->
+          printf "Y.GetLine: "; read_line () |> return |> f
   end
 end
 
-(* module Terminals. *)
 
-module MyMachine = Machine.For(Terminal)
-module TerminalDsl = Terminal.Dsl (MyMachine)
-(* module TerminalDsl2 = Terminal2.Dsl (MyMachine) *)
 
-open TerminalDsl
+
+
+
+
+
+
+
+
+
+
+module CustomDsl = struct
+  module L = Machine.Combine (X.Core) (Y.Core)
+
+  let run = function
+    | L.Core.Case1 cmd -> X.Runner.run cmd
+    | L.Core.Case2 cmd -> Y.Runner.run cmd
+
+  let debug = function
+    | L.Core.Case1 cmd -> X.Runner.debug cmd
+    | L.Core.Case2 cmd -> Y.Runner.debug cmd
+
+  module MyMachine = Machine.ForLanguage(L.Core)
+
+  module Result = Result.For(MyMachine.Free)
+  module X = X.Dsl (L.T1.For(MyMachine))
+  module Y = Y.Dsl (L.T2.For(MyMachine))
+end
+
+
+open CustomDsl
 open Result
+open Result.Infix
+
+(*
+  TODO
+    - We have a precedence issue with our semicolon operator: (/>)
+    - We need to "take" the combinator (>>) to act as the semicolon
+    - We should make the "discard operation" as the operator (>>>)
+*)
 
 let program1 =
-  puts "What's your name?" />
-  get_line ()
+  X.puts "What's your name?" >>
+  Y.get_line ()
   >>= fun name ->
-  puts (name ^ ", have a nice day")
+  X.puts (name ^ ", have a nice day") >>
+  Y.puts "Let's test some errors?! Type something."
+  >---------
+  ( function
+    _e -> return ()
+  ) >>>
+  X.get_line ()
+  >---------
+  ( fun _ ->
+    X.puts "The computation resulted in an unexpected error" >>
+    return "recovered"
+  )
+  >>= fun line ->
+  Y.puts ("You said: " ^ line)
+
 
 let () =
-  MyMachine.run Terminal.Runner.run (Result.unwrap program1)
+  MyMachine.run debug (Result.unwrap program1)

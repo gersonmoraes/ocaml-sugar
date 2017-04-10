@@ -57,8 +57,9 @@ Library "sugar"
   FindlibName:      sugar
   Path:             lib/sugar
   Modules:          Sugar_promise, Sugar_types, Sugar_option, Sugar_result, Sugar,
-                    Sugar_generic, Sugar_machine, Sugar_machine_error_aware,
-                    Sugar_monadic_with_natural
+                    Sugar_generic, Sugar_machine,
+                    Sugar_monadic_with_natural,
+                    Sugar_machine_with_shared_errors
 
   CompiledObject:   best
   XMETADescription: A library to bring sugar syntatic to your error handling layer.

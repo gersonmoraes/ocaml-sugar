@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: c9cb9e31f1c3a6a1b697bda424e637ee)
+# DO NOT EDIT (digest: edb19216d53d5f9ff218ae74a5fba212)
 Sugar_promise
 Sugar_types
 Sugar_option
@@ -7,6 +7,6 @@ Sugar_result
 Sugar
 Sugar_generic
 Sugar_machine
-Sugar_machine_error_aware
 Sugar_monadic_with_natural
+Sugar_machine_with_shared_errors
 # OASIS_STOP

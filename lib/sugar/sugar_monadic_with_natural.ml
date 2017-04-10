@@ -62,7 +62,7 @@ struct
 
     let (>>|) = map
 
-    let (>>) x y =
+    let (>>>) x y =
       x
       >>= fun _ ->
       y
@@ -103,7 +103,7 @@ struct
 
 
   let (>>=) = bind_if
-  let (/>) x y =
+  let (>>) x y =
     x
     >>= fun () ->
     y

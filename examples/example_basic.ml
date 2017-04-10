@@ -61,7 +61,7 @@ let _ =
 
 
 let _ =
-  print_message "We are extensively using a user defined result type" />
+  print_message "We are extensively using a user defined result type" >>
   ( List.length <$> load_list 10)
   >>= fun len ->
   throw (Unexpected (sprintf "List length invalid: %d" len))
@@ -71,9 +71,9 @@ let _ =
   )
   >>=
   ( fun recovered ->
-    print_message "This will NOT be printed"        />
-    print_message "The previous error_handler"      />
-    print_message "can't catch 'Unexpected' errors" />
+    print_message "This will NOT be printed"        >>
+    print_message "The previous error_handler"      >>
+    print_message "can't catch 'Unexpected' errors" >>
     return "for sure"
   )
   >---------
@@ -83,7 +83,7 @@ let _ =
   >>= print_message
 
 let _ =
-  print_message "We are extensively using a user defined result type" />
+  print_message "We are extensively using a user defined result type" >>
   load_list 10
   >>| List.length
   >>= fun len ->
@@ -94,9 +94,9 @@ let _ =
   )
   >>=
   ( fun recovered ->
-    print_message "This will NOT be printed"        />
-    print_message "The previous error_handler"      />
-    print_message "can't catch 'Unexpected' errors" />
+    print_message "This will NOT be printed"        >>
+    print_message "The previous error_handler"      >>
+    print_message "can't catch 'Unexpected' errors" >>
     return "for sure"
   )
   >---------
