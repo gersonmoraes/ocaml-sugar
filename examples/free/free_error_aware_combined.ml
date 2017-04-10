@@ -1,24 +1,21 @@
 (* open Sugar *)
 
-module Machine = Sugar_machine_with_shared_errors
-open Machine.Utils
+open Sugar_free.Utils
 open Printf
 
-(* module Result = Sugar.MakeResult (Machine.Error) *)
+(* module Result = Sugar.MakeResult (Sugar_free.Error) *)
 (* open Result *)
 
 module X = struct
-  open Machine.CoreResult
+  open Sugar_free.CoreResult
 
-  (* it could be less annoying if this was defined by the user *)
   module Errors = struct
     type t = Issue1 | Issue2
   end
 
-  type Machine.Error.t += Error of Errors.t
+  type Sugar_free.Error.t += Error of Errors.t
 
   module Core = struct
-
     type 'f t =
       | Puts of string * ('f, unit result) next
       | GetLine of ('f, string result) next
@@ -28,7 +25,7 @@ module X = struct
   end
   open Core
 
-  module Spec = Machine.SpecFor (Core)
+  module Spec = Sugar_free.SpecFor (Core)
 
   module Api (Ctx:Spec.S.Context) = struct
     let puts s = Puts (s, id) |> Ctx.lift
@@ -43,22 +40,14 @@ module X = struct
       | Puts (s, f) ->
           printf "X.Puts: %s\n" s; return () |> f
       | GetLine f ->
-          printf "X.GetLine: ";
-          (* throw (Error.X_Error ()) |> f *)
-          read_line () |> return |> f
+          printf "X.GetLine: "; read_line () |> return |> f
   end
 end
 
 
 
 module Y = struct
-  open Machine.CoreResult
-
-  module Errors = struct
-    type t = Issue1 | Issue2
-  end
-
-  type Machine.Error.t += Error of Errors.t
+  open Sugar_free.CoreResult
 
   module Core = struct
     type 'f t =
@@ -68,24 +57,33 @@ module Y = struct
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
   end
+
   open Core
 
-  module Spec = Machine.SpecFor (Core)
+  module Spec = Sugar_free.SpecFor (Core)
 
   module Api (Ctx:Spec.S.Context) = struct
     let puts s = Puts (s, id) |> Ctx.lift
     let get_line () = GetLine id |> Ctx.lift
   end
 
+  (* Error definitions *)
+  module Errors = struct
+    type t = unit
+  end
+  type Sugar_free.Error.t += Error of Errors.t
+
   module Runner = struct
     open Errors
+
+    let throw (e:Errors.t) = throw (Error e)
 
     let run = function
       | Puts (s, f) -> print_endline s; return () |> f
       | GetLine f -> read_line () |> return |> f
     let debug = function
       | Puts (s, f) ->
-          printf "Y.Puts: %s\n" s; throw (Error Issue1) |> f
+          printf "Y.Puts: %s\n" s; throw () |> f
           (* printf "Puts: %s\n" s; return () |> f *)
       | GetLine f ->
           printf "Y.GetLine: "; read_line () |> return |> f
@@ -95,7 +93,7 @@ end
 
 
 module X_and_Y = struct
-  include Machine.Combine (X.Core) (Y.Core)
+  include Sugar_free.Combine (X.Core) (Y.Core)
 
   module Runner = struct
     let run = function
@@ -114,8 +112,8 @@ module X_and_Y = struct
 end
 
 
-module Context = Machine.ForLanguage(X_and_Y.Core)
-module Result = Machine.CoreResult.For(Context.Free)
+module Context = Sugar_free.CreateContext(X_and_Y.Core)
+module Result = Sugar_free.CoreResult.For(Context.Free)
 
 open Result
 open Result.Infix
@@ -142,7 +140,7 @@ let program1 =
         | X.Errors.Issue1 -> return ()
         | X.Errors.Issue2 -> return ()
       )
-    | Y.Error e -> return ()
+    | Y.Error () -> return ()
     | _ -> assert false
   ) >>
   Api.X.get_line ()
@@ -152,7 +150,7 @@ let program1 =
     return "recovered"
   )
   >>= fun line ->
-  Api.Y.puts ("You said: " ^ line)
+  Api.X.puts ("You said: " ^ line)
 
 
 let () =

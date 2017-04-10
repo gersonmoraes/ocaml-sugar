@@ -110,8 +110,9 @@ module type Context = sig
   (* val return : 'a -> 'a Free.t *)
 
   (* This result is compatible to the free monad *)
-  (* module Result : Sugar_types.Promise
-    with type error = Error.t *)
+  module Result : Sugar_types.Promise
+    with type error := Error.t
+     and type 'a monad := 'a Free.t
 end
 
 
@@ -209,6 +210,8 @@ module SpecFor(L:Functor) : Spec
       (* let return v = Ctx.Free.return v *)
 
       module Free = Ctx.Free
+
+      module Result = CoreResult.For (Ctx.Free)
     end  (* Spec.Proxy.For *)
   end (* Spec.Proxy *)
 
@@ -334,7 +337,7 @@ module type Runtime = sig
   end
 end
 
-module ForLanguage(L:Functor) = struct
+module CreateContext(L:Functor) = struct
   module Free = MakeFree (L)
   type 'a free   = 'a Free.t
   type 'a free_f = 'a Free.f
@@ -348,12 +351,14 @@ module ForLanguage(L:Functor) = struct
   let return f = Free.return f
   let lift f = Free.lift (apply f)
 
+  module Result = CoreResult.For (Free)
+
   let run runner program =
     Free.iter runner program
 end
 
 module For(R:Runtime) = struct
-  include ForLanguage(R.Core)
+  include CreateContext(R.Core)
 end
 
 module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
