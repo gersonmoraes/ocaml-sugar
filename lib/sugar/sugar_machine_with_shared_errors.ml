@@ -2,12 +2,11 @@
 open Sugar_generic
 
 module Error = struct
-  type error = ..
-  type error += Unexpected of string
+  type t = ..
 end
 
 module type Result = Sugar_types.Result
-  with type error = Error.error
+  with type error = Error.t
 
 module CoreResult = Sugar.MakeResult (Error)
 
@@ -103,16 +102,16 @@ module type Context = sig
     with type 'a dst = 'a free_f
 
   val lift: 'a src -> 'a Free.t
-  
+
   (* TODO:
-      - This instruction should be removed from here. 
-        It is not error aware. We need functionality like this in the result module. 
+      - This instruction should be removed from here.
+        It is not error aware. We need functionality like this in the result module.
   *)
   (* val return : 'a -> 'a Free.t *)
-  
-  (** This result is compatible to the free monad *)
-  module Result : Sugar_types.Promise
-    with type error = Error.error
+
+  (* This result is compatible to the free monad *)
+  (* module Result : Sugar_types.Promise
+    with type error = Error.t *)
 end
 
 
@@ -205,11 +204,9 @@ module SpecFor(L:Functor) : Spec
       let apply v = Ctx.apply (T.apply v)
 
       let lift f = Ctx.Free.lift (apply f)
-      
+
       (* this should be related to the result module *)
       (* let return v = Ctx.Free.return v *)
-      
-      module Result = CoreResult.For(Ctx.Free)
 
       module Free = Ctx.Free
     end  (* Spec.Proxy.For *)

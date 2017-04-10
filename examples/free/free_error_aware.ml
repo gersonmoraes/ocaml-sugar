@@ -18,7 +18,7 @@ module Terminal = struct
   *)
 
   module Error = struct
-    type error = string
+    type t = string
   end
 
   module Core = struct
