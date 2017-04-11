@@ -1,5 +1,5 @@
 open Sugar
-open Machine.Utils
+open DSL.Utils
 open Printf
 
 module Terminal = struct
@@ -15,7 +15,7 @@ module Terminal = struct
   end
   open Core
 
-  module Spec = Machine.SpecFor (Core)
+  module Spec = DSL.SpecFor (Core)
 
   module Runner = struct
     let run = function
@@ -46,7 +46,7 @@ end
   (module Terminal      : Machine.Runtime) *)
 
 
-module Env = Machine.For(Terminal)
+module Env = DSL.ContextFor(Terminal.Core)
 module Dsl = Terminal.Dsl (Env)
 
 open Env.Free.Infix

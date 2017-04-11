@@ -1,30 +1,14 @@
-(* open Sugar *)
+open Sugar
 
-module Machine = Sugar_machine
-open Machine.Utils
+open DSL.Utils
+
 open Printf
 
 
 module Terminal = struct
 
-  (* module Computation = Sugar.MakeResult
-    (struct
-      type error = unit
-    end) *)
-
-  (*
-     If we add errors and results to the Core module, we can figure them out on
-     combine modules as well, right?
-  *)
-
-  module Error = struct
-    type t = string
-  end
-
   module Core = struct
-    (* Our new convention *)
-    module Result = Sugar.MakeResult (Error)
-    open Result
+    open DSL.CoreResult
 
     type 'f t =
       | Puts of string * ('f, unit result) next
@@ -36,14 +20,11 @@ module Terminal = struct
   end
   open Core
 
-  module Spec = Machine.SpecFor (Core)
+  module Spec = DSL.SpecFor (Core)
 
   (* module Dsl (Ctx:Spec.S.Context) (Error:Spec.S.NaturalError) = struct *)
   module Dsl (Ctx:Spec.S.Context) = struct
     open Ctx
-
-    (* module Result = Result.For(Free) (Error) *)
-    module Result = Result.For(Free)
 
     let puts s =
       Puts (s, id) |> lift
@@ -52,8 +33,15 @@ module Terminal = struct
       GetLine id |> lift
   end
 
+  module Errors = struct
+    type t = string
+  end
+  type DSL.Error.t += Error of Errors.t
+
   module Runner = struct
-    open Core.Result
+    open DSL.CoreResult
+    
+    let throw e = Error e
 
     let run = function
       | Puts (s, f) -> print_endline s; return () |> f
@@ -67,18 +55,17 @@ module Terminal = struct
           read_line () |> return |> f
   end
 end
-(*
-let _ =
-  (module Terminal.Core:Machine.Language),
-  (module Terminal:Machine.Runtime) *)
 
 
-
-module MyMachine = Machine.For(Terminal)
+module MyMachine = DSL.ContextForRuntime(Terminal)
 module TerminalDsl = Terminal.Dsl (MyMachine)
 
 open TerminalDsl
+
+open MyMachine
+
 open Result
+open Result.Infix
 
 let program1 =
   puts "What's your name?" >>

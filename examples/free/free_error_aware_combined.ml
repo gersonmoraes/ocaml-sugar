@@ -1,19 +1,19 @@
 (* open Sugar *)
 
-open Sugar_free.Utils
+open Sugar.DSL.Utils
 open Printf
 
-(* module Result = Sugar.MakeResult (Sugar_free.Error) *)
+(* module Result = Sugar.MakeResult (Sugar.DSL.Error) *)
 (* open Result *)
 
 module X = struct
-  open Sugar_free.CoreResult
+  open Sugar.DSL.CoreResult
 
   module Errors = struct
     type t = Issue1 | Issue2
   end
 
-  type Sugar_free.Error.t += Error of Errors.t
+  type Sugar.DSL.Error.t += Error of Errors.t
 
   module Core = struct
     type 'f t =
@@ -25,7 +25,7 @@ module X = struct
   end
   open Core
 
-  module Spec = Sugar_free.SpecFor (Core)
+  module Spec = Sugar.DSL.SpecFor (Core)
 
   module Api (Ctx:Spec.S.Context) = struct
     let puts s = Puts (s, id) |> Ctx.lift
@@ -47,7 +47,7 @@ end
 
 
 module Y = struct
-  open Sugar_free.CoreResult
+  open Sugar.DSL.CoreResult
 
   module Core = struct
     type 'f t =
@@ -60,7 +60,7 @@ module Y = struct
 
   open Core
 
-  module Spec = Sugar_free.SpecFor (Core)
+  module Spec = Sugar.DSL.SpecFor (Core)
 
   module Api (Ctx:Spec.S.Context) = struct
     let puts s = Puts (s, id) |> Ctx.lift
@@ -71,7 +71,7 @@ module Y = struct
   module Errors = struct
     type t = unit
   end
-  type Sugar_free.Error.t += Error of Errors.t
+  type Sugar.DSL.Error.t += Error of Errors.t
 
   module Runner = struct
     open Errors
@@ -93,7 +93,7 @@ end
 
 
 module X_and_Y = struct
-  include Sugar_free.Combine (X.Core) (Y.Core)
+  include Sugar.DSL.Combine (X.Core) (Y.Core)
 
   module Runner = struct
     let run = function
@@ -112,11 +112,16 @@ module X_and_Y = struct
 end
 
 
-module Context = Sugar_free.ContextFor(X_and_Y.Core)
-module Result = Sugar_free.CoreResult.For(Context.Free)
+module Context = Sugar.DSL.ContextFor(X_and_Y.Core)
+(* module Result = Sugar.DSL.CoreResult.For(Context.Free) *)
+
+open Context
 
 open Result
 open Result.Infix
+
+(* open Result
+open Result.Infix *)
 
 module Api = X_and_Y.Api (Context)
 
