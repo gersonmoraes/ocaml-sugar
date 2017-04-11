@@ -36,11 +36,12 @@ module Terminal = struct
   module Errors = struct
     type t = string
   end
-  type DSL.Error.t += Error of Errors.t
+
+  type exn += Error of Errors.t
 
   module Runner = struct
     open DSL.CoreResult
-    
+
     let throw e = Error e
 
     let run = function

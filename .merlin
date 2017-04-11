@@ -1,4 +1,4 @@
-PKG yojson threads lwt
+PKG yojson threads lwt  ppx_sexp_conv sexplib
 EXT lwt
 S lib/sugar
 S lib/lwt

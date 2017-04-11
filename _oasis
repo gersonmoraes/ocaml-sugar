@@ -96,7 +96,7 @@ Executable "free_error_aware_combined"
   Path:           examples/free
   MainIs:         free_error_aware_combined.ml
   CompiledObject: best
-  BuildDepends:   sugar
+  BuildDepends:   sugar, ppx_sexp_conv, sexplib
 
 Executable "example_async"
   Build$:         flag(example) && flag(async)

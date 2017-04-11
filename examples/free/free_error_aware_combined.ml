@@ -1,5 +1,6 @@
 (* open Sugar *)
 
+open Sexplib.Std
 open Sugar.DSL.Utils
 open Printf
 
@@ -10,10 +11,11 @@ module X = struct
   open Sugar.DSL.CoreResult
 
   module Errors = struct
-    type t = Issue1 | Issue2
+    type t = Issue1 | Issue2 [@@deriving sexp]
   end
 
   type Sugar.DSL.Error.t += Error of Errors.t
+  (* exception Error of Errors.t *)
 
   module Core = struct
     type 'f t =
@@ -28,8 +30,8 @@ module X = struct
   module Spec = Sugar.DSL.SpecFor (Core)
 
   module Api (Ctx:Spec.S.Context) = struct
-    let puts s = Puts (s, id) |> Ctx.lift
-    let get_line () = GetLine id |> Ctx.lift
+    let x_puts s = Puts (s, id) |> Ctx.lift
+    let x_get_line () = GetLine id |> Ctx.lift
   end
 
   module Runner = struct
@@ -63,14 +65,15 @@ module Y = struct
   module Spec = Sugar.DSL.SpecFor (Core)
 
   module Api (Ctx:Spec.S.Context) = struct
-    let puts s = Puts (s, id) |> Ctx.lift
-    let get_line () = GetLine id |> Ctx.lift
+    let y_puts s = Puts (s, id) |> Ctx.lift
+    let y_get_line () = GetLine id |> Ctx.lift
   end
 
   (* Error definitions *)
   module Errors = struct
-    type t = unit
+    type t = Unexpected of string | Not_found [@@deriving sexp]
   end
+  (* exception Error of Errors.t *)
   type Sugar.DSL.Error.t += Error of Errors.t
 
   module Runner = struct
@@ -83,7 +86,7 @@ module Y = struct
       | GetLine f -> read_line () |> return |> f
     let debug = function
       | Puts (s, f) ->
-          printf "Y.Puts: %s\n" s; throw () |> f
+          printf "Y.Puts: %s\n" s; throw (Unexpected "Could not print your msg") |> f
           (* printf "Puts: %s\n" s; return () |> f *)
       | GetLine f ->
           printf "Y.GetLine: "; read_line () |> return |> f
@@ -93,6 +96,9 @@ end
 
 
 module X_and_Y = struct
+  (*
+    Here, we're including new modules Core, Spec and Natural
+  *)
   include Sugar.DSL.Combine (X.Core) (Y.Core)
 
   module Runner = struct
@@ -106,22 +112,17 @@ module X_and_Y = struct
   end
 
   module Api (Ctx: Spec.S.Context) = struct
-    module X = X.Api (Natural.Proxy1.For(Ctx))
-    module Y = Y.Api (Natural.Proxy2.For(Ctx))
+    include X.Api (Natural.Proxy1.For(Ctx))
+    include Y.Api (Natural.Proxy2.For(Ctx))
   end
 end
 
 
 module Context = Sugar.DSL.ContextFor(X_and_Y.Core)
-(* module Result = Sugar.DSL.CoreResult.For(Context.Free) *)
-
 open Context
 
 open Result
 open Result.Infix
-
-(* open Result
-open Result.Infix *)
 
 module Api = X_and_Y.Api (Context)
 
@@ -131,13 +132,14 @@ module Api = X_and_Y.Api (Context)
     - We need to "take" the combinator (>>) to act as the semicolon
     - We should make the "discard operation" as the operator (>>>)
 *)
+open Api
 
 let program1 =
-  Api.X.puts "What's your name?" >>
-  Api.X.get_line ()
+  x_puts "What's your name?" >>
+  x_get_line ()
   >>= fun name ->
-  Api.X.puts (name ^ ", have a nice day") >>
-  Api.Y.puts "Let's test some errors?! Type something."
+  x_puts (name ^ ", have a nice day") >>
+  y_puts "Let's test some errors?! Type something."
   >---------
   ( function
     | X.Error e ->
@@ -145,17 +147,22 @@ let program1 =
         | X.Errors.Issue1 -> return ()
         | X.Errors.Issue2 -> return ()
       )
-    | Y.Error () -> return ()
+    | Y.Error e ->
+      ( x_puts
+        ( "Could not handle this error: " ^
+          ( Sexplib.Sexp.to_string_hum @@ Y.Errors.sexp_of_t e )
+        )
+      )
     | _ -> assert false
   ) >>
-  Api.X.get_line ()
+  x_get_line ()
   >---------
   ( fun _ ->
-    Api.X.puts "The computation resulted in an unexpected error" >>
+    x_puts "The computation resulted in an unexpected error" >>
     return "recovered"
   )
   >>= fun line ->
-  Api.X.puts ("You said: " ^ line)
+  x_puts ("You said: " ^ line)
 
 
 let () =

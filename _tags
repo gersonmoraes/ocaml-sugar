@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 974355f8b52c52d8a01f7d22eef7c700)
+# DO NOT EDIT (digest: 0229e0595792016b661eb603ea577157)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -33,7 +33,11 @@ true: annot, bin_annot
 # Executable free_error_aware
 <examples/free/free_error_aware.{native,byte}>: use_sugar
 # Executable free_error_aware_combined
+<examples/free/free_error_aware_combined.{native,byte}>: pkg_ppx_sexp_conv
+<examples/free/free_error_aware_combined.{native,byte}>: pkg_sexplib
 <examples/free/free_error_aware_combined.{native,byte}>: use_sugar
+<examples/free/*.ml{,i,y}>: pkg_ppx_sexp_conv
+<examples/free/*.ml{,i,y}>: pkg_sexplib
 <examples/free/*.ml{,i,y}>: use_sugar
 # Executable example_async
 <examples/example_async.{native,byte}>: pkg_async
