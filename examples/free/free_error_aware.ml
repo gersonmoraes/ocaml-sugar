@@ -67,11 +67,11 @@ open MyMachine
 open Result
 open Result.Infix
 
-let program1 =
+let program1 () =
   puts "What's your name?" >>
   get_line ()
   >>= fun name ->
   puts (name ^ ", have a nice day")
 
 let () =
-  MyMachine.run Terminal.Runner.run (Result.unwrap program1)
+  MyMachine.run_error_aware Terminal.Runner.run program1

@@ -204,7 +204,6 @@ module ErrorFor(E:Errors) : ErrorForSpec
     Sexplib.Sexp.to_string_hum @@ E.sexp_of_t e
 end
 
-
 (**
   Automates the generation of minimum specification
   for a library based on its algebra.
@@ -359,10 +358,10 @@ module ContextFor(L:Functor) = struct
   module Result = CoreResult.For (Free)
 
   let run_error_aware runner program =
-    Free.iter runner (Result.unwrap_or raise program)
+    Free.iter runner (Result.unwrap_or raise (program ()))
 
   let run runner program =
-    Free.iter runner program
+    Free.iter runner (program ())
 end
 
 module ContextForRuntime(R:Runtime) = struct

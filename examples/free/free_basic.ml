@@ -52,7 +52,7 @@ module Dsl = Terminal.Dsl (Env)
 open Env.Free.Infix
 open Dsl
 
-let program =
+let program () =
   puts "What's your name?" />
   get_line ()
   >>= fun name ->

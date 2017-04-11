@@ -130,7 +130,7 @@ module Api = X_and_Y.Api (Context)
 *)
 open Api
 
-let program1 =
+let program1 () =
   x_puts "What's your name?" >>
   y_get_line ()
   >>= fun name ->
