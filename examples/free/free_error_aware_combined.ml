@@ -1,21 +1,19 @@
 (* open Sugar *)
 
 open Sexplib.Std
-open Sugar.DSL.Utils
+
+module DSL = Sugar.DSL
+
+open DSL.Std
 open Printf
 
-(* module Result = Sugar.MakeResult (Sugar.DSL.Error) *)
-(* open Result *)
-
 module X = struct
-  open Sugar.DSL.CoreResult
+  open DSL.CoreResult
 
   module Errors = struct
     type t = Issue1 | Issue2 [@@deriving sexp]
   end
-
-  type Sugar.DSL.Error.t += Error of Errors.t
-  (* exception Error of Errors.t *)
+  include DSL.ErrorFor(Errors)
 
   module Core = struct
     type 'f t =
@@ -27,7 +25,7 @@ module X = struct
   end
   open Core
 
-  module Spec = Sugar.DSL.SpecFor (Core)
+  module Spec = DSL.SpecFor (Core)
 
   module Api (Ctx:Spec.S.Context) = struct
     let x_puts s = Puts (s, id) |> Ctx.lift
@@ -45,11 +43,11 @@ module X = struct
           printf "X.GetLine: "; read_line () |> return |> f
   end
 end
-
+let _ = (module X:DSL.S.Library)
 
 
 module Y = struct
-  open Sugar.DSL.CoreResult
+  open DSL.CoreResult
 
   module Core = struct
     type 'f t =
@@ -62,19 +60,17 @@ module Y = struct
 
   open Core
 
-  module Spec = Sugar.DSL.SpecFor (Core)
+  module Spec = DSL.SpecFor (Core)
 
   module Api (Ctx:Spec.S.Context) = struct
     let y_puts s = Puts (s, id) |> Ctx.lift
     let y_get_line () = GetLine id |> Ctx.lift
   end
 
-  (* Error definitions *)
   module Errors = struct
     type t = Unexpected of string | Not_found [@@deriving sexp]
   end
-  (* exception Error of Errors.t *)
-  type Sugar.DSL.Error.t += Error of Errors.t
+  include DSL.ErrorFor(Errors)
 
   module Runner = struct
     open Errors
@@ -82,24 +78,24 @@ module Y = struct
     let throw (e:Errors.t) = throw (Error e)
 
     let run = function
-      | Puts (s, f) -> print_endline s; return () |> f
+      | Puts (s, f) ->
+          throw (Unexpected "Could not print your msg") |> f
       | GetLine f -> read_line () |> return |> f
     let debug = function
       | Puts (s, f) ->
-          printf "Y.Puts: %s\n" s; throw (Unexpected "Could not print your msg") |> f
-          (* printf "Puts: %s\n" s; return () |> f *)
+          throw (Unexpected "Could not print your msg") |> f
       | GetLine f ->
           printf "Y.GetLine: "; read_line () |> return |> f
   end
 end
-
+let _ = (module Y:DSL.S.Library)
 
 
 module X_and_Y = struct
   (*
     Here, we're including new modules Core, Spec and Natural
   *)
-  include Sugar.DSL.Combine (X.Core) (Y.Core)
+  include DSL.Combine (X.Core) (Y.Core)
 
   module Runner = struct
     let run = function
@@ -118,7 +114,7 @@ module X_and_Y = struct
 end
 
 
-module Context = Sugar.DSL.ContextFor(X_and_Y.Core)
+module Context = DSL.ContextFor(X_and_Y.Core)
 open Context
 
 open Result
@@ -136,7 +132,7 @@ open Api
 
 let program1 =
   x_puts "What's your name?" >>
-  x_get_line ()
+  y_get_line ()
   >>= fun name ->
   x_puts (name ^ ", have a nice day") >>
   y_puts "Let's test some errors?! Type something."
@@ -148,11 +144,7 @@ let program1 =
         | X.Errors.Issue2 -> return ()
       )
     | Y.Error e ->
-      ( x_puts
-        ( "Could not handle this error: " ^
-          ( Sexplib.Sexp.to_string_hum @@ Y.Errors.sexp_of_t e )
-        )
-      )
+        x_puts ("Error in Y: " ^ (Y.string_of_error e))
     | _ -> assert false
   ) >>
   x_get_line ()
@@ -162,8 +154,17 @@ let program1 =
     return "recovered"
   )
   >>= fun line ->
-  x_puts ("You said: " ^ line)
+  x_puts ("You said: " ^ line) >>
+  y_puts "hello world"
+  >---------
+  ( fun e ->
+    ( match e with
+      | Y.Error error_y -> x_puts ("Error in Y: " ^ ( Y.string_of_error error_y ))
+      | _ -> throw e
+    )
+  )
 
 
 let () =
-  Context.run X_and_Y.Runner.debug (Result.unwrap program1)
+  Context.run_error_aware X_and_Y.Runner.debug program1
+  (* Context.run_error_aware X_and_Y.Runner.run program1 *)

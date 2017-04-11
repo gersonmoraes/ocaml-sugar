@@ -37,7 +37,7 @@ Library "sugar_lwt"
   FindlibName:      lwt
   FindlibParent:    sugar
   Path:             lib/lwt
-  CompiledObject:   best
+  CompiledObject:   byte
   Modules:          Sugar_lwt
   BuildDepends:     threads, lwt, sugar
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
@@ -49,7 +49,7 @@ Library "sugar_async"
   FindlibParent:    sugar
   Path:             lib/async
   Modules:          Sugar_async
-  CompiledObject:   best
+  CompiledObject:   byte
   BuildDepends:     threads, async, sugar
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
@@ -58,8 +58,9 @@ Library "sugar"
   Path:             lib/sugar
   Modules:          Sugar_promise, Sugar_types, Sugar_option, Sugar_result, Sugar,
                     Sugar_generic, Sugar_free
+  BuildDepends:     ppx_sexp_conv, sexplib
 
-  CompiledObject:   best
+  CompiledObject:   byte
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
 
 
@@ -71,7 +72,7 @@ Executable "example_basic"
   Install:        false
   Path:           examples
   MainIs:         example_basic.ml
-  CompiledObject: best
+  CompiledObject: byte
   BuildDepends:   sugar
 
 Executable "free_basic"
@@ -79,7 +80,7 @@ Executable "free_basic"
   Install:        false
   Path:           examples/free
   MainIs:         free_basic.ml
-  CompiledObject: best
+  CompiledObject: byte
   BuildDepends:   sugar
 
 Executable "free_error_aware"
@@ -87,7 +88,7 @@ Executable "free_error_aware"
   Install:        false
   Path:           examples/free
   MainIs:         free_error_aware.ml
-  CompiledObject: best
+  CompiledObject: byte
   BuildDepends:   sugar
 
 Executable "free_error_aware_combined"
@@ -95,7 +96,7 @@ Executable "free_error_aware_combined"
   Install:        false
   Path:           examples/free
   MainIs:         free_error_aware_combined.ml
-  CompiledObject: best
+  CompiledObject: byte
   BuildDepends:   sugar, ppx_sexp_conv, sexplib
 
 Executable "example_async"
@@ -103,7 +104,7 @@ Executable "example_async"
   Install:        false
   Path:           examples
   MainIs:         example_async.ml
-  CompiledObject: best
+  CompiledObject: byte
   BuildDepends:   async, async_unix, sugar, sugar.async
 
 Executable "example_semicolon"
@@ -111,7 +112,7 @@ Executable "example_semicolon"
   Install:        false
   Path:           examples
   MainIs:         example_semicolon.ml
-  CompiledObject: best
+  CompiledObject: byte
   BuildDepends:   lwt, lwt.unix, sugar, sugar.lwt
 
 

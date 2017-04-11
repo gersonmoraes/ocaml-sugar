@@ -2,28 +2,156 @@
 open Sugar_generic
 
 module Error = struct
-  type t = ..
+  type t = exn
 end
 
-module type Result = Sugar_types.Result
-  with type error = Error.t
+module S = struct
 
-module CoreResult = Sugar_result.Make (Error)
+  module type Result = Sugar_types.Result
+    with type error = exn
 
-module Utils = struct
+  module type Errors = sig
+    type t
+
+    val t_of_sexp : Sexplib.Type.t -> t
+    val sexp_of_t : t -> Sexplib.Type.t
+  end
+
+  module type ErrorForSpec = sig
+    type error
+
+    exception Error of error
+
+    val string_of_error: error -> string
+  end
+
+  (**
+    Natural Transformation.
+    It represents a translation from a functor to another.
+  *)
+  module type Natural = sig
+    type 'a src
+    type 'a dst
+    val apply: 'a src -> 'a dst
+  end
+
+  (**
+    A translation context for DSLs writers.
+
+    This signature specifies the minimum requirements to instanciate a module
+    containing all helper functions associated to an algebra. They requirements are:
+      - A FreeMonad
+      - A natural transformation to this FreeMonad
+      - A lift function tied to the algebra (to chain an instruction)
+      - A return function to yield any OCaml value.
+
+    The translation of contexts does some cool things:
+      - As a DSL writer, you get a clean, typed view of the "running environment"
+      - You don't need much to translate contexts of the DSL you use.
+      - All specification about compatibility is type safe and automated
+      - It is easy to compose a big DSL from smaller ones
+  *)
+  module type Context = sig
+    module Free : FreeMonad
+
+    type 'a free   = 'a Free.t
+    type 'a free_f = 'a Free.f
+
+    include Natural
+      with type 'a dst = 'a free_f
+
+    val lift: 'a src -> 'a Free.t
+
+    (* TODO:
+        - This instruction should be removed from here.
+          It is not error aware. We need functionality like this in the result module.
+    *)
+    (* val return : 'a -> 'a Free.t *)
+
+    (* This result is compatible to the free monad *)
+    module Result : Sugar_types.Promise
+      with type error := Error.t
+       and type 'a monad := 'a Free.t
+  end
+
+
+  (**
+    Minimum specification for a library.
+
+    It contains:
+     - A functor `Core` describing an algebra
+     - A module `S` with useful interfaces for this algebra
+     - A context translator, called `Proxy`, to help other DSL writers
+       integrate with this library.
+
+    This defines a base for all meta programming around our DSLs.
+    This is why FreeMonads are easy to use on OCaml.
+
+    Note: This spec shouldn't be written manually. It can be derived
+    from any functor describing an algebra. This is why we have a SpecFor(...)
+    module.
+  *)
+  module type Spec = sig
+    module Core : Functor
+
+    module S : sig
+      module type Natural = sig
+        type 'a src
+        val apply: 'a src -> 'a Core.t
+      end
+
+      module type Context = Context
+        with type 'a src = 'a Core.t
+
+      module type Runner = sig
+        val run: 'a Core.t -> 'a
+        val debug: 'a Core.t -> 'a
+      end
+    end
+
+    module Proxy : functor(T:S.Natural) -> sig
+      module For : functor(Ctx:S.Context) -> sig
+        include Context with
+          module Free = Ctx.Free
+          and type 'a free  = 'a Ctx.Free.t
+          and type 'a free_f = 'a Ctx.Free.f
+          and type 'a src  = 'a T.src
+          and type 'a dst = 'a Ctx.Free.f
+      end
+    end
+  end (* Machine.Spec *)
+
+
+  module type Library = sig
+    module Errors : Errors
+    exception Error of Errors.t
+
+    module Core : Functor
+    module Spec : Spec with module Core = Core
+  end
+
+  module type Runtime = sig
+    module Core : Functor
+    module Spec : Spec with module Core = Core
+    module Runner : sig
+      val run : 'a Core.t -> 'a
+      val debug : 'a Core.t -> 'a
+    end
+  end
+
+  module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
+
+
+end
+
+open S
+
+
+module Std = struct
   let id = fun x -> x
-  (* let ($) = (@@) *)
-  let (%) = (@@)
 
   (** Function composition *)
   let (@) f g = fun v -> f (g v)
-
-  (* this is an alias for function composition *)
-  (* let (%) = (@) *)
-
-  (* let ($) f a = (@@) *)
-
-  (* type ('f, 'args) continuation = 'args -> 'f *)
 
   (**
     A specification for the "next continuation".
@@ -59,108 +187,22 @@ module Utils = struct
   *)
   type 'f unrelated = ('f, unit) next
 
-  let is_some = function
-    | Some _ -> true
-    | None -> false
 end
 
-open Utils
+module CoreResult = Sugar_result.Make (Error)
 
-(**
-  Natural Transformation.
-  It represents a translation from a functor to another.
-*)
-module type Natural = sig
-  type 'a src
-  type 'a dst
-  val apply: 'a src -> 'a dst
+open Std
+
+module ErrorFor(E:Errors) : ErrorForSpec
+  with type error := E.t
+ = struct
+  type error = E.t
+
+  exception Error of error
+
+  let string_of_error (e:error) : string =
+    Sexplib.Sexp.to_string_hum @@ E.sexp_of_t e
 end
-
-(**
-  A translation context for DSLs writers.
-
-  This signature specifies the minimum requirements to instanciate a module
-  containing all helper functions associated to an algebra. They requirements are:
-    - A FreeMonad
-    - A natural transformation to this FreeMonad
-    - A lift function tied to the algebra (to chain an instruction)
-    - A return function to yield any OCaml value.
-
-  The translation of contexts does some cool things:
-    - As a DSL writer, you get a clean, typed view of the "running environment"
-    - You don't need much to translate contexts of the DSL you use.
-    - All specification about compatibility is type safe and automated
-    - It is easy to compose a big DSL from smaller ones
-*)
-module type Context = sig
-  module Free : FreeMonad
-
-  type 'a free   = 'a Free.t
-  type 'a free_f = 'a Free.f
-
-  include Natural
-    with type 'a dst = 'a free_f
-
-  val lift: 'a src -> 'a Free.t
-
-  (* TODO:
-      - This instruction should be removed from here.
-        It is not error aware. We need functionality like this in the result module.
-  *)
-  (* val return : 'a -> 'a Free.t *)
-
-  (* This result is compatible to the free monad *)
-  module Result : Sugar_types.Promise
-    with type error := Error.t
-     and type 'a monad := 'a Free.t
-end
-
-
-(**
-  Minimum specification for a library.
-
-  It contains:
-   - A functor `Core` describing an algebra
-   - A module `S` with useful interfaces for this algebra
-   - A context translator, called `Proxy`, to help other DSL writers
-     integrate with this library.
-
-  This defines a base for all meta programming around our DSLs.
-  This is why FreeMonads are easy to use on OCaml.
-
-  Note: This spec shouldn't be written manually. It can be derived
-  from any functor describing an algebra. This is why we have a SpecFor(...)
-  module.
-*)
-module type Spec = sig
-  module Core : Functor
-
-  module S : sig
-    module type Natural = sig
-      type 'a src
-      val apply: 'a src -> 'a Core.t
-    end
-
-    module type Context = Context
-      with type 'a src = 'a Core.t
-
-    module type Runner = sig
-      val run: 'a Core.t -> 'a
-      val debug: 'a Core.t -> 'a
-    end
-  end
-
-  module Proxy : functor(T:S.Natural) -> sig
-    module For : functor(Ctx:S.Context) -> sig
-      include Context with
-        module Free = Ctx.Free
-        and type 'a free  = 'a Ctx.Free.t
-        and type 'a free_f = 'a Ctx.Free.f
-        and type 'a src  = 'a T.src
-        and type 'a dst = 'a Ctx.Free.f
-    end
-  end
-end (* Machine.Spec *)
 
 
 (**
@@ -301,14 +343,6 @@ struct
   end
 end (* Combine4 *)
 
-module type Runtime = sig
-  module Core : Functor
-  module Spec : Spec with module Core = Core
-  module Runner : sig
-    val run : 'a Core.t -> 'a
-    val debug : 'a Core.t -> 'a
-  end
-end
 
 module ContextFor(L:Functor) = struct
   module Free = MakeFree (L)
@@ -324,6 +358,9 @@ module ContextFor(L:Functor) = struct
 
   module Result = CoreResult.For (Free)
 
+  let run_error_aware runner program =
+    Free.iter runner (Result.unwrap_or raise program)
+
   let run runner program =
     Free.iter runner program
 end
@@ -331,8 +368,6 @@ end
 module ContextForRuntime(R:Runtime) = struct
   include ContextFor(R.Core)
 end
-
-module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
 
 module Assemble (R1:Runtime) (R2:Runtime) = struct
   include Combine (R1.Core) (R2.Core)
@@ -349,14 +384,6 @@ module Assemble (R1:Runtime) (R2:Runtime) = struct
       | Case2 v -> R2.Runner.debug v
   end
 end
-
-(*
-let (++) r1 r2 =
-  let module R1 = (val r1:Runtime) in
-  let module R2 = (val r2:Runtime) in
-  let module R3 = Assemble (R1) (R2) in
-  (module R3: Runtime)
-*)
 
 let _ =
   (module Assemble: Assembly)

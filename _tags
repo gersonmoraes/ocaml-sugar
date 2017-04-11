@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 0229e0595792016b661eb603ea577157)
+# DO NOT EDIT (digest: bba2f0f6fab97caf3f087d8ffd7935ab)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -16,46 +16,64 @@ true: annot, bin_annot
 "_darcs": not_hygienic
 # Library sugar
 "lib/sugar/sugar.cmxs": use_sugar
+<lib/sugar/*.ml{,i,y}>: pkg_ppx_sexp_conv
+<lib/sugar/*.ml{,i,y}>: pkg_sexplib
 # Library sugar_async
 "lib/async/sugar_async.cmxs": use_sugar_async
 <lib/async/*.ml{,i,y}>: pkg_async
+<lib/async/*.ml{,i,y}>: pkg_ppx_sexp_conv
+<lib/async/*.ml{,i,y}>: pkg_sexplib
 <lib/async/*.ml{,i,y}>: pkg_threads
 <lib/async/*.ml{,i,y}>: use_sugar
 # Library sugar_lwt
 "lib/lwt/sugar_lwt.cmxs": use_sugar_lwt
 <lib/lwt/*.ml{,i,y}>: pkg_lwt
+<lib/lwt/*.ml{,i,y}>: pkg_ppx_sexp_conv
+<lib/lwt/*.ml{,i,y}>: pkg_sexplib
 <lib/lwt/*.ml{,i,y}>: pkg_threads
 <lib/lwt/*.ml{,i,y}>: use_sugar
 # Executable example_basic
-<examples/example_basic.{native,byte}>: use_sugar
+"examples/example_basic.byte": pkg_ppx_sexp_conv
+"examples/example_basic.byte": pkg_sexplib
+"examples/example_basic.byte": use_sugar
 # Executable free_basic
-<examples/free/free_basic.{native,byte}>: use_sugar
+"examples/free/free_basic.byte": pkg_ppx_sexp_conv
+"examples/free/free_basic.byte": pkg_sexplib
+"examples/free/free_basic.byte": use_sugar
 # Executable free_error_aware
-<examples/free/free_error_aware.{native,byte}>: use_sugar
+"examples/free/free_error_aware.byte": pkg_ppx_sexp_conv
+"examples/free/free_error_aware.byte": pkg_sexplib
+"examples/free/free_error_aware.byte": use_sugar
 # Executable free_error_aware_combined
-<examples/free/free_error_aware_combined.{native,byte}>: pkg_ppx_sexp_conv
-<examples/free/free_error_aware_combined.{native,byte}>: pkg_sexplib
-<examples/free/free_error_aware_combined.{native,byte}>: use_sugar
+"examples/free/free_error_aware_combined.byte": pkg_ppx_sexp_conv
+"examples/free/free_error_aware_combined.byte": pkg_sexplib
+"examples/free/free_error_aware_combined.byte": use_sugar
 <examples/free/*.ml{,i,y}>: pkg_ppx_sexp_conv
 <examples/free/*.ml{,i,y}>: pkg_sexplib
 <examples/free/*.ml{,i,y}>: use_sugar
 # Executable example_async
-<examples/example_async.{native,byte}>: pkg_async
-<examples/example_async.{native,byte}>: pkg_async_unix
-<examples/example_async.{native,byte}>: pkg_threads
-<examples/example_async.{native,byte}>: use_sugar
-<examples/example_async.{native,byte}>: use_sugar_async
+"examples/example_async.byte": pkg_async
+"examples/example_async.byte": pkg_async_unix
+"examples/example_async.byte": pkg_ppx_sexp_conv
+"examples/example_async.byte": pkg_sexplib
+"examples/example_async.byte": pkg_threads
+"examples/example_async.byte": use_sugar
+"examples/example_async.byte": use_sugar_async
 <examples/*.ml{,i,y}>: pkg_async
 <examples/*.ml{,i,y}>: pkg_async_unix
 <examples/*.ml{,i,y}>: use_sugar_async
 # Executable example_semicolon
-<examples/example_semicolon.{native,byte}>: pkg_lwt
-<examples/example_semicolon.{native,byte}>: pkg_lwt.unix
-<examples/example_semicolon.{native,byte}>: pkg_threads
-<examples/example_semicolon.{native,byte}>: use_sugar
-<examples/example_semicolon.{native,byte}>: use_sugar_lwt
+"examples/example_semicolon.byte": pkg_lwt
+"examples/example_semicolon.byte": pkg_lwt.unix
+"examples/example_semicolon.byte": pkg_ppx_sexp_conv
+"examples/example_semicolon.byte": pkg_sexplib
+"examples/example_semicolon.byte": pkg_threads
+"examples/example_semicolon.byte": use_sugar
+"examples/example_semicolon.byte": use_sugar_lwt
 <examples/*.ml{,i,y}>: pkg_lwt
 <examples/*.ml{,i,y}>: pkg_lwt.unix
+<examples/*.ml{,i,y}>: pkg_ppx_sexp_conv
+<examples/*.ml{,i,y}>: pkg_sexplib
 <examples/*.ml{,i,y}>: pkg_threads
 <examples/*.ml{,i,y}>: use_sugar
 <examples/*.ml{,i,y}>: use_sugar_lwt

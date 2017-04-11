@@ -1,12 +1,11 @@
 # OASIS_START
-# DO NOT EDIT (digest: ccd876783cb9e09410c4b21dd47fc393)
+# DO NOT EDIT (digest: fc7e392dbb18411636cf51b168a4edce)
 version = "0.4.0"
 description =
 "A library to bring sugar syntatic to your error handling layer."
+requires = "ppx_sexp_conv sexplib"
 archive(byte) = "sugar.cma"
 archive(byte, plugin) = "sugar.cma"
-archive(native) = "sugar.cmxa"
-archive(native, plugin) = "sugar.cmxs"
 exists_if = "sugar.cma"
 package "lwt" (
  version = "0.4.0"
@@ -15,8 +14,6 @@ package "lwt" (
  requires = "threads lwt sugar"
  archive(byte) = "sugar_lwt.cma"
  archive(byte, plugin) = "sugar_lwt.cma"
- archive(native) = "sugar_lwt.cmxa"
- archive(native, plugin) = "sugar_lwt.cmxs"
  exists_if = "sugar_lwt.cma"
 )
 
@@ -27,8 +24,6 @@ package "async" (
  requires = "threads async sugar"
  archive(byte) = "sugar_async.cma"
  archive(byte, plugin) = "sugar_async.cma"
- archive(native) = "sugar_async.cmxa"
- archive(native, plugin) = "sugar_async.cmxs"
  exists_if = "sugar_async.cma"
 )
 # OASIS_STOP

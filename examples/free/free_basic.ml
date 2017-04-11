@@ -1,5 +1,5 @@
 open Sugar
-open DSL.Utils
+open DSL.Std
 open Printf
 
 module Terminal = struct
