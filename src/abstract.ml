@@ -69,3 +69,42 @@ module MakeFree (F : Functor) : FreeMonad with type 'a f = 'a F.t = struct
     let (>>|) m f = map f m
   end
 end
+
+(**
+  Conventional module type to define the errors inside a project.
+  This is how Sugar understands the error handling layer of a project.
+
+  Like:
+  <code>
+    module MyError = struct
+      type error = Not_found | Invalid_arg of string
+    end
+  </code>
+
+  This module might be used to create blocking or asynchronous error handling
+  layers, using the Sugar functors, like:
+  <code>
+    module MyResult = Sugar.Result.Make (MyError)
+    
+    module MyResult2 = Sugar.Promise.Make (Lwt) (MyError)
+    module MyResult2 = MyResult.For (Lwt)
+  </code>
+*)
+module type Error = sig
+  (**
+    You should implement this type according to your project.
+    This could be any type, including strings or unit.
+  *)
+  type t
+end
+
+(**
+  Natural Transformation.
+  It represents a translation from a functor to another.
+*)
+module type Natural = sig
+  type 'a src
+  type 'a dst
+  val apply: 'a src -> 'a dst
+end
+

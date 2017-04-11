@@ -1,5 +1,5 @@
 (* module Generic = Generic *)
-open Generic
+open Abstract
 
 module Error = struct
   type t = exn
@@ -7,7 +7,7 @@ end
 
 module S = struct
 
-  module type Result = Types.Result
+  module type CoreResult = Result.S
     with type error = exn
 
   module type Errors = sig
@@ -23,16 +23,6 @@ module S = struct
     exception Error of error
 
     val string_of_error: error -> string
-  end
-
-  (**
-    Natural Transformation.
-    It represents a translation from a functor to another.
-  *)
-  module type Natural = sig
-    type 'a src
-    type 'a dst
-    val apply: 'a src -> 'a dst
   end
 
   (**
@@ -61,15 +51,8 @@ module S = struct
       with type 'a dst = 'a free_f
 
     val lift: 'a src -> 'a Free.t
-
-    (* TODO:
-        - This instruction should be removed from here.
-          It is not error aware. We need functionality like this in the result module.
-    *)
-    (* val return : 'a -> 'a Free.t *)
-
-    (* This result is compatible to the free monad *)
-    module Result : Types.Promise
+ 
+    module Result : Promise.S
       with type error := Error.t
        and type 'a monad := 'a Free.t
   end
