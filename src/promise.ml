@@ -1,10 +1,10 @@
-open Sugar_types
+open Types
 
 (**
   A functor that implements the asynchronous interface.
-  The complete documentation can be found in {!Sugar_types.Promise}.
+  The complete documentation can be found in {!Types.Promise}.
 *)
-module Make  (UserMonad:Sugar_types.Monad)  (UserError:Sugar_types.Error) : Sugar_types.Promise
+module Make  (UserMonad:Types.Monad)  (UserError:Types.Error) : Types.Promise
   with
     type error := UserError.t
     and type 'a monad := 'a UserMonad.t

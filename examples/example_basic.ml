@@ -20,7 +20,7 @@ struct
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-module MyResult = Sugar.MakeResult(MyError)
+module MyResult = Sugar.Result.Make(MyError)
 
 (* Start using them *)
 open MyResult
@@ -44,9 +44,6 @@ let error_handler e: string result =
   | _ -> throw e
 
 open MyResult.Infix
-
-let (<$>) f m =
-  map m f
 
 (* implementing it in order, later we do it in parallel *)
 let (<*>) fab fa =

@@ -1,45 +1,18 @@
-# Suppress duplicate topdirs.cmi warnings.
-OCAMLFIND_IGNORE_DUPS_IN = $(shell ocamlfind query compiler-libs)
-export OCAMLFIND_IGNORE_DUPS_IN
+default:
+	jbuilder build @install
 
-# OASIS_START
-# DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
+install:
+	jbuilder install $(INSTALL_ARGS)
 
-SETUP = ocaml setup.ml
+uninstall:
+	jbuilder uninstall $(INSTALL_ARGS)
 
-build: setup.data
-	$(SETUP) -build $(BUILDFLAGS)
-
-doc: setup.data build
-	$(SETUP) -doc $(DOCFLAGS)
-
-test: setup.data build
-	$(SETUP) -test $(TESTFLAGS)
-
-all:
-	$(SETUP) -all $(ALLFLAGS)
-
-install: setup.data
-	$(SETUP) -install $(INSTALLFLAGS)
-
-uninstall: setup.data
-	$(SETUP) -uninstall $(UNINSTALLFLAGS)
-
-reinstall: setup.data
-	$(SETUP) -reinstall $(REINSTALLFLAGS)
+reinstall: uninstall install
 
 clean:
-	$(SETUP) -clean $(CLEANFLAGS)
+	rm -rf _build
 
-distclean:
-	$(SETUP) -distclean $(DISTCLEANFLAGS)
+examples:
+	jbuilder build examples/free_error_aware_combined.exe
 
-setup.data:
-	$(SETUP) -configure $(CONFIGUREFLAGS)
-
-configure:
-	$(SETUP) -configure $(CONFIGUREFLAGS)
-
-.PHONY: build doc test all install uninstall reinstall clean distclean configure
-
-# OASIS_STOP
+.PHONY: default install uninstall reinstall clean examples

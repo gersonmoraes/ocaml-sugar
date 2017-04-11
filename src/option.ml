@@ -1,7 +1,7 @@
-open Sugar_types
+open Types
 
 (**
-  An implementation of {{!Sugar_types.Result}  Sugar.Types.Result } interface
+  An implementation of {{!Types.Result}  Sugar.Types.Result } interface
   for the option type.
 
   This is probably the easiest way to start using Sugar, as there is no need to
@@ -79,7 +79,7 @@ let expect r msg =
   | Some r -> r
   | None -> invalid_arg msg
 
-module Monad : Sugar_types.Monad
+module Monad : Types.Monad
    with type 'a t = 'a option =
 struct
   type 'a t = 'a option

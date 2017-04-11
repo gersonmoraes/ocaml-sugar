@@ -1,8 +1,7 @@
-module DSL = Sugar.DSL
+module DSL = Sugar.Dsl
 open DSL.Prelude
 
 open Printf
-
 
 module Terminal = struct
 
@@ -21,7 +20,6 @@ module Terminal = struct
 
   module Spec = DSL.SpecFor (Core)
 
-  (* module Dsl (Ctx:Spec.S.Context) (Error:Spec.S.NaturalError) = struct *)
   module Dsl (Ctx:Spec.S.Context) = struct
     open Ctx
 

@@ -1,8 +1,6 @@
-(* open Sugar *)
-
 open Sexplib.Std
 
-module DSL = Sugar.DSL
+module DSL = Sugar.Dsl
 
 open DSL.Prelude
 open Printf

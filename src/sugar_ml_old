@@ -52,20 +52,20 @@
 *)
 
 (** This module defines minimalistic interfaces for all Sugar modules *)
-module Types = Sugar_types
+module Types = Types
 
 (** Implements the Sugar interface for the option type *)
 module Option = Sugar_option
 
 (** A functor that implements the blocking interface *)
-module MakeResult = Sugar_result.Make
+module MakeResult = Result.Make
 
 (** A functor that implements the asynchronous interface  *)
-module MakePromise = Sugar_promise.Make
+module MakePromise = Promise.Make
 
-module Monadic(M:Sugar_generic.Monad) (E:Sugar_types.Error) = struct
+module Monadic(M:Generic.Monad) (E:Types.Error) = struct
   module M =
-  (* : Sugar_types.Monad
+  (* : Types.Monad
     with type 'a monad = 'a M.t = *)
   struct
     type 'a monad = 'a M.t

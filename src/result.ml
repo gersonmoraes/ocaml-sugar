@@ -1,11 +1,11 @@
-open Sugar_types
+open Types
 
 (**
   A functor that implements the blocking interface.
 
-  This functors produces a module following the interface {!Sugar_types.Result}.
+  This functors produces a module following the interface {!Types.Result}.
 *)
-module Make (UserError:Error) : Sugar_types.Result
+module Make (UserError:Error) : Types.Result
   with type error = UserError.t =
 struct
   type 'a result = ('a, UserError.t) Pervasives.result
@@ -73,7 +73,7 @@ struct
     >>= fun () ->
     y
 
-  module Monad : Sugar_types.Monad
+  module Monad : Types.Monad
     with type 'a t = 'a result =
   struct
     type 'a t = 'a result
@@ -82,8 +82,8 @@ struct
     let (>>=) = bind_if
   end
 
-  module For(M: Sugar_types.Monad) = struct
-    include Sugar_promise.Make (M) (UserError)
+  module For(M: Types.Monad) = struct
+    include Promise.Make (M) (UserError)
   end
 end
 

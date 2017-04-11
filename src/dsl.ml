@@ -1,5 +1,5 @@
-(* module Generic = Sugar_generic *)
-open Sugar_generic
+(* module Generic = Generic *)
+open Generic
 
 module Error = struct
   type t = exn
@@ -7,7 +7,7 @@ end
 
 module S = struct
 
-  module type Result = Sugar_types.Result
+  module type Result = Types.Result
     with type error = exn
 
   module type Errors = sig
@@ -69,7 +69,7 @@ module S = struct
     (* val return : 'a -> 'a Free.t *)
 
     (* This result is compatible to the free monad *)
-    module Result : Sugar_types.Promise
+    module Result : Types.Promise
       with type error := Error.t
        and type 'a monad := 'a Free.t
   end
@@ -189,7 +189,7 @@ module Prelude = struct
 
 end
 
-module CoreResult = Sugar_result.Make (Error)
+module CoreResult = Result.Make (Error)
 
 open Prelude
 

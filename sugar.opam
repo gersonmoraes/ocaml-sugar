@@ -1,20 +1,21 @@
 opam-version: "1.2"
 name: "sugar"
-version: "0.4.0"
+version: "0.5.0"
 maintainer: "Gerson Moraes <gerson@digirati.com.br>"
 authors: "Gerson Moraes <gerson@digirati.com.br>"
 homepage: "https://github.com/gersonmoraes/ocaml-sugar"
-license: "MIT"
 dev-repo: "https://github.com/gersonmoraes/ocaml-sugar"
 bug-reports: "https://github.com/gersonmoraes/ocaml-sugar/issues"
+license: "MIT"
 build: [
-  ["./configure" "--prefix=%{prefix}%"]
-  [make]
+  ["jbuilder" "build"
+    "--only-packages" "sugar"
+    "--root" "."
+    "-j" jobs
+    "@install"]
 ]
-install: [make "install"]
-remove: ["ocamlfind" "remove" "sugar"]
 depends: [
-  "ocamlfind" {build}
+  "jbuilder"      {>= "1.0+beta5"}
 ]
 available: [ ocaml-version >= "4.03.0" ]
-depopts: ["lwt" "async"]
+descr: "A DSL Driven library for OCaml projects"

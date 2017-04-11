@@ -1,0 +1,15 @@
+(jbuild_version 1)
+
+(alias
+ ((name    examples)
+  (deps    (free_error_aware_combined.exe))
+  (action  (run ${<}))))
+
+(executables
+ ((names       (free_error_aware_combined free_error_aware free_basic example_basic))
+  (libraries
+    (sexplib
+     ppx_sexp_conv
+     sugar))
+  (preprocess (pps (ppx_sexp_conv)))
+))
