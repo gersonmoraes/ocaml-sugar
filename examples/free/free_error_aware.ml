@@ -1,5 +1,5 @@
 module DSL = Sugar.DSL
-open DSL.Std
+open DSL.Prelude
 
 open Printf
 

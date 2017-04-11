@@ -4,7 +4,7 @@ open Sexplib.Std
 
 module DSL = Sugar.DSL
 
-open DSL.Std
+open DSL.Prelude
 open Printf
 
 module X = struct

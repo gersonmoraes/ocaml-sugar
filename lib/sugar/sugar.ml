@@ -75,4 +75,4 @@ module Monadic(M:Sugar_generic.Monad) (E:Sugar_types.Error) = struct
   include MakePromise(M) (E)
 end
 
-module DSL = Sugar_free
+module DSL = Sugar_dsl
