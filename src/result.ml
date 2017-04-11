@@ -1,4 +1,4 @@
-open Types
+open Abstract
 
 (** Monadic interface for result types *)
 module type S = sig
@@ -98,30 +98,30 @@ module type S = sig
 
 
   (**
-    Broom combinator 
-    
+    Broom combinator
+
     Used to introduce an error handler block to "clean errors".
-    
+
     There's a secret message behind the form of this combinator.
-    It has the same number of characters sufficient for the whole block 
+    It has the same number of characters sufficient for the whole block
     in the next line. For example:
-    
+
     <code>
     let program1 () =
-      do_something () 
+      do_something ()
       >---------
       ( fun e ->
         return ()
       )
-      
+
     let program2 () =
-      do_something () 
+      do_something ()
       >---------
       ( function
         e -> return ()
       )
     </code>
-    
+
     So beyond the clean aesthetics similar to markdown, we are
     implying that a developer should never handle errors in an open
     anonymous function.
@@ -165,8 +165,8 @@ module type S = sig
 
   (**
     Ignore operator.
-    
-    Use this operator to ignore the previous result 
+
+    Use this operator to ignore the previous result
     and return the next instruction.
   *)
   val (>>>): 'a result -> 'b result -> 'b result
@@ -181,16 +181,16 @@ module type S = sig
 
   (**
     Bind combinator
-    
-    If the computation in the left is successful, the operator will 
-    Take the inner value and feed it to the function in the right. This is an 
+
+    If the computation in the left is successful, the operator will
+    Take the inner value and feed it to the function in the right. This is an
     alias for the function [bind_if].
-    
-    If the computation in the left failed, the operator will propagate the error, 
+
+    If the computation in the left failed, the operator will propagate the error,
     skipping the function completely.
   *)
   val (>>=): 'a result -> ('a -> 'b result) -> 'b result
-  
+
   (**
     Unwraps the successful result as a normal value in the threading monad.
     If the value is not successful, it will raise an Invalid_arg exception.
@@ -240,7 +240,7 @@ module type S = sig
     (**
       Create a new result module based on the current one, but wrapped around a monad.
     *)
-    module For : functor (UserMonad:Monad) -> Promise
+    module For : functor (UserMonad:Monad) -> Promise.S
       with type error := error
       and type 'a monad := 'a UserMonad.t
 end
@@ -280,7 +280,7 @@ struct
   module Infix = struct
     let (>>=) = bind_if
     let (>>|) = map
-    let (>>>) x y = bind_if x (fun _ -> y) 
+    let (>>>) x y = bind_if x (fun _ -> y)
     let (>---------) = bind_unless
 
     let (<*>) f x =
@@ -309,9 +309,9 @@ struct
 
 
   let (>>=) = bind_if
-  let (>>) x y = bind_if x (fun () -> y) 
+  let (>>) x y = bind_if x (fun () -> y)
 
-  module Monad : Types.Monad
+  module Monad : Abstract.Monad
     with type 'a t = 'a result =
   struct
     type 'a t = 'a result
@@ -320,7 +320,7 @@ struct
     let (>>=) = bind_if
   end
 
-  module For(M: Types.Monad) = struct
+  module For(M: Abstract.Monad) = struct
     include Promise.Make (M) (UserError)
   end
 end

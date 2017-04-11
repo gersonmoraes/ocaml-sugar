@@ -2,6 +2,5 @@ B ../_build/default/src
 FLG -open Sugar -w -40
 PKG bigarray
 PKG sexplib
-PKG sexplib.0
 PKG unix
 S .

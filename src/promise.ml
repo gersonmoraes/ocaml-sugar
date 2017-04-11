@@ -1,10 +1,10 @@
-open Types
+open Abstract
 
 (**
   This interface specifies an error handling layer for monadic computations.
 
   Sugar result modules work with any monad.
-  
+
   <code>
     module MyMonad = struct
       type 'a monad = 'a Lwt.t
@@ -86,35 +86,35 @@ module type S = sig
 
   (** Applicative combinator for map *)
   val (<$>): ('a -> 'b) -> 'a promise -> 'b promise
-  
+
   (** Applicative combinator for parallel execution of function and operand *)
   val (<*>): ('a -> 'b) promise -> 'a promise -> 'b promise
 
   (**
-    Broom combinator 
-    
+    Broom combinator
+
     Used to introduce an error handler block to "clean errors".
-    
+
     There's a secret message behind the form of this combinator.
-    It has the same number of characters sufficient for the whole block 
+    It has the same number of characters sufficient for the whole block
     in the next line. For example:
-    
+
     <code>
     let program1 () =
-      do_something () 
+      do_something ()
       >---------
       ( fun e ->
         return ()
       )
-      
+
     let program2 () =
-      do_something () 
+      do_something ()
       >---------
       ( function
         e -> return ()
       )
     </code>
-    
+
     So beyond the clean aesthetics similar to markdown, we are
     implying that a developer should never handle errors in an open
     anonymous function.
@@ -124,8 +124,8 @@ module type S = sig
 
   (**
     Ignore operator.
-    
-    Use this operator to ignore the previous result 
+
+    Use this operator to ignore the previous result
     and return the next instruction.
   *)
   val (>>>): 'a promise -> 'b promise -> 'b promise
@@ -160,21 +160,21 @@ module type S = sig
 
   (**
     Bind combinator
-    
-    If the computation in the left is successful, the operator will 
-    Take the inner value and feed it to the function in the right. This is an 
+
+    If the computation in the left is successful, the operator will
+    Take the inner value and feed it to the function in the right. This is an
     alias for the function [bind_if].
-    
-    If the computation in the left failed, the operator will propagate the error, 
+
+    If the computation in the left failed, the operator will propagate the error,
     skipping the function completely.
   *)
   val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
 
 
  (**
-   Semicolon combinator. 
-   
-   Like the standard semicolon in OCaml, ";", the previous operation needs 
+   Semicolon combinator.
+
+   Like the standard semicolon in OCaml, ";", the previous operation needs
    to evaluate to a unit promise.
  *)
  val ( >> ) : unit promise -> 'b promise -> 'b promise
@@ -186,7 +186,7 @@ end
   A parametric module that implements the monadic interface for results.
   The complete documentation can be found in {!Types.Promise}.
 *)
-module Make  (UserMonad:Types.Monad)  (UserError:Types.Error) : S
+module Make  (UserMonad:Monad)  (UserError:Error) : S
   with
     type error := UserError.t
     and type 'a monad := 'a UserMonad.t

@@ -1,4 +1,4 @@
-open Types
+open Abstract
 
 (**
   An implementation of {{!Types.Result}  Sugar.Types.Result } interface
@@ -25,7 +25,7 @@ open Types
       >----------
       ( fun () ->
         return "recovered"
-      ) 
+      )
   </code>
 
   In case you are wondering, the evaluation of [run ()] in the example above,
@@ -54,13 +54,13 @@ let map r f =
   | Some v -> Some (f v)
 
 let (>>=) = bind_if
-let (>>) x y = bind_if x (fun () -> y) 
+let (>>) x y = bind_if x (fun () -> y)
 
 module Infix = struct
   let (>---------) = bind_unless
   let (>>|) = map
   let (>>>) x y = bind_if x (fun _ -> y)
-  
+
   let (<*>) f x =
     f
     >>= fun f' ->
@@ -69,7 +69,7 @@ module Infix = struct
     return (f' x')
 
   let (<$>) f x = map x f
-end 
+end
 
 let wrap f =
   try Some (f ()) with
@@ -89,10 +89,10 @@ let expect r msg =
   | Some r -> r
   | None -> invalid_arg msg
 
-module Monad : Types.Monad
+module Monad : Monad
    with type 'a t = 'a option =
 struct
   type 'a t = 'a option
-  let return = commit
+  let return = return
   let (>>=) = bind_if
 end
