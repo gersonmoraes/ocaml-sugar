@@ -8,7 +8,7 @@ end
 module type Result = Sugar_types.Result
   with type error = Error.t
 
-module CoreResult = Sugar.MakeResult (Error)
+module CoreResult = Sugar_result.Make (Error)
 
 module Utils = struct
   let id = fun x -> x

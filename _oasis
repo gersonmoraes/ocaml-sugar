@@ -57,7 +57,7 @@ Library "sugar"
   FindlibName:      sugar
   Path:             lib/sugar
   Modules:          Sugar_promise, Sugar_types, Sugar_option, Sugar_result, Sugar,
-                    Sugar_generic, Sugar_machine, Sugar_free
+                    Sugar_generic, Sugar_free
 
   CompiledObject:   best
   XMETADescription: A library to bring sugar syntatic to your error handling layer.
