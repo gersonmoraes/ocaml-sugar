@@ -5,25 +5,27 @@ open Types
   for the option type.
 
   This is probably the easiest way to start using Sugar, as there is no need to
-  use describe errors or use functors. Still, because this module follows the
-  same API, when you need to start refactoring to more complex, non-blocking
-  results you get to keep the same clean API, making be transition
+  use describe errors. Still, because this module follows the
+  same interface, when you need to start refactoring to more complex, monadic
+  results you get to keep the same clean interface, making be transition
   straightfoward.
 
   Usage example:
   <code>
-    open Sugar.option
+    open Sugar.Option
 
-    let some_computation (): string result =
+    let do_something (): string result =
       if true then
         Some "you could use any option type"
       else
         throw ()
 
     let run (): string result =
-      some_computation ()
-      ||= fun () ->
-      commit "recovered"
+      do_something ()
+      >----------
+      ( fun () ->
+        return "recovered"
+      ) 
   </code>
 
   In case you are wondering, the evaluation of [run ()] in the example above,
@@ -33,7 +35,7 @@ open Types
 type error = unit
 type 'a result = 'a option
 
-let commit v = Some v
+let return v = Some v
 let throw () = None
 
 let bind_if r f =
@@ -51,15 +53,23 @@ let map r f =
   | None -> None
   | Some v -> Some (f v)
 
-let (&&=) = bind_if
-let (||=) = bind_unless
-let (&&|) = map
+let (>>=) = bind_if
+let (>>) x y = bind_if x (fun () -> y) 
 
-let (/>) = bind_if
-let (//>) x y =
-  match x, y with
-  | None, _ -> None
-  | _ -> y
+module Infix = struct
+  let (>---------) = bind_unless
+  let (>>|) = map
+  let (>>>) x y = bind_if x (fun _ -> y)
+  
+  let (<*>) f x =
+    f
+    >>= fun f' ->
+    x
+    >>= fun x' ->
+    return (f' x')
+
+  let (<$>) f x = map x f
+end 
 
 let wrap f =
   try Some (f ()) with

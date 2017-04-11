@@ -1,19 +1,7 @@
 (**
    This module defines minimalistic interfaces for all Sugar modules
  *)
-
-(** Common monadic signature *)
-(* module type Monad = sig
-  type 'a monad
-  val return: 'a -> 'a monad
-  val (>>=): 'a monad -> ('a -> 'b monad) -> 'b monad
-end *)
-
-module type Monad = sig
-  type 'a t
-  val return: 'a -> 'a t
-  val (>>=): 'a t -> ('a -> 'b t) -> 'b t
-end
+open Generic
 
 module type NaturalError = sig
   type src
@@ -22,12 +10,6 @@ module type NaturalError = sig
   val apply: src -> dst
   val reverse: dst -> src option
 end
-(*
-module type Monad = sig
-  type 'a t
-  val return: 'a -> 'a t
-  val (>>=): 'a t -> ('a -> 'b t) -> 'b t
-end *)
 
 
 (**
@@ -44,7 +26,10 @@ end *)
   This module might be used to create blocking or asynchronous error handling
   layers, using the Sugar functors, like:
   <code>
-    module MyResult = Sugar.MakeResult(MyError)
+    module MyResult = Sugar.Result.Make (MyError)
+    
+    module MyResult2 = Sugar.Promise.Make (Lwt) (MyError)
+    module MyResult2 = MyResult.For (Lwt)
   </code>
 *)
 module type Error = sig
@@ -56,26 +41,17 @@ module type Error = sig
 end
 
 (**
-  This interface specifies an error handling layer for asynchronous.
-  computations.
+  This interface specifies an error handling layer for monadic computations.
 
-  Sugar works with any concurrent threadling library. The most basic functor
-  to create an asynchronous computation might be used like this
+  Sugar result modules work with any monad.
+  
   <code>
     module MyMonad = struct
       type 'a monad = 'a Lwt.t
       let return = Lwt.return
       let (>>=) = Lwt.bind
     end
-    module MyResult = Sugar.MakePromise (MyMonad) (MyError)
-  </code>
-
-  If you install Sugar with opam, and you have Lwt or Async are installed, you
-  you will get sugar sub-libraries, respectively "sugar.lwt" and "sugar.async".
-  With one of these libraries, you can use a shorter version:
-  <code>
-    module MyResult = Sugar_lwt.MakeResult   (MyError)
-    module MyResult = Sugar_async.MakeResult (MyError)
+    module MyResult = Sugar.Promise.Make (MyMonad) (MyError)
   </code>
 *)
 module type Promise = sig
@@ -148,33 +124,51 @@ module type Promise = sig
   *)
   val (>>|): 'a promise -> ('a -> 'b) -> 'b promise
 
+  (** Applicative combinator for map *)
   val (<$>): ('a -> 'b) -> 'a promise -> 'b promise
+  
+  (** Applicative combinator for parallel execution of function and operand *)
   val (<*>): ('a -> 'b) promise -> 'a promise -> 'b promise
 
+  (**
+    Broom combinator 
+    
+    Used to introduce an error handler block to "clean errors".
+    
+    There's a secret message behind the form of this combinator.
+    It has the same number of characters sufficient for the whole block 
+    in the next line. For example:
+    
+    <code>
+    let program1 () =
+      do_something () 
+      >---------
+      ( fun e ->
+        return ()
+      )
+      
+    let program2 () =
+      do_something () 
+      >---------
+      ( function
+        e -> return ()
+      )
+    </code>
+    
+    So beyond the clean aesthetics similar to markdown, we are
+    implying that a developer should never handle errors in an open
+    anonymous function.
+  *)
+  val (>---------): 'a promise -> (error -> 'a promise) -> 'a promise
 
 
-   val (>---------): 'a promise -> (error -> 'a promise) -> 'a promise
-
-
-  (*
-     "Non blocking" semicolon operator.
-     It chains the completion of unit promise with the next in the sequence.
-
-     It can be used to chain thunks in a meaningful way like:
-     <code>
-       let puts s =
-         asynchronous_puts s
-         >>= return
-
-       let main =
-         puts "Hello"         //>
-         puts "Non-blocking"  //>
-         puts "Computations"
-       </code>
-   *)
-   (* val (//>): unit promise -> 'a promise -> 'a promise *)
-
-   val (>>>): 'a promise -> 'b promise -> 'b promise
+  (**
+    Ignore operator.
+    
+    Use this operator to ignore the previous result 
+    and return the next instruction.
+  *)
+  val (>>>): 'a promise -> 'b promise -> 'b promise
 
   end
 
@@ -204,10 +198,25 @@ module type Promise = sig
   *)
   val expect: 'a result monad -> string -> 'a monad
 
+  (**
+    Bind combinator
+    
+    If the computation in the left is successful, the operator will 
+    Take the inner value and feed it to the function in the right. This is an 
+    alias for the function [bind_if].
+    
+    If the computation in the left failed, the operator will propagate the error, 
+    skipping the function completely.
+  *)
   val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
 
 
- (* val (/>): unit promise -> (unit -> 'b promise) -> 'b promise *)
+ (**
+   Semicolon combinator. 
+   
+   Like the standard semicolon in OCaml, ";", the previous operation needs 
+   to evaluate to a unit promise.
+ *)
  val ( >> ) : unit promise -> 'b promise -> 'b promise
 
 end
@@ -242,7 +251,7 @@ module type Result = sig
     must throw an error or provide an equivalent for the result type of the
     previous computation.
 
-    You can use the operator {{!(||=)} ||=} instead of this function for syntatic sugar
+    You can use the operator {{!(>---------)} (>---------} instead of this function for syntatic sugar
    *)
   val bind_unless: 'a result -> (error -> 'a result) -> 'a result
 
@@ -264,14 +273,7 @@ module type Result = sig
   val map:  'a result -> ('a -> 'b) -> 'b result
 
   (**
-    Commit a successful computation.
-
-    The main reason for this function is to abstract the differences from the
-    internals of your result type. It provides a standard interface to create
-    successful values to both blocking and non-blocking computations. So, you
-    can make your computations asynchronous without refactoring a lot of code.
-    You could also change between the option and result types and keep large
-    parts of your code intact.
+    Return a value in a successful computation.
 
     This function should be used with its counterpart, [throw]
   *)
@@ -317,81 +319,40 @@ module type Result = sig
   module Infix : sig
 
 
-
-  val (>---------): 'a result -> (error -> 'a result) -> 'a result
-
-  (*
-    Conditional binding operator AND. An alias for {{!bind_if} bind_if}.
-
-    This is the main reason Sugar can simplify the usage of error aware
-    expressions. For example, say you are working with a project with a lot of
-    error aware expressions, and between those, you have these functions:
-
+  (**
+    Broom combinator 
+    
+    Used to introduce an error handler block to "clean errors".
+    
+    There's a secret message behind the form of this combinator.
+    It has the same number of characters sufficient for the whole block 
+    in the next line. For example:
+    
     <code>
-      let computation () =
-        let value = ... in
-        Ok value
-
-      let transform value =
-        let new_value = ... in
-        Ok new_value
-    </code>
-
-    There are various ways you could use the functions above in OCaml.
-    Someone could write this code in idiomatic OCaml:
-
-    <code>
-      let run () =
-        match computation () with
-        | Error e -> Error e
-        | Ok v ->
-          begin
-            match transform v with
-            | Error e -> Error e
-            | Ok v ->
-              begin
-                print_endline "everything ok";
-                Ok ()
-              end
-          end
-    </code>
-
-    But we believe this code is not very expressive. And as your code base grows
-    and you start using error aware expressions everywhere, it tends to bloat
-    your code with pattern matching. You could also avoid using the typesystem
-    to handle the errors and rely on exceptions, but exceptions literally bypass
-    compiler and may easily break your code at runtime.
-
-    If you are using Sugar, it is very likely your final version would look
-    like:
-
-    <code>
-      let run () =
-        computation ()
-        &&= transform
-        &&= fun v ->
-        print_endline "everything ok";
+    let program1 () =
+      do_something () 
+      >---------
+      ( fun e ->
         return ()
+      )
+      
+    let program2 () =
+      do_something () 
+      >---------
+      ( function
+        e -> return ()
+      )
     </code>
-
-    For a more diverse example, look at the {!Sugar} module.
+    
+    So beyond the clean aesthetics similar to markdown, we are
+    implying that a developer should never handle errors in an open
+    anonymous function.
   *)
-  (* val (&&=): 'a result -> ('a -> 'b result) -> 'b result *)
-
-
-  (*
-    Conditional binding operator OR. An alias for {{!bind_unless} bind_unless}.
-
-    This function lets you assign an error handler inside a chained error
-    aware expression.
-
-    For a more diverse example, look at the {!Sugar} module.
-  *)
-  (* val (||=): 'a result -> (error -> 'a result) -> 'a result *)
+  val (>---------): 'a result -> (error -> 'a result) -> 'a result
 
 
   (**
-    Conditional binding operator MAP
+    Combinator for map with semantic similar to bind
 
     As its name sugests, this is an alias for the function {{!map} map}.
     Its intended use is to help integrate with functions that are not error
@@ -407,12 +368,12 @@ module type Result = sig
      let twenty =
        match Some 10 with
        | None -> None
-       | Some n -> double n
+       | Some n -> Some (double n)
 
-      (* using the default &&= combinator *)
+      (* using the default >>= combinator *)
       let twenty =
        Some 10
-       &&= fun n ->
+       >>= fun n ->
        return (double n)
 
      (* using the map combinator *)
@@ -424,24 +385,12 @@ module type Result = sig
   val (>>|): 'a result -> ('a -> 'b) -> 'b result
 
 
-  (*
-    Non blocking semicolon operator.
-    It chains the completion of unit result with the next in the sequence.
-
-    It can be used to chain thunks in a meaningful way like:
-    <code>
-    let puts s =
-      asynchronous_puts s
-      >>= return
-
-    let main =
-      puts "Hello"         //>
-      puts "Non-blocking"  //>
-      puts "Computations"
-    </code>
-   *)
-  (* val (//>): unit result -> 'a result -> 'a result *)
-
+  (**
+    Ignore operator.
+    
+    Use this operator to ignore the previous result 
+    and return the next instruction.
+  *)
   val (>>>): 'a result -> 'b result -> 'b result
 
   val (>>=): 'a result -> ('a -> 'b result) -> 'b result
@@ -452,7 +401,18 @@ module type Result = sig
 
   end
 
+  (**
+    Bind combinator
+    
+    If the computation in the left is successful, the operator will 
+    Take the inner value and feed it to the function in the right. This is an 
+    alias for the function [bind_if].
+    
+    If the computation in the left failed, the operator will propagate the error, 
+    skipping the function completely.
+  *)
   val (>>=): 'a result -> ('a -> 'b result) -> 'b result
+  
   (**
     Unwraps the successful result as a normal value in the threading monad.
     If the value is not successful, it will raise an Invalid_arg exception.
@@ -499,6 +459,9 @@ module type Result = sig
      *)
     val (>>): unit result -> 'b result -> 'b result
 
+    (**
+      Create a new result module based on the current one, but wrapped around a monad.
+    *)
     module For : functor (UserMonad:Monad) -> Promise
       with type error := error
       and type 'a monad := 'a UserMonad.t

@@ -1,7 +1,7 @@
 open Types
 
 (**
-  A functor that implements the asynchronous interface.
+  A parametric module that implements the monadic interface for results.
   The complete documentation can be found in {!Types.Promise}.
 *)
 module Make  (UserMonad:Types.Monad)  (UserError:Types.Error) : Types.Promise

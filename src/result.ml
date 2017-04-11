@@ -1,9 +1,9 @@
 open Types
 
 (**
-  A functor that implements the blocking interface.
+  A parametric module that implements the blocking interface.
 
-  This functors produces a module following the interface {!Types.Result}.
+  The complete documentation can be found in {!Types.Result}.
 *)
 module Make (UserError:Error) : Types.Result
   with type error = UserError.t =
@@ -86,18 +86,3 @@ struct
     include Promise.Make (M) (UserError)
   end
 end
-
-
-(* module type NaturalError = sig
-  type src
-  type dst
-
-  val apply: src -> dst
-  val reverse: dst -> src
-end
-
-module MakeWith(Natural: NaturalError) = struct
-  module Error = struct
-    type error = Natural.dst
-  end
-end *)
