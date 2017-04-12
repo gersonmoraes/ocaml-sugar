@@ -422,7 +422,7 @@ Don't forget to make your errors serializable using s-expressions.
 open Sexplib.Std
 
 module Terminal = struct
-  module Core = ...
+  ...
 
   module Errors = struct
     type t
@@ -462,9 +462,8 @@ This will get you an `Error` constructor to wrap around your door specification.
 
 ```ocaml
 module Terminal = struct
-  module Core = ...
+  ...
 
-  module Errors = ...
   include Sugar.DSL.ErrorFor(Errors)
 end
 ```
@@ -506,7 +505,7 @@ end
 
 ----
 
-A `Spec` module gives you essential interoperability signatures and builders so your Dsl can became pluggable.
+This will be the only requirement for anyone to use your DSL.
 
 ```ocaml
 module Terminal = struct
@@ -526,13 +525,28 @@ end
 
 # DSL Writer Tour - Part II
 
-**Public Api**
+**Meta Programming**
 
-You need a module to work as a public view of your DSL, so other DSL writers or developers writing a final program. To make one, you need to know what is a *context*.
+- ~~**Integrate your errors with Sugar**~~
+- ~~**Create a specification for this DSL**~~
+- ~~**Write a public module for your users**~~
 
-> **Context** is a module responsible for the translation of core instructions from current the language to the bigger language used to build the final runtime. They can be seem as the glue that allows you to mix different DSLs.
+<br/>
 
-><u>Note:</u> The signature for the context matching the current library is given by the `Spec.S.Context`.
+----
+
+But, what is a `context` and how can you get one?
+
+---
+
+class: left, middle
+background-color: #E3E2DE
+
+# A context is
+
+A module responsible for the translation of core instructions from current the language to the bigger language used to build the final runtime. They can be seem as the glue that allows you to mix different DSLs.
+
+Under the hood, it is how Sugar implements natural transformations to make languages 
 
 
 ---
