@@ -155,9 +155,7 @@ Did you notice the hidden message?
 
 ---
 
-# A hidden message
-
-<u>You need to clean your errors with a block.</u>
+# Clean your errors with a block
 
 This broom shaped combinator has the exact minimum char count for the next expression: *an anonymous function wrapped inside a block*.
 
@@ -240,9 +238,7 @@ class: left, middle
 
 A short path towards composable DSLs with **The Free Monad**. Don't write a program, write a description of a program. Since it's your description, you can decide how to interpret it, and in how many ways.
 
-It's your chance to easily swap core components of your projects,
-separate business logic from logging and cloud services. You can write integration
-tests that are easy to reason about.
+It's your chance to easily swap core components of your projects, separate business logic from things like logging and cloud services. You can write integration tests that are easy to reason about.
 
 ---
 
@@ -254,10 +250,11 @@ tests that are easy to reason about.
 
 2. DSL Writer Tour
  1. Bare Bones
- 2. Meta Programming
- 3. Public Api Module
+ 2. Code Generation
+ 3. Define a Public Api
+ 4. Contexts
 
-3. DSL Library Writer
+3. Library Writer Tour
  1. Combining Languages
  2. Assembling Runtimes
  3. Partially implemented DSLs
@@ -327,7 +324,7 @@ type 'f instruction =
 class: left, middle
 background-color: #E3E2DE
 
-# Interfaces for DSL writers
+# DSL Writer Tour
 
 In the next slides, we will describe the minimum steps to create a small `Terminal` DSL.
 
@@ -438,21 +435,19 @@ end
 
 # DSL Writer Tour - Part II
 
-**Meta Programming**
+**Code Generation**
 
 - Integrate your errors with Sugar
 - Create a specification for this DSL
-- Write a public module for your users
 
 ---
 
 # DSL Writer Tour - Part II
 
-**Meta Programming**
+**Code Generation**
 
 - **Integrate your errors with Sugar**
 - Create a specification for this DSL
-- Write a public module for your users
 
 <br/>
 
@@ -473,11 +468,10 @@ end
 
 # DSL Writer Tour - Part II
 
-**Meta Programming**
+**Code Generation**
 
 - ~~**Integrate your errors with Sugar**~~
 - **Create a specification for this DSL**
-- Write a public module for your users
 
 <br/>
 
@@ -494,13 +488,24 @@ end
 ```
 ---
 
-# DSL Writer Tour - Part II
+# DSL Writer Tour - Part III
 
-**Meta Programming**
+**Define a Public Api**
 
-- ~~**Integrate your errors with Sugar**~~
-- ~~**Create a specification for this DSL**~~
+- Write a public module for your users
+- Understand how contexts work
+- Instantiate your own Public Api
+
+
+---
+
+# DSL Writer Tour - Part III
+
+**Define a Public Api**
+
 - **Write a public module for your users**
+- Understand how contexts work
+- Instantiate your own Public Api
 
 <br/>
 
@@ -526,19 +531,13 @@ end
 
 ---
 
-# DSL Writer Tour - Part II
+# DSL Writer Tour - Part III
 
-**Meta Programming**
+**Define a Public Api**
 
-- ~~**Integrate your errors with Sugar**~~
-- ~~**Create a specification for this DSL**~~
 - ~~**Write a public module for your users**~~
-
-<br/>
-
-----
-
-But, what is a `Context` and how can you get one?
+- **Understand how contexts work**
+- Instantiate your own Public Api
 
 ---
 
@@ -551,31 +550,44 @@ The guys responsible for translating instructions from current the language to a
 
 Under the hood, they implement a natural transformation.
 
----
-# How can you get a context
-
-If you just have one DSL, use the default builder:
-
-```ocaml
-module Context = Sugar.DSL.ContextFor(Terminal.Core)
-```
 
 ---
-# How can you get a context
 
-If you just have one DSL, use the default builder:
+# DSL Writer Tour - Part III
 
-```ocaml
-module Context = Sugar.DSL.ContextFor(Terminal.Core)
-```
+**Define a Public Api**
+
+- ~~**Write a public module for your users**~~
+- ~~**Understand how contexts work**~~
+- **Instantiate your own Public Api**
 
 <br/>
 
-After this, you can start using the `Terminal` Api:
+----
+
+If you just have one DSL, use the default builder to create a context. Instantiating a DSL's Public Api is also straightforward. 
 
 ```ocaml
-module TerminalApi = Terminal.Api (Context)
+module Context = Sugar.DSL.ContextFor(Terminal.Core) 
 
+module TerminalApi = Terminal.Api (Context)
+```
+
+---
+
+# DSL Writer Tour - Part III
+
+**Define a Public Api**
+
+- ~~**Write a public module for your users**~~
+- ~~**Understand how contexts work**~~
+- **Instantiate your own Public Api**
+
+<br/>
+
+----
+
+```ocaml
 open TerminalApi
 open Context.Result
 
@@ -602,7 +614,7 @@ The process is quite similar. Hold tight.
 
 ---
 
-# Combine operation
+# Combining DSLs
 
 Say you have two DSLs.
 
@@ -611,7 +623,6 @@ module X = struct
   module Errors = struct
     type t = Not_found [@@deriving sexp]
   end
-
   module Core = struct
     type 'f t = A of 'f unrelated
     let map f = function
@@ -619,12 +630,13 @@ module X = struct
   end
   ...
 end
+```
 
+```ocaml 
 module Y = struct
   module Errors = struct
     type t = Not_available [@@deriving sexp]
   end
-
   module Core = struct
     type 'f t = B of 'f unrelated
     let map f = function
@@ -636,7 +648,7 @@ end
 
 ---
 
-# Combine operation
+# Combining DSLs
 
 Each one with its own Api module.
 
@@ -648,7 +660,9 @@ module X = struct
       A id |> C.lift
   end
 end
+```
 
+```ocaml 
 module Y = struct
   ...
   module Api (C:Spec.S.Context) = struct
@@ -661,9 +675,9 @@ end
 
 ---
 
-# Combine operation
+# Combining DSLs
 
-To use `X` and `Y` together, you need to combine both core instructions and Apis.
+To use `X` and `Y` together, you need to combine both core instructions and Public Apis.
 
 ```ocaml
 module X_and_Y = struct
@@ -678,9 +692,9 @@ end
 
 ---
 
-# Combine operation
+# Combining DSLs
 
-To use `X` and `Y` together, you need to combine both core instructions and Apis.
+To use `X` and `Y` together, you need to combine both core instructions and Public Apis.
 
 ```ocaml
 module X_and_Y = struct
@@ -723,7 +737,7 @@ So far we've learned how to describe programs. How about running them?
 
 # Interpreters
 
-Every DSL comes with a signature for its `Runner`:
+Every DSL comes with a signature for its `Runner`.
 
 ```ocaml
 module Spec = struct
@@ -739,7 +753,7 @@ end
 
 # Interpreters
 
-Every DSL comes with a signature for its `Runner`:
+Every DSL comes with a signature for its `Runner`.
 
 ```ocaml
 module Spec = struct
@@ -750,10 +764,21 @@ module Spec = struct
   end
 end
 ```
+
+
+The default interpreter is the `run` function.The `debug` function should do virtually the same with higher verbosity. You are not forced to follow this structure in your code base, but we believe it is an expressive one.
+
+Notice how a runner only knows about its core instructions. This holds even if you mix different DSLs and is the reason there is a clear separation of concerns when writing DSLs. 
+
+---
+
+# Interpreters
+
 Here's a runner for the `Terminal` DSL:
 
 ```ocaml
 module TerminalRunner = struct
+
   open Terminal.Core
 
   let run = function
