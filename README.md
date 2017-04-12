@@ -46,18 +46,20 @@ open Errors
 open Result
 open Result.Infix
 
-let run () : unit promise =
+let program () : unit promise =
   return [1; 2; 3]
   >>| List.length
-  >>= fun len ->
   >---------
   ( function
     | Not_available -> return 0
     | Unexpected s  -> return 0
   )
   >>= fun len ->
-  Printf.printf "The len is %d" len;
+  Printf.printf "The len is %d\n" len;
   return ()
+
+let () =
+  Lwt_main.run ( unwrap (program ()) );;
 ```
 
 # Write a DSL
