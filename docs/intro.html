@@ -7,10 +7,17 @@
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
       @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Roboto+Condensed:300,600,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Fjalla+One:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Josefin+Sans:300,700,400italic);
 
-      body { font-family: 'Droid Serif'; }
+      /*body { font-family: 'Droid Serif'; }*/
+      body { font-family: 'Roboto Condensed', sans-serif; }
       h1, h2, h3 {
-        font-family: 'Yanone Kaffeesatz';
+        font-family: 'Josefin Sans';
+        /*font-family: 'Yanone Kaffeesatz';*/
+        /*font-family: 'Fjalla One';*/
         font-weight: normal;
       }
       .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
@@ -33,6 +40,7 @@ A peek into the future of Functional Programming
 
 ---
 class: left, middle
+background-color: #E3E2DE
 
 # What it is
 
@@ -44,7 +52,10 @@ A **Model Driven Development** library that allows you to:
 
 ---
 
-# OCaml lean and clean
+class: left, middle
+background-color: #E3E2DE
+
+# Lean and Clean
 
 **Safer computations**
 
@@ -55,6 +66,7 @@ Exceptions are easy to write and easier to forget. Better to avoid them. Sugar e
 Using meta programming, all our error aware expressions, *asynchronous or not*, will keep the same clean look. Let the machine translate the result types. *Focus on the real stufff*.
 
 ---
+class: left, middle
 
 # Custom-build for your project
 
@@ -129,9 +141,7 @@ background-size: cover
 
 # Not just aesthetics
 
-Yes, this is a huge 10-char long operator.
-
-But...
+Yep, it's a huge *10-char long* operator. But...
 
 ---
 background-image: url(https://www.ocamlplace.com/assets/measurement-millimeter-centimeter-meter-162500.jpeg)
@@ -139,17 +149,17 @@ background-size: cover
 
 # Not just aesthetics
 
-Yes, this is a huge 10-char long operator.
+Yep, it's a huge *10-char long* operator. But...
 
-Did you see the following expression?
+Did you notice the hidden message?
 
 ---
-background-image: url(https://www.ocamlplace.com/assets/measurement-millimeter-centimeter-meter-162500.jpeg)
-background-size: cover
 
-# Not just aesthetics
+# A hidden message
 
-The **broom** combinator has the *exact minimum char count* for the next expression: *an anonymous function wrapped inside a block*.
+<u>You need to clean your errors with a block.</u>
+
+This broom shaped combinator has the exact minimum char count for the next expression: *an anonymous function wrapped inside a block*.
 
 The same goes for the other syntax for anonymous functions:
 
@@ -163,22 +173,20 @@ let program () =
 ```
 
 ---
-background-color: #E3E3E3
 
 # Why this matters
 
 - Anonymous functions have *gigantic scope*.
-- Using them to write an alternative control flow can be misleading
-- You want a block around every error handler.
+- Using them to write alternative control flows can be misleading
+- You *want* a block around every error handler.
 
 ---
-background-color: #E3E3E3
 
 # Why this matters
 
 - Anonymous functions have *gigantic scope*.
-- Using them to write an alternative control flow can be misleading
-- You want a block around every error handler.
+- Using them to write alternative control flows can be misleading
+- You *want* a block around every error handler.
 
 <br/>
 *What would be printed?*
@@ -197,16 +205,15 @@ let program () =
   puts "world"
 ```
 ---
-background-color: #E3E3E3
 
 # Why this matters
 
 - Anonymous functions have *gigantic scope*.
-- Using them to write an alternative control flow can be misleading
-- You want a block around every error handler.
+- Using them to write alternative control flows can be misleading
+- You *want* a block around every error handler.
 
 <br/>
-*And now?*
+*What about now?*
 
 ```ocaml
 let puts s =
@@ -222,45 +229,51 @@ let program () =
   >>= fun () ->
   puts "world"
 ```
+
+*Tip*: The programs have different outputs
 ---
 
-background-color: rgba(189, 207, 199, 1)
+background-color: #E3E2DE
 class: left, middle
 
 # Way more than that
 
-A short path to composable DSLs with the **Free Monad**, no Category Theory required. Don't write a program, write a description of a program. Since it's your description, you can decide how to interpret it, and in how many ways.
+A short path towards composable DSLs with **The Free Monad**. Don't write a program, write a description of a program. Since it's your description, you can decide how to interpret it, and in how many ways.
 
-**Separate concerns**. Business logic far from cloud services and logging. Tests don't need to change production code: just change interpreters.
+It's your chance to easily swap core components of your projects,
+separate business logic from logging and cloud services. You can write integration
+tests that are easy to reason about.
 
 ---
 
-# A short dive into Sugar DSLs
+# Composable DSLs
 
 1. Abstract concepts
- 1. Functors
- 2. Monads
- 3. The Free Monad
- 4. Continuation
+ 1. Functors, Monads and The Free Monad
+ 2. Continuations
 
-2. Interfaces for DSL writers
- 1. Creating a language
- 2. Contexts
- 3. Meta Programming
- 4. Colaborating
+2. DSL Writer Tour
+ 1. Bare Bones
+ 2. Meta Programming
+ 3. Public Api Module
 
-3. A small example
+3. DSL Library Writer
+ 1. Combining Languages
+ 2. Assembling Runtimes
+ 3. Partially implemented DSLs
+
 4. Conclusion
 
 
 ---
 class: left, middle
+background-color: #E3E2DE
 
 # Abstract concepts
 
-**Funtors**, **Monads** and **Free Monads** matter. You should probably learn about them. But this knowledge is not essential to write DSLs, since a basic OCaml undertanding is enough to get you started.
+**Funtors**, **Monads** and **Free Monads** matter. You should probably learn about them. But this knowledge is not essential to write DSLs, since a basic OCaml undertanding is sufficient to get you started.
 
-A **Continuation** is a fancy word to name a callback. It is a function stored for later to be run at some point. Each instruction in the language defines a signature for the next continuation, effectively specifying details about valid chains of expressions.
+A **Continuation** is a fancy word to name a callback. It is a function stored for later, hopefully to be run at some point.
 
 
 ---
@@ -312,18 +325,20 @@ type 'f instruction =
 
 ---
 class: left, middle
+background-color: #E3E2DE
 
 # Interfaces for DSL writers
 
-In the next slides, we will describe the minimum steps to create a Dsl: a small language to print and get lines from the screen.
+In the next slides, we will describe the minimum steps to create a small Terminal DSL.
 
-We will go over the main conventions, meta programming, and the few things you need to do so other people can safely use your DSL.
+We will go over the main conventions, meta programming, and the few things you
+need to do so other people can safely use your DSL.
 
 ---
 
 # DSL Writer Tour - Part I
 
-So you want to write a DSL. This is what you need:
+**Bare Bones**
 
 - Describe your core instructions
 - Write a `map` function
@@ -333,7 +348,7 @@ So you want to write a DSL. This is what you need:
 
 # DSL Writer Tour - Part I
 
-So you want to write a DSL. This is what you need:
+**Bare Bones**
 
 - **Describe your core instructions**
 - Write a `map` function
@@ -343,7 +358,7 @@ So you want to write a DSL. This is what you need:
 
 ----
 
-We are defining just two instructions: Puts and GetLine. 
+We are defining just two instructions: Puts and GetLine.
 
 ```ocaml
 module Terminal = struct
@@ -361,7 +376,7 @@ end
 
 # DSL Writer Tour - Part I
 
-So you want to write a DSL. This is what you need:
+**Bare Bones**
 
 - ~~**Describe your core instructions**~~
 - **Write a `map` function**
@@ -375,10 +390,10 @@ This is how the compiler will know how to store and iterate over instructions on
 
 ```ocaml
 module Terminal = struct
-  
+
   module Core = struct
     ...
-    
+
     let map f = function
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
@@ -391,7 +406,7 @@ end
 
 # DSL Writer Tour - Part I
 
-So you want to write a DSL. This is what you need:
+**Bare Bones**
 
 - ~~**Describe your core instructions**~~
 - ~~**Write a `map` function**~~
@@ -407,7 +422,7 @@ Don't forget to make your errors serializable using s-expressions.
 open Sexplib.Std
 
 module Terminal = struct
-  module Core = ... 
+  module Core = ...
 
   module Errors = struct
     type t
@@ -423,21 +438,21 @@ end
 
 # DSL Writer Tour - Part II
 
-Simple so far, but we're not done. We will also need:
+**Meta Programming**
 
 - Integrate your errors with Sugar
 - Create a specification for this DSL
-- Write a public module your users
+- Write a public module for your users
 
 ---
 
 # DSL Writer Tour - Part II
 
-Simple so far, but we're not done. We will also need:
+**Meta Programming**
 
 - **Integrate your errors with Sugar**
 - Create a specification for this DSL
-- Write a public module your users
+- Write a public module for your users
 
 <br/>
 
@@ -458,11 +473,11 @@ end
 
 # DSL Writer Tour - Part II
 
-Simple so far, but we're not done. We will also need:
+**Meta Programming**
 
 - ~~**Integrate your errors with Sugar**~~
 - **Create a specification for this DSL**
-- Write a public module your users
+- Write a public module for your users
 
 <br/>
 
@@ -473,7 +488,7 @@ A `Spec` module gives you essential interoperability signatures and builders so 
 ```ocaml
 module Terminal = struct
   ...
-  
+
   module Spec = Sugar.DSL.SpecFor(Core)
 end
 ```
@@ -481,11 +496,11 @@ end
 
 # DSL Writer Tour - Part II
 
-Simple so far, but we're not done. We will also need:
+**Meta Programming**
 
 - ~~**Integrate your errors with Sugar**~~
 - ~~**Create a specification for this DSL**~~
-- **Write a public module your users**
+- **Write a public module for your users**
 
 <br/>
 
@@ -496,8 +511,14 @@ A `Spec` module gives you essential interoperability signatures and builders so 
 ```ocaml
 module Terminal = struct
   ...
-  
-  module Spec = Sugar.DSL.SpecFor(Core)
+
+  module Api (Ctx:Spec.S.Context) = struct
+    let puts s =
+      Puts (s, id) |> Ctx.lift
+
+    let get_line () =
+      GetLine id |> Ctx.lift
+  end
 end
 ```
 
