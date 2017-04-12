@@ -21,8 +21,10 @@
 
 
 class: right, middle
+
 background-image: url(https://www.ocamlplace.com/assets/pexels-photo-352779.jpeg)
 background-size: cover
+
 # OCaml Sugar
 
 A peek into the future of Functional Programming
@@ -34,7 +36,7 @@ class: left, middle
 
 # What it is
 
-A **Model Driven Development** library de allows you to:
+A **Model Driven Development** library that allows you to:
 
 - Write code using modern FP techniques
 - Produce clean code using error-aware expressions everywhere
@@ -44,14 +46,13 @@ A **Model Driven Development** library de allows you to:
 
 # OCaml lean and clean
 
-**One interface to rule them all**
-
-Using meta programming, all our error aware expressions, *asynchronous or not*, will keep the same clean look. Let the machine translate the result types. *Focus on the real stufff*.
-
 **Safer computations**
 
 Exceptions are easy to write and easier to forget. Better to avoid them. Sugar encourages you to define your error types early on, and always be ready for failures.
 
+**One interface to rule them all**
+
+Using meta programming, all our error aware expressions, *asynchronous or not*, will keep the same clean look. Let the machine translate the result types. *Focus on the real stufff*.
 
 ---
 
@@ -98,7 +99,7 @@ let program () =
 
 # Add your error handlers
 
-With exceptions, you'd use a try block like:
+With exceptions, you'd normally use a `try...with` block like:
 
 ```ocaml
 let program () =
@@ -228,7 +229,7 @@ class: left, middle
 
 # Way more than that
 
-A short path to composable DSLs with the **FreeMonad**, no Category Theory required. Write a program once, and interpret it later as you please.
+A short path to composable DSLs with the **Free Monad**, no Category Theory required. Don't write a program, write a description of a program. Since it's your description, you can decide how to interpret it, and in how many ways.
 
 **Separate concerns**. Business logic far from cloud services and logging. Tests don't need to change production code: just change interpreters.
 
@@ -310,105 +311,199 @@ type 'f instruction =
 ```
 
 ---
+class: left, middle
 
-# Creating a DSL
+# Interfaces for DSL writers
 
-So you want to write a DSL. This is what you need:
+In the next slides, we will describe the minimum steps to create a Dsl: a small language to print and get lines from the screen.
 
-- Create a new module
-- Specify your errors
-- Describe your core instructions
-
+We will go over the main conventions, meta programming, and the few things you need to do so other people can safely use your DSL.
 
 ---
 
-# Creating a DSL
+# DSL Writer Tour - Part I
 
 So you want to write a DSL. This is what you need:
 
-- Create a new module
-- Specify your errors
 - Describe your core instructions
+- Write a `map` function
+- Specify your errors
+
+---
+
+# DSL Writer Tour - Part I
+
+So you want to write a DSL. This is what you need:
+
+- **Describe your core instructions**
+- Write a `map` function
+- Specify your errors
 
 <br/>
-Example:
+
+----
+
+We are defining just two instructions: Puts and GetLine. 
 
 ```ocaml
 module Terminal = struct
-  module Errors = struct
-    type t
-      = Not_available | Unexpected of string
-  end
 
   module Core = struct
     type 'f t
       = Puts of string * ('f unrelated)
       | GetLine of ('f, string result) next
+  end
 
+end
+```
+
+---
+
+# DSL Writer Tour - Part I
+
+So you want to write a DSL. This is what you need:
+
+- ~~**Describe your core instructions**~~
+- **Write a `map` function**
+- Specify your errors
+
+<br/>
+
+----
+
+This is how the compiler will know how to store and iterate over instructions on our programs.
+
+```ocaml
+module Terminal = struct
+  
+  module Core = struct
+    ...
+    
     let map f = function
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
   end
+
 end
 ```
 
 ---
 
-# Creating a DSL
+# DSL Writer Tour - Part I
 
-Simple so far, but we're not done. We will also need:
+So you want to write a DSL. This is what you need:
 
-- Integrate your errors with Sugar
-- Create a specification for these core instructions
-- Create an Api module for your users
+- ~~**Describe your core instructions**~~
+- ~~**Write a `map` function**~~
+- **Specify your errors**
 
----
+<br/>
 
-# Creating a DSL
+----
 
-Simple so far, but we're not done. We will also need:
-
-- Integrate your errors with Sugar
-- Create a specification for these core instructions
-- Create an Api module for your users
-
-```ocaml
-module Terminal = struct
-  module Errors = ...
-  include Sugar.DSL.ErrorFor(Errors)
-
-  module Core = ...
-  module Spec = Sugar.DSL.SpecFor(Core)
-
-  ...
-end
-```
-
----
-
-# Creating a DSL
-
-**Serializable errors**
-
-Actually, this code wouldn't compile because all  errors need to be serializable using s-expressions. Here is the fix:
-
+Don't forget to make your errors serializable using s-expressions.
 
 ```ocaml
 open Sexplib.Std
 
 module Terminal = struct
+  module Core = ... 
+
   module Errors = struct
     type t
       = Not_available
       | Unexpected of string [@@deriving sexp]
   end
-  ...
+
+end
+```
+
+
+---
+
+# DSL Writer Tour - Part II
+
+Simple so far, but we're not done. We will also need:
+
+- Integrate your errors with Sugar
+- Create a specification for this DSL
+- Write a public module your users
+
+---
+
+# DSL Writer Tour - Part II
+
+Simple so far, but we're not done. We will also need:
+
+- **Integrate your errors with Sugar**
+- Create a specification for this DSL
+- Write a public module your users
+
+<br/>
+
+----
+
+This will get you an `Error` constructor to wrap around your door specification. It will also add a `string_of_error` function.
+
+```ocaml
+module Terminal = struct
+  module Core = ...
+
+  module Errors = ...
+  include Sugar.DSL.ErrorFor(Errors)
 end
 ```
 
 ---
 
-# Creating a DSL
+# DSL Writer Tour - Part II
+
+Simple so far, but we're not done. We will also need:
+
+- ~~**Integrate your errors with Sugar**~~
+- **Create a specification for this DSL**
+- Write a public module your users
+
+<br/>
+
+----
+
+A `Spec` module gives you essential interoperability signatures and builders so your Dsl can became pluggable.
+
+```ocaml
+module Terminal = struct
+  ...
+  
+  module Spec = Sugar.DSL.SpecFor(Core)
+end
+```
+---
+
+# DSL Writer Tour - Part II
+
+Simple so far, but we're not done. We will also need:
+
+- ~~**Integrate your errors with Sugar**~~
+- ~~**Create a specification for this DSL**~~
+- **Write a public module your users**
+
+<br/>
+
+----
+
+A `Spec` module gives you essential interoperability signatures and builders so your Dsl can became pluggable.
+
+```ocaml
+module Terminal = struct
+  ...
+  
+  module Spec = Sugar.DSL.SpecFor(Core)
+end
+```
+
+---
+
+# DSL Writer Tour - Part II
 
 **Public Api**
 
@@ -421,7 +516,7 @@ You need a module to work as a public view of your DSL, so other DSL writers or 
 
 ---
 
-# Creating a DSL
+# DSL Writer Tour - Part II
 
 **Public Api (example)**
 
