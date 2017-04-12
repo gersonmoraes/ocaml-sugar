@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Title</title>
+    <title>OCaml Sugar</title>
     <meta charset="utf-8">
     <style>
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
@@ -17,98 +17,444 @@
     </style>
   </head>
   <body>
-<textarea id="source">
+<textarea id="source" hidden="true">
 
 
+class: right, middle
+background-image: url(https://www.ocamlplace.com/assets/pexels-photo-352779.jpeg)
+background-size: cover
+# OCaml Sugar
 
-class: center, middle
+A peek into the future of Functional Programming
 
-# Título da apresentação
+<small>*Gerson Moraes*</small>
 
-Um Subtítulo
+---
+class: left, middle
+
+# What it is
+
+A **Model Driven Development** library de allows you to:
+
+- Write code using modern FP techniques
+- Produce clean code using error-aware expressions everywhere
+- Write DSLs that are modular and composable by design
 
 ---
 
-# Agenda
+# OCaml lean and clean
 
-1. Assunto principal
- 1. Sub tópico
- 2. Sub tópico
- 3. Sub tópico
+**One interface to rule them all**
 
-2. Assunto complementar
- 1. Sub tópico
- 2. Sub tópico
- 3. Sub tópico
+Using meta programming, all our error aware expressions, *asynchronous or not*, will keep the same clean look. Let the machine translate the result types. *Focus on the real stufff*.
 
-3. Vantagens e desvantagens
-4. Conclusão
+**Safer computations**
+
+Exceptions are easy to write and easier to forget. Better to avoid them. Sugar encourages you to define your error types early on, and always be ready for failures.
+
 
 ---
 
+# Custom-build for your project
 
-# Exemplos de código
+Set up an isolated module for your errors.
+```ocaml
+module MyError = struct
+  type t = AlreadyExists | Not_found
+end
+```
+<br/>
 
-Trecho de código usando marcação markdown
+And feed it to a *result module builder* to start coding:
+```ocaml
+module MyResult = Sugar.Result.Make (MyError)
+open MyResult
+
+let main () : string result =
+  do_something ()
+  >>= fun res ->
+  run_computation res >>
+  return "hello world"
+
+```
+
+---
+
+# Add your error handlers
+
+With exceptions, you'd normally use a `try...with` block like:
 
 ```ocaml
-module A = struct
+let program () =
+  try
+    do_something ()
+  with
+  | AlreadyExists -> print_endline "recoverd"
+  | Not_found     -> print_endline "recoverd"
+```
+<br/>
 
-  let puts s =
-    print_endline s
+---
 
+# Add your error handlers
+
+With exceptions, you'd use a try block like:
+
+```ocaml
+let program () =
+  try
+    do_something ()
+  with
+  | AlreadyExists -> print_endline "recoverd"
+  | Not_found     -> print_endline "recoverd"
+```
+<br/>
+
+The same can be done with error aware expressions:
+
+```ocaml
+let program () =
+  do_something ()
+  >---------
+  ( function
+    | AlreadyExists -> puts "recoverd"
+    | Not_found     -> puts "recoverd"
+  )
+```
+
+---
+background-image: url(https://www.ocamlplace.com/assets/measurement-millimeter-centimeter-meter-162500.jpeg)
+background-size: cover
+
+# Not just aesthetics
+
+Yes, this is a huge 10-char long operator.
+
+But...
+
+---
+background-image: url(https://www.ocamlplace.com/assets/measurement-millimeter-centimeter-meter-162500.jpeg)
+background-size: cover
+
+# Not just aesthetics
+
+Yes, this is a huge 10-char long operator.
+
+Did you see the following expression?
+
+---
+background-image: url(https://www.ocamlplace.com/assets/measurement-millimeter-centimeter-meter-162500.jpeg)
+background-size: cover
+
+# Not just aesthetics
+
+The **broom** combinator has the *exact minimum char count* for the next expression: *an anonymous function wrapped inside a block*.
+
+The same goes for the other syntax for anonymous functions:
+
+```ocaml
+let program () =
+  do_something ()
+  >---------
+  ( fun e ->
+    puts "recoverd"
+  )
+```
+
+---
+background-color: #E3E3E3
+
+# Why this matters
+
+- Anonymous functions have *gigantic scope*.
+- Using them to write an alternative control flow can be misleading
+- You want a block around every error handler.
+
+---
+background-color: #E3E3E3
+
+# Why this matters
+
+- Anonymous functions have *gigantic scope*.
+- Using them to write an alternative control flow can be misleading
+- You want a block around every error handler.
+
+<br/>
+*What would be printed?*
+
+```ocaml
+let puts s =
+  print_endline s;
+  return ()
+
+let program () =
+  puts "hello"
+  >---------
+  fun e ->
+  return ()
+  >>= fun () ->
+  puts "world"
+```
+---
+background-color: #E3E3E3
+
+# Why this matters
+
+- Anonymous functions have *gigantic scope*.
+- Using them to write an alternative control flow can be misleading
+- You want a block around every error handler.
+
+<br/>
+*And now?*
+
+```ocaml
+let puts s =
+  print_endline s;
+  return ()
+
+let program () =
+  puts "hello"
+  >---------
+  ( fun e ->
+    return ()
+  )
+  >>= fun () ->
+  puts "world"
+```
+---
+
+background-color: rgba(189, 207, 199, 1)
+class: left, middle
+
+# Way more than that
+
+A short path to composable DSLs with the **FreeMonad**, no Category Theory required. Write a program once, and interpret it later as you please.
+
+**Separate concerns**. Business logic far from cloud services and logging. Tests don't need to change production code: just change interpreters.
+
+---
+
+# A short dive into Sugar DSLs
+
+1. Abstract concepts
+ 1. Functors
+ 2. Monads
+ 3. The Free Monad
+ 4. Continuation
+
+2. Interfaces for DSL writers
+ 1. Creating a language
+ 2. Contexts
+ 3. Meta Programming
+ 4. Colaborating
+
+3. A small example
+4. Conclusion
+
+
+---
+class: left, middle
+
+# Abstract concepts
+
+**Funtors**, **Monads** and **Free Monads** matter. You should probably learn about them. But this knowledge is not essential to write DSLs, since a basic OCaml undertanding is enough to get you started.
+
+A **Continuation** is a fancy word to name a callback. It is a function stored for later to be run at some point. Each instruction in the language defines a signature for the next continuation, effectively specifying details about valid chains of expressions.
+
+
+---
+class: left, top
+
+# More on Continuations
+
+**Watching the next instruction**
+
+To write a DSL, you need to describe *(and implement)* each instruction separately. One crucial information about an instruction is what value it should return back to the caller. This is defined by specifying the next continuation in the chain.
+
+To help you do that, use the `next` type:
+
+```ocaml
+type ('f, 'args) next = 'args -> 'f
+```
+
+<br/>
+Can you guess the meaning of each type of continuation bellow?
+
+```ocaml
+type 'f instruction =
+  | A of ('f, string) next
+  | B of ('f, int option) next
+  | C of ('f, bool -> bool -> bool) next
+```
+
+---
+class: left, top
+
+# More on Continuations
+
+**Unrelated continuations**
+
+If your expression doesn't return any useful value, you could use the `unrelated` type alias:
+
+```ocaml
+type 'f unrelated = ('f, unit) next
+```
+
+<br/>
+In the example bellow, `A` and `B` have the same singnature for the next continuation.
+
+```ocaml
+type 'f instruction =
+  | A of ('f, unit) next
+  | B of 'f unrelated
+```
+
+---
+
+# Creating a DSL
+
+So you want to write a DSL. This is what you need:
+
+- Create a new module
+- Specify your errors
+- Describe your core instructions
+
+
+---
+
+# Creating a DSL
+
+So you want to write a DSL. This is what you need:
+
+- Create a new module
+- Specify your errors
+- Describe your core instructions
+
+<br/>
+Example:
+
+```ocaml
+module Terminal = struct
+  module Errors = struct
+    type t
+      = Not_available | Unexpected of string
+  end
+
+  module Core = struct
+    type 'f t
+      = Puts of string * ('f unrelated)
+      | GetLine of ('f, string result) next
+
+    let map f = function
+      | Puts (s, g) -> Puts (s, f @ g)
+      | GetLine g -> GetLine (f @ g)
+  end
 end
 ```
 
 ---
 
-# Formatação
+# Creating a DSL
 
-- **Negrito**
-- *Itálico*
-- ~~Taxado~~
-- <u>Underline</u>
-- `Código mono-espaçado`
+Simple so far, but we're not done. We will also need:
 
----
-
-# Notas ocultas de orador
-
-Essa página possui anotações privadas. Para visualizá-las, use o atalho **P**.
-
-<br/>
-
-**Não mostre para o público!**
-
-Clone a janela atual com **C**, e mova a cópia da janela para um monitor auxiliar. No seu monitor particular, abra as anotações com **P**. As duas janelas serão sincronizadas automaticamente.
-
-???
-
-## Qualquer anotação de orador
-
-Para visualizar:
-  - Clone a janela com "C"
-  - Alterne para o "modo de orador" na janela auxiliar com "P"
-
+- Integrate your errors with Sugar
+- Create a specification for these core instructions
+- Create an Api module for your users
 
 ---
 
-# Mais informações
+# Creating a DSL
 
-- [Remark](https://remarkjs.com/#1)
-  - Biblioteca JS para criar essas apresentações de slides
-- Plugins para integração com Atom:
-  - [LiveReload](https://atom.io/packages/livereload): ao ser ativado com `Ctrl-Shift-R`, ele sincroniza modificações com navegador.
-  - [Atom-Idle-Autosave](https://atom.io/packages/atom-idle-autosave): permite configurar um *intervalo de inatividade em milessegundos* para salvar o arquivo atual automaticamente
+Simple so far, but we're not done. We will also need:
 
+- Integrate your errors with Sugar
+- Create a specification for these core instructions
+- Create an Api module for your users
+
+```ocaml
+module Terminal = struct
+  module Errors = ...
+  include Sugar.DSL.ErrorFor(Errors)
+
+  module Core = ...
+  module Spec = Sugar.DSL.SpecFor(Core)
+
+  ...
+end
+```
+
+---
+
+# Creating a DSL
+
+**Serializable errors**
+
+Actually, this code wouldn't compile because all  errors need to be serializable using s-expressions. Here is the fix:
+
+
+```ocaml
+open Sexplib.Std
+
+module Terminal = struct
+  module Errors = struct
+    type t
+      = Not_available
+      | Unexpected of string [@@deriving sexp]
+  end
+  ...
+end
+```
+
+---
+
+# Creating a DSL
+
+**Public Api**
+
+You need a module to work as a public view of your DSL, so other DSL writers or developers writing a final program. To make one, you need to know what is a *context*.
+
+> **Context** is a module responsible for the translation of core instructions from current the language to the bigger language used to build the final runtime. They can be seem as the glue that allows you to mix different DSLs.
+
+><u>Note:</u> The signature for the context matching the current library is given by the `Spec.S.Context`.
+
+
+---
+
+# Creating a DSL
+
+**Public Api (example)**
+
+Let's finish the specification of our Terminal Dsl.
+It uses two helper functions to "instanciate" each instruction:
+
+- **id**: return the next continuation
+- **lift**: *store the instruction for later*. This instruction will be "stored" in the Free Monad main type.
+
+
+```ocaml
+module Terminal = struct
+  ...
+
+  module Api (Ctx:Spec.S.Context) = struct
+
+    let puts s =
+      Puts (s, id) |> Ctx.lift
+
+    let get_line () =
+      GetLine id |> Ctx.lift
+
+  end
+end
+```
 
 ---
 class: center, middle
 
 
-# Conclusão
+# Conclusion
 
-Sua frase de efeito.
+...
 
 
 

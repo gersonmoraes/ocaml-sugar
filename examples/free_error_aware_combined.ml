@@ -162,7 +162,15 @@ let program1 () =
     )
   )
 
+let program2 () =
+  x_puts "Hello"
+  >---------
+  fun e ->
+  return ()
+  >>= fun () ->
+  x_puts "World"
+
 
 let () =
-  Context.run_error_aware X_and_Y.Runner.debug program1
+  Context.run_error_aware X_and_Y.Runner.debug program2
   (* Context.run_error_aware X_and_Y.Runner.run program1 *)

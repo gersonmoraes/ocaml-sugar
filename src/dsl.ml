@@ -51,7 +51,7 @@ module S = struct
       with type 'a dst = 'a free_f
 
     val lift: 'a src -> 'a Free.t
- 
+
     module Result : Promise.S
       with type error := Error.t
        and type 'a monad := 'a Free.t
