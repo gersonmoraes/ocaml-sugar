@@ -189,7 +189,7 @@ let program () =
 - You *want* a block around every error handler.
 
 <br/>
-*What would be printed?*
+What would be printed?
 
 ```ocaml
 let puts s =
@@ -213,7 +213,7 @@ let program () =
 - You *want* a block around every error handler.
 
 <br/>
-*What about now?*
+What about now?
 
 ```ocaml
 let puts s =
@@ -329,7 +329,7 @@ background-color: #E3E2DE
 
 # Interfaces for DSL writers
 
-In the next slides, we will describe the minimum steps to create a small Terminal DSL.
+In the next slides, we will describe the minimum steps to create a small `Terminal` DSL.
 
 We will go over the main conventions, meta programming, and the few things you
 need to do so other people can safely use your DSL.
@@ -458,7 +458,8 @@ end
 
 ----
 
-This will get you an `Error` constructor to wrap around your door specification. It will also add a `string_of_error` function.
+This code get create a new `Error` constructor, compatible with other DSLs, but
+only accessible using the full namespaced name `Terminal.Error`. It will also create a `string_of_error` function.
 
 ```ocaml
 module Terminal = struct
@@ -482,7 +483,7 @@ end
 
 ----
 
-A `Spec` module gives you essential interoperability signatures and builders so your Dsl can became pluggable.
+A `Spec` module gives you interoperability signatures and builders so your DSL can became pluggable.
 
 ```ocaml
 module Terminal = struct
@@ -511,12 +512,14 @@ This will be the only requirement for anyone to use your DSL.
 module Terminal = struct
   ...
 
-  module Api (Ctx:Spec.S.Context) = struct
+  module Api (C:Spec.S.Context) = struct
+    open C
+
     let puts s =
-      Puts (s, id) |> Ctx.lift
+      Puts (s, id) |> lift
 
     let get_line () =
-      GetLine id |> Ctx.lift
+      GetLine id |> lift
   end
 end
 ```
@@ -535,56 +538,373 @@ end
 
 ----
 
-But, what is a `context` and how can you get one?
+But, what is a `Context` and how can you get one?
 
 ---
 
 class: left, middle
 background-color: #E3E2DE
 
-# A context is
+# Contexts
 
-A module responsible for the translation of core instructions from current the language to the bigger language used to build the final runtime. They can be seem as the glue that allows you to mix different DSLs.
+The guys responsible for translating instructions from current the language to a bigger one, used to build the final runtime. They are the glue that allows you to mix different DSLs.
 
-Under the hood, it is how Sugar implements natural transformations to make languages 
+Under the hood, they implement a natural transformation.
+
+---
+# How can you get a context
+
+If you just have one DSL, use the default builder:
+
+```ocaml
+module Context = Sugar.DSL.ContextFor(Terminal.Core)
+```
+
+---
+# How can you get a context
+
+If you just have one DSL, use the default builder:
+
+```ocaml
+module Context = Sugar.DSL.ContextFor(Terminal.Core)
+```
+
+<br/>
+
+After this, you can start using the `Terminal` Api:
+
+```ocaml
+module TerminalApi = Terminal.Api (Context)
+
+open TerminalApi
+open Context.Result
+
+let program () =
+  puts "What's your name?" >>
+  get_line ()
+  >>= fun name ->
+  puts (name ^ ", have a nice day.")
+  >---------
+  ( function
+    Terminal.Error e -> puts ("recovered from "^(Terminal.string_of_error e))
+    _ -> assert false
+  )
+```
+
+---
+
+class: left, middle
+background-color: #E3E2DE
+
+# What if you need to combine different DSLs?
+
+The process is quite similar. Hold tight.
+
+---
+
+# Combine operation
+
+Say you have two DSLs.
+
+```ocaml
+module X = struct
+  module Errors = struct
+    type t = Not_found [@@deriving sexp]
+  end
+
+  module Core = struct
+    type 'f t = A of 'f unrelated
+    let map f = function
+      | A g -> A (f @ g)
+  end
+  ...
+end
+
+module Y = struct
+  module Errors = struct
+    type t = Not_available [@@deriving sexp]
+  end
+
+  module Core = struct
+    type 'f t = B of 'f unrelated
+    let map f = function
+      | B g -> B (f @ g)
+  end
+  ...
+end
+```
+
+---
+
+# Combine operation
+
+Each one with its own Api module.
+
+```ocaml
+module X = struct
+  ...
+  module Api (C:Spec.S.Context) = struct
+    let a () =
+      A id |> C.lift
+  end
+end
+
+module Y = struct
+  ...
+  module Api (C:Spec.S.Context) = struct
+    let b () =
+      b id |> C.lift
+  end
+end
+```
 
 
 ---
 
-# DSL Writer Tour - Part II
+# Combine operation
 
-**Public Api (example)**
-
-Let's finish the specification of our Terminal Dsl.
-It uses two helper functions to "instanciate" each instruction:
-
-- **id**: return the next continuation
-- **lift**: *store the instruction for later*. This instruction will be "stored" in the Free Monad main type.
-
+To use `X` and `Y` together, you need to combine both core instructions and Apis.
 
 ```ocaml
-module Terminal = struct
-  ...
+module X_and_Y = struct
+  include Sugar.DSL.Combine (X.Core) (Y.Core)
 
-  module Api (Ctx:Spec.S.Context) = struct
-
-    let puts s =
-      Puts (s, id) |> Ctx.lift
-
-    let get_line () =
-      GetLine id |> Ctx.lift
-
+  module Api (C:Spec.S.Context) = struct
+    include X.Api (Natural.Proxy1.For(Ctx))
+    include Y.Api (Natural.Proxy2.For(Ctx))
   end
 end
 ```
 
 ---
+
+# Combine operation
+
+To use `X` and `Y` together, you need to combine both core instructions and Apis.
+
+```ocaml
+module X_and_Y = struct
+  include Sugar.DSL.Combine (X.Core) (Y.Core)
+
+  module Api (C:Spec.S.Context) = struct
+    include X.Api (Natural.Proxy1.For(Ctx))
+    include Y.Api (Natural.Proxy2.For(Ctx))
+  end
+end
+```
+
+<br/>
+
+From this point on, you can start coding.
+
+```ocaml
+module Context = Sugar.DSL.ContextFor(X_and_Y.Core)
+module MyApi = X_and_Y.Api (Context)
+
+open MyApi
+open Context.Result
+
+let program () =
+   a () >>
+   b ()
+```
+
+
+---
+
+class: left, middle
+background-color: #E3E2DE
+
+# Interpreters
+
+So far we've learned how to describe programs. How about running them?
+
+---
+
+# Interpreters
+
+Every DSL comes with a signature for its `Runner`:
+
+```ocaml
+module Spec = struct
+  ...
+  module type Runner = sig
+    val run: 'a Core.t -> 'a
+    val debug: 'a Core.t -> 'a
+  end
+end
+```
+
+---
+
+# Interpreters
+
+Every DSL comes with a signature for its `Runner`:
+
+```ocaml
+module Spec = struct
+  ...
+  module type Runner = sig
+    val run: 'a Core.t -> 'a
+    val debug: 'a Core.t -> 'a
+  end
+end
+```
+Here's a runner for the `Terminal` DSL:
+
+```ocaml
+module TerminalRunner = struct
+  open Terminal.Core
+
+  let run = function
+    | Puts (s, f) -> print_endline s; return () |> f
+    | GetLine f -> read_line () |> return |> f
+
+  let debug = function
+    | Puts (s, f) ->
+        print_endline ("Puts: " ^ s); return () |> f
+    | GetLine f ->
+        Printf.printf "GetLine: ";
+        read_line () |> return |> f
+end
+```
+
+---
+
+# Interpreters
+
+Combined DSLs also need a Runner.
+
+```ocaml
+module X_and_Y_Runner = struct
+  open X_and_Y.Core
+
+  let run = function
+    | Case1 (X.Core.A f) -> f ()
+    | Case2 (Y.Core.B f) -> f ()
+
+  let debug = function
+    | Case1 (X.Core.A f) -> print_endline "X.A: "; f ()
+    | Case2 (Y.Core.B f) -> print_endline "X.B: "; f ()
+end
+```
+
+---
+
+# Interpreters
+
+Combined DSLs also need a Runner.
+
+```ocaml
+module X_and_Y_Runner = struct
+  open X_and_Y.Core
+
+  let run = function
+    | Case1 (X.Core.A f) -> f ()
+    | Case2 (Y.Core.B f) -> f ()
+
+  let debug = function
+    | Case1 (X.Core.A f) -> print_endline "X.A: "; f ()
+    | Case2 (Y.Core.B f) -> print_endline "X.B: "; f ()
+end
+```
+
+<br/>
+
+You can use this runners with the context to run programs:
+
+```ocaml
+let () =
+  Context.run_error_aware Terminal.Runner.debug program
+```
+
+---
+class: left, middle
+background-color: #E3E2DE
+
+# Scaling with runtimes
+
+If you are combining many DSLs that you already know how to run, you can wrap them
+together and manage them as a unit. We call this a `Runtime` inside Sugar.
+
+The fun part is that runtimes can be assambled together too.
+
+---
+
+# Runtimes
+
+A runtime have a signature very similar to the DSL module we've seen before,
+plus a runner.
+
+```ocaml
+module type Runtime = sig
+  module Core : Functor
+  module Spec : Spec with module Core = Core
+  module Runner : sig
+    val run : 'a Core.t -> 'a
+    val debug : 'a Core.t -> 'a
+  end
+end
+```
+
+---
+
+# Runtimes
+
+A runtime have a signature very similar to the DSL module we've seen before,
+plus a runner.
+
+```ocaml
+module type Runtime = sig
+  module Core : Functor
+  module Spec : Spec with module Core = Core
+  module Runner : sig
+    val run : 'a Core.t -> 'a
+    val debug : 'a Core.t -> 'a
+  end
+end
+```
+
+<br/>
+Combining runtimes instead of just the core modules have advantage of reusing
+the known runners. We call this operation `Assembly` inside Sugar.
+
+
+---
+
+# Runtimes
+
+For example, if the DSLs `X` and `Y` from the previous examples came with default
+runners, with could merge them together with:
+
+```ocaml
+module XY = struct
+  include Assembly (X) (Y)
+
+  module Api (C:Spec.S.Context) = struct
+    include X.Api (Natural.Proxy1.For(C))
+    include Y.Api (Natural.Proxy2.For(C))
+  end
+end
+
+Context = Sugar.DSL.ContextForRuntime(X_and_Y)
+
+...
+
+let () =
+  Context.run_error_aware XY.Runner.debug program_for_xy
+```
+---
+
 class: center, middle
+background-color: #E3E2DE
 
 
 # Conclusion
 
-...
+You have new tools to build DSLs in OCaml.
+
+Have fun with the language.
 
 
 
