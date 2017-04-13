@@ -50,15 +50,16 @@ end
 module Context = ContextFor(Terminal.Algebra)
 module Lib1 = Terminal.New (Context)
 
+open Context.Free
 open Context.Free.Infix
+
 open Lib1
 
 let program () =
-  puts "What's your name?" />
+  puts "What's your name?" >>
   get_line ()
   >>= fun name ->
   puts (name ^ ", have a nice day.")
-
 
 let () =
   Context.run Terminal.Runner.run program

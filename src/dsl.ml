@@ -110,9 +110,12 @@ module S = struct
 
     val lift: 'a src -> 'a Free.t
 
-    module Result : Promise.S
+    include Promise.S
       with type error := exn
        and type 'a monad := 'a Free.t
+    (* module Result : Promise.S
+      with type error := exn
+       and type 'a monad := 'a Free.t *)
   end
 
 
@@ -246,7 +249,8 @@ module SpecFor(L:Functor) : Spec
 
       module Free = Ctx.Free
 
-      module Result = Prelude.CoreResult.For (Ctx.Free)
+      include Prelude.CoreResult.For (Ctx.Free)
+      (* module Result = Prelude.CoreResult.For (Ctx.Free) *)
     end  (* Spec.Proxy.For *)
   end (* Spec.Proxy *)
 
@@ -352,10 +356,11 @@ module ContextFor(L:Functor) = struct
   let return f = Free.return f
   let lift f = Free.lift (apply f)
 
-  module Result = Prelude.CoreResult.For (Free)
+  include Prelude.CoreResult.For (Free)
+  (* module Result = Prelude.CoreResult.For (Free) *)
 
   let run_error_aware runner program =
-    Free.iter runner (Result.unwrap_or raise (program ()))
+    Free.iter runner (unwrap_or raise (program ()))
 
   let run runner program =
     Free.iter runner (program ())

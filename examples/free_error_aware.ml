@@ -1,4 +1,5 @@
 open Sugar.Dsl
+open Sexplib.Std
 
 open Printf
 
@@ -30,7 +31,7 @@ module Terminal = struct
   end
 
   module Errors = struct
-    type t = string
+    type t = string [@@deriving sexp]
   end
 
   include ErrorFor(Errors)
@@ -56,10 +57,9 @@ module Context = ContextForRuntime(Terminal)
 module MyTerminal = Terminal.New (Context)
 
 open MyTerminal
-open Context
 
-open Result
-open Result.Infix
+open Context
+open Context.Infix
 
 let program1 () =
   puts "What's your name?" >>

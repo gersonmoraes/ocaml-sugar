@@ -31,8 +31,8 @@ module type FreeMonad = sig
 
   module Infix : sig
     val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
-    val (>>)  : 'a t -> 'b t -> 'b t
-    val (/>)  : unit t -> 'b t -> 'b t
+    val (>>>)  : 'a t -> 'b t -> 'b t
+    val (>>)  : unit t -> 'b t -> 'b t
     val (>>|) : 'a t -> ('a -> 'b) -> 'b t
   end
 end
@@ -64,8 +64,8 @@ module MakeFree (F : Functor) : FreeMonad with type 'a f = 'a F.t = struct
 
   module Infix = struct
     let (>>=) m f = bind f m
-    let (>>) x y = bind (fun _ -> y) x
-    let (/>) x y = bind (fun () -> y) x
+    let (>>>) x y = bind (fun _ -> y) x
+    let (>>) x y = bind (fun () -> y) x
     let (>>|) m f = map f m
   end
 end
@@ -85,7 +85,7 @@ end
   layers, using the Sugar functors, like:
   <code>
     module MyResult = Sugar.Result.Make (MyError)
-    
+
     module MyResult2 = Sugar.Promise.Make (Lwt) (MyError)
     module MyResult2 = MyResult.For (Lwt)
   </code>
@@ -107,4 +107,3 @@ module type Natural = sig
   type 'a dst
   val apply: 'a src -> 'a dst
 end
-

@@ -119,10 +119,9 @@ end
 
 
 module Context = ContextFor(X_and_Y.Algebra)
-open Context
 
-open Result
-open Result.Infix
+open Context
+open Context.Infix
 
 module Lib1 = X_and_Y.New (Context)
 
