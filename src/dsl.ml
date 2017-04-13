@@ -1,9 +1,64 @@
 (* module Generic = Generic *)
 open Abstract
 
+let id = fun x -> x
+
+(** Function composition *)
+let (@) f g = fun v -> f (g v)
+
+
 module Error = struct
   type t = exn
 end
+
+module Prelude = struct
+
+  module Algebra = struct
+    type 'a result = ('a, exn) Pervasives.result
+
+    (**
+      A specification for the "next continuation".
+
+      Each instruction in our language must specify the type for the next
+      continuation in the chain. Some instructions return "unit", some return
+      a function. In all cases, this need to be defined.
+
+      But the type "next" makes this trivial. The code bellow define an
+      instruction that returns a string option.
+      <code>
+        type 'f t =
+          GetData of ('f, string option) next
+      </code>
+
+      To use this expression, the developer needs to provide a function ['f] that
+      can handle a [string option].
+
+      If your continuation needs to be more complex and return, for example, a
+      string option, an int, and a float, this could be done with:
+      <code>
+        type 'f t =
+          GetData of ('f, string option -> int -> float) next
+      </code>
+    *)
+    type ('f, 'args) next = 'args -> 'f
+
+    (**
+      Specifies that the continuation ['f] is not related to the current
+      instruction.
+
+      This type is syntatic sugar for the type [next].
+    *)
+    type 'f unrelated = ('f, unit) next
+  end
+
+  module CoreResult = Result.Make (Error)
+
+  module Runner = struct
+    module Result = CoreResult
+  end
+end
+
+open Prelude
 
 module S = struct
 
@@ -24,7 +79,7 @@ module S = struct
 
     val string_of_error: error -> string
 
-    val throw: error -> exn
+    val throw: error -> 'a Prelude.Algebra.result
   end
 
   (**
@@ -55,7 +110,7 @@ module S = struct
     val lift: 'a src -> 'a Free.t
 
     module Result : Promise.S
-      with type error := Error.t
+      with type error := exn
        and type 'a monad := 'a Free.t
   end
 
@@ -64,7 +119,7 @@ module S = struct
     Minimum specification for a library.
 
     It contains:
-     - A functor `Core` describing an algebra
+     - A functor `Algebra` describing an algebra
      - A module `S` with useful interfaces for this algebra
      - A context translator, called `Proxy`, to help other DSL writers
        integrate with this library.
@@ -77,20 +132,20 @@ module S = struct
     module.
   *)
   module type Spec = sig
-    module Core : Functor
+    module Algebra : Functor
 
     module S : sig
       module type Natural = sig
         type 'a src
-        val apply: 'a src -> 'a Core.t
+        val apply: 'a src -> 'a Algebra.t
       end
 
       module type Context = Context
-        with type 'a src = 'a Core.t
+        with type 'a src = 'a Algebra.t
 
       module type Runner = sig
-        val run: 'a Core.t -> 'a
-        val debug: 'a Core.t -> 'a
+        val run: 'a Algebra.t -> 'a
+        val debug: 'a Algebra.t -> 'a
       end
     end
 
@@ -111,16 +166,16 @@ module S = struct
     module Errors : Errors
     exception Error of Errors.t
 
-    module Core : Functor
-    module Spec : Spec with module Core = Core
+    module Algebra : Functor
+    module Spec : Spec with module Algebra = Algebra
   end
 
   module type Runtime = sig
-    module Core : Functor
-    module Spec : Spec with module Core = Core
+    module Algebra : Functor
+    module Spec : Spec with module Algebra = Algebra
     module Runner : sig
-      val run : 'a Core.t -> 'a
-      val debug : 'a Core.t -> 'a
+      val run : 'a Algebra.t -> 'a
+      val debug : 'a Algebra.t -> 'a
     end
   end
 
@@ -132,52 +187,6 @@ end
 open S
 
 
-module Prelude = struct
-  let id = fun x -> x
-
-  (** Function composition *)
-  let (@) f g = fun v -> f (g v)
-
-  (**
-    A specification for the "next continuation".
-
-    Each instruction in our language must specify the type for the next
-    continuation in the chain. Some instructions return "unit", some return
-    a function. In all cases, this need to be defined.
-
-    But the type "next" makes this trivial. The code bellow define an
-    instruction that returns a string option.
-    <code>
-      type 'f t =
-        GetData of ('f, string option) next
-    </code>
-
-    To use this expression, the developer needs to provide a function ['f] that
-    can handle a [string option].
-
-    If your continuation needs to be more complex and return, for example, a
-    string option, an int, and a float, this could be done with:
-    <code>
-      type 'f t =
-        GetData of ('f, string option -> int -> float) next
-    </code>
-  *)
-  type ('f, 'args) next = 'args -> 'f
-
-  (**
-    Specifies that the continuation ['f] is not related to the current
-    instruction.
-
-    This type is syntatic sugar for the type [next].
-  *)
-  type 'f unrelated = ('f, unit) next
-
-end
-
-module CoreResult = Result.Make (Error)
-
-open Prelude
-
 module ErrorFor(E:Errors) : ErrorForSpec
   with type error := E.t
  = struct
@@ -188,7 +197,7 @@ module ErrorFor(E:Errors) : ErrorForSpec
   let string_of_error (e:error) : string =
     Sexplib.Sexp.to_string_hum @@ E.sexp_of_t e
 
-  let throw e = Error e
+  let throw e = Pervasives.Error (Error e)
 end
 
 (**
@@ -196,10 +205,10 @@ end
   for a library based on its algebra.
 *)
 module SpecFor(L:Functor) : Spec
-  with module Core = L
+  with module Algebra = L
  = struct
 
-  module Core = L
+  module Algebra = L
 
   module S = struct
     module type Context = Context
@@ -211,8 +220,8 @@ module SpecFor(L:Functor) : Spec
     end
 
     module type Runner = sig
-      val run: 'a Core.t -> 'a
-      val debug: 'a Core.t -> 'a
+      val run: 'a Algebra.t -> 'a
+      val debug: 'a Algebra.t -> 'a
     end
   end (* SpecFor.S *)
 
@@ -236,7 +245,7 @@ module SpecFor(L:Functor) : Spec
 
       module Free = Ctx.Free
 
-      module Result = CoreResult.For (Ctx.Free)
+      module Result = Prelude.CoreResult.For (Ctx.Free)
     end  (* Spec.Proxy.For *)
   end (* Spec.Proxy *)
 
@@ -244,7 +253,7 @@ end (* SpecFor *)
 
 module Combine (L1:Functor) (L2:Functor) = struct
 
-  module Core = struct
+  module Algebra = struct
     type 'a t =
       | Case1 of 'a L1.t
       | Case2 of 'a L2.t
@@ -254,10 +263,10 @@ module Combine (L1:Functor) (L2:Functor) = struct
       | Case2 v -> Case2 (L2.map f v)
   end
 
-  module Spec = SpecFor (Core)
+  module Spec = SpecFor (Algebra)
 
   module Natural = struct
-    open Core
+    open Algebra
     open Spec
 
     let apply1 v = Case1 v
@@ -270,7 +279,7 @@ module Combine (L1:Functor) (L2:Functor) = struct
 end (* Combine *)
 
 module Combine3 (L1:Functor) (L2:Functor) (L3:Functor) = struct
-  module Core = struct
+  module Algebra = struct
     type 'a t =
       | Case1 of 'a L1.t
       | Case2 of 'a L2.t
@@ -282,10 +291,10 @@ module Combine3 (L1:Functor) (L2:Functor) (L3:Functor) = struct
       | Case3 v -> Case3 (L3.map f v)
   end
 
-  module Spec = SpecFor(Core)
+  module Spec = SpecFor(Algebra)
 
   module Natural = struct
-    open Core
+    open Algebra
     open Spec
 
     let apply1 v = Case1 v
@@ -306,21 +315,21 @@ end (* Combine3 *)
 module Combine4 (L1:Functor) (L2:Functor)
                 (L3:Functor) (L4:Functor) =
 struct
-  module Core_A = Combine (L1) (L2)
-  module Core_B = Combine (L3) (L4)
+  module Algebra_A = Combine (L1) (L2)
+  module Algebra_B = Combine (L3) (L4)
 
-  module R = Combine (Core_A.Core) (Core_B.Core)
+  module R = Combine (Algebra_A.Algebra) (Algebra_B.Algebra)
 
-  module Core = R.Core
+  module Algebra = R.Algebra
   module Spec = R.Spec
 
   module Natural = struct
     open Spec
 
-    let apply1 v = R.Natural.apply1 (Core_A.Natural.apply1 v)
-    let apply2 v = R.Natural.apply1 (Core_A.Natural.apply2 v)
-    let apply3 v = R.Natural.apply2 (Core_B.Natural.apply1 v)
-    let apply4 v = R.Natural.apply2 (Core_B.Natural.apply2 v)
+    let apply1 v = R.Natural.apply1 (Algebra_A.Natural.apply1 v)
+    let apply2 v = R.Natural.apply1 (Algebra_A.Natural.apply2 v)
+    let apply3 v = R.Natural.apply2 (Algebra_B.Natural.apply1 v)
+    let apply4 v = R.Natural.apply2 (Algebra_B.Natural.apply2 v)
 
     module Proxy1 = Proxy(struct type 'a src = 'a L1.t let apply = apply1 end)
     module Proxy2 = Proxy(struct type 'a src = 'a L2.t let apply = apply2 end)
@@ -337,12 +346,12 @@ module ContextFor(L:Functor) = struct
 
   type 'a src = 'a L.t
   type 'a dst = 'a L.t
-  let apply = id
+  let apply v = v
 
   let return f = Free.return f
   let lift f = Free.lift (apply f)
 
-  module Result = CoreResult.For (Free)
+  module Result = Prelude.CoreResult.For (Free)
 
   let run_error_aware runner program =
     Free.iter runner (Result.unwrap_or raise (program ()))
@@ -352,14 +361,14 @@ module ContextFor(L:Functor) = struct
 end
 
 module ContextForRuntime(R:Runtime) = struct
-  include ContextFor(R.Core)
+  include ContextFor(R.Algebra)
 end
 
 module Assemble (R1:Runtime) (R2:Runtime) = struct
-  include Combine (R1.Core) (R2.Core)
+  include Combine (R1.Algebra) (R2.Algebra)
 
   module Runner : Spec.S.Runner = struct
-    open Core
+    open Algebra
 
     let run = function
       | Case1 v -> R1.Runner.run v

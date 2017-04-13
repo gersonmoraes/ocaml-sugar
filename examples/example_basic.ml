@@ -1,4 +1,3 @@
-open Sugar.Types
 
 
 (* Example of basic usage of Sugar to build an Error Handling Layer
@@ -44,14 +43,6 @@ let error_handler e: string result =
   | _ -> throw e
 
 open MyResult.Infix
-
-(* implementing it in order, later we do it in parallel *)
-let (<*>) fab fa =
-  fab
-  >>= fun f ->
-  fa
-  >>= fun a ->
-  return (f a)
 
 let _ =
   print_endline "Hello World"

@@ -1,66 +1,73 @@
 open Sexplib.Std
 
-module DSL = Sugar.Dsl
+open Sugar.Dsl
 
-open DSL.Prelude
 open Printf
 
 module X = struct
-  open DSL.CoreResult
 
   module Errors = struct
     type t = Issue1 | Issue2 [@@deriving sexp]
   end
-  include DSL.ErrorFor(Errors)
 
-  module Core = struct
+  include ErrorFor(Errors)
+
+  module Algebra = struct
+    open Prelude.Algebra
+
     type 'f t =
       | Puts of string * ('f, unit result) next
       | GetLine of ('f, string result) next
+
     let map f = function
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
   end
-  open Core
 
-  module Spec = DSL.SpecFor (Core)
+  open Algebra
 
-  module Api (Ctx:Spec.S.Context) = struct
-    let x_puts s = Puts (s, id) |> Ctx.lift
-    let x_get_line () = GetLine id |> Ctx.lift
+  module Spec = SpecFor (Algebra)
+
+  module New (C:Spec.S.Context) = struct
+    let x_puts s = Puts (s, id) |> C.lift
+    let x_get_line () = GetLine id |> C.lift
   end
 
   module Runner = struct
+    open Prelude.Runner
+
     let run = function
-      | Puts (s, f) -> print_endline s; return () |> f
-      | GetLine f -> read_line () |> return |> f
+      | Puts (s, f) -> print_endline s; Result.return () |> f
+      | GetLine f -> read_line () |> Result.return |> f
+
     let debug = function
       | Puts (s, f) ->
-          printf "X.Puts: %s\n" s; return () |> f
+          printf "X.Puts: %s\n" s; Result.return () |> f
       | GetLine f ->
-          printf "X.GetLine: "; read_line () |> return |> f
+          printf "X.GetLine: "; read_line () |> Result.return |> f
   end
 end
-let _ = (module X:DSL.S.Library)
+(* let _ = (module X:DSL.S.Library) *)
 
 
 module Y = struct
-  open DSL.CoreResult
+  module Algebra = struct
+    open Prelude.Algebra
 
-  module Core = struct
     type 'f t =
       | Puts of string * ('f, unit result) next
       | GetLine of ('f, string result) next
+
     let map f = function
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
   end
 
-  open Core
+  open Algebra
 
-  module Spec = DSL.SpecFor (Core)
+  module Spec = SpecFor (Algebra)
 
-  module Api (Ctx:Spec.S.Context) = struct
+  module New (Ctx:Spec.S.Context) = struct
     let y_puts s = Puts (s, id) |> Ctx.lift
     let y_get_line () = GetLine id |> Ctx.lift
   end
@@ -68,57 +75,58 @@ module Y = struct
   module Errors = struct
     type t = Unexpected of string | Not_found [@@deriving sexp]
   end
-  include DSL.ErrorFor(Errors)
+
+  include ErrorFor(Errors)
 
   module Runner = struct
+    open Prelude.Runner
     open Errors
-
-    let throw (e:Errors.t) = throw (Error e)
 
     let run = function
       | Puts (s, f) ->
           throw (Unexpected "Could not print your msg") |> f
-      | GetLine f -> read_line () |> return |> f
+      | GetLine f -> read_line () |> Result.return |> f
+
     let debug = function
       | Puts (s, f) ->
           throw (Unexpected "Could not print your msg") |> f
       | GetLine f ->
-          printf "Y.GetLine: "; read_line () |> return |> f
+          printf "Y.GetLine: "; read_line () |> Result.return |> f
   end
 end
-let _ = (module Y:DSL.S.Library)
+(* let _ = (module Y:DSL.S.Library) *)
 
 
 module X_and_Y = struct
-  (*
-    Here, we're including new modules Core, Spec and Natural
-  *)
-  include DSL.Combine (X.Core) (Y.Core)
+
+  include Combine (X.Algebra) (Y.Algebra)
 
   module Runner = struct
+    open Algebra
+
     let run = function
-      | Core.Case1 cmd -> X.Runner.run cmd
-      | Core.Case2 cmd -> Y.Runner.run cmd
+      | Case1 cmd -> X.Runner.run cmd
+      | Case2 cmd -> Y.Runner.run cmd
 
     let debug = function
-      | Core.Case1 cmd -> X.Runner.debug cmd
-      | Core.Case2 cmd -> Y.Runner.debug cmd
+      | Case1 cmd -> X.Runner.debug cmd
+      | Case2 cmd -> Y.Runner.debug cmd
   end
 
-  module Api (Ctx: Spec.S.Context) = struct
-    include X.Api (Natural.Proxy1.For(Ctx))
-    include Y.Api (Natural.Proxy2.For(Ctx))
+  module New (Ctx: Spec.S.Context) = struct
+    include X.New (Natural.Proxy1.For(Ctx))
+    include Y.New (Natural.Proxy2.For(Ctx))
   end
 end
 
 
-module Context = DSL.ContextFor(X_and_Y.Core)
+module Context = ContextFor(X_and_Y.Algebra)
 open Context
 
 open Result
 open Result.Infix
 
-module Api = X_and_Y.Api (Context)
+module Lib1 = X_and_Y.New (Context)
 
 (*
   TODO
@@ -126,7 +134,7 @@ module Api = X_and_Y.Api (Context)
     - We need to "take" the combinator (>>) to act as the semicolon
     - We should make the "discard operation" as the operator (>>>)
 *)
-open Api
+open Lib1
 
 let program1 () =
   x_puts "What's your name?" >>

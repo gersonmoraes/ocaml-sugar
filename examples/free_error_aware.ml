@@ -1,12 +1,11 @@
-module DSL = Sugar.Dsl
-open DSL.Prelude
+open Sugar.Dsl
 
 open Printf
 
 module Terminal = struct
 
-  module Core = struct
-    open DSL.CoreResult
+  module Algebra = struct
+    open Prelude.Algebra
 
     type 'f t =
       | Puts of string * ('f, unit result) next
@@ -16,11 +15,11 @@ module Terminal = struct
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
   end
-  open Core
+  open Algebra
 
-  module Spec = DSL.SpecFor (Core)
+  module Spec = SpecFor (Algebra)
 
-  module Dsl (Ctx:Spec.S.Context) = struct
+  module New (Ctx:Spec.S.Context) = struct
     open Ctx
 
     let puts s =
@@ -37,30 +36,27 @@ module Terminal = struct
   type exn += Error of Errors.t
 
   module Runner = struct
-    open DSL.CoreResult
-
-    let throw e = Error e
+    open Prelude.Runner
 
     let run = function
-      | Puts (s, f) -> print_endline s; return () |> f
-      | GetLine f -> read_line () |> return |> f
+      | Puts (s, f) -> print_endline s; Result.return () |> f
+      | GetLine f -> read_line () |> Result.return |> f
 
     let debug = function
       | Puts (s, f) ->
-          printf "Puts: %s\n" s; return () |> f
+          printf "Puts: %s\n" s; Result.return () |> f
       | GetLine f ->
           printf "GetLine: ";
-          read_line () |> return |> f
+          read_line () |> Result.return |> f
   end
 end
 
 
-module MyMachine = DSL.ContextForRuntime(Terminal)
-module TerminalDsl = Terminal.Dsl (MyMachine)
+module Context = ContextForRuntime(Terminal)
+module MyTerminal = Terminal.New (Context)
 
-open TerminalDsl
-
-open MyMachine
+open MyTerminal
+open Context
 
 open Result
 open Result.Infix
@@ -72,4 +68,4 @@ let program1 () =
   puts (name ^ ", have a nice day")
 
 let () =
-  MyMachine.run_error_aware Terminal.Runner.run program1
+  Context.run_error_aware Terminal.Runner.run program1

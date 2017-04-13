@@ -1,11 +1,11 @@
-module DSL = Sugar.Dsl
-
-open DSL.Prelude
+open Sugar.Dsl
 open Printf
 
 module Terminal = struct
 
-  module Core = struct
+  module Algebra = struct
+    open Prelude.Algebra
+
     type 'f t =
       | Puts of string * 'f unrelated
       | GetLine of ('f, string) next
@@ -14,9 +14,9 @@ module Terminal = struct
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
   end
-  open Core
+  open Algebra
 
-  module Spec = DSL.SpecFor (Core)
+  module Spec = SpecFor (Algebra)
 
   module Runner = struct
     let run = function
@@ -31,7 +31,7 @@ module Terminal = struct
           f (read_line ())
   end
 
-  module Dsl (Ctx:Spec.S.Context) = struct
+  module New (Ctx:Spec.S.Context) = struct
     open Ctx
 
     let puts s =
@@ -43,15 +43,15 @@ module Terminal = struct
 end
 
 (* let _ =
-  (module Terminal.Core : Generic.Functor),
+  (module Terminal.Algebra : Generic.Functor),
   (module Terminal      : Machine.Runtime) *)
 
 
-module Env = DSL.ContextFor(Terminal.Core)
-module Dsl = Terminal.Dsl (Env)
+module Context = ContextFor(Terminal.Algebra)
+module Lib1 = Terminal.New (Context)
 
-open Env.Free.Infix
-open Dsl
+open Context.Free.Infix
+open Lib1
 
 let program () =
   puts "What's your name?" />
@@ -61,4 +61,4 @@ let program () =
 
 
 let () =
-  Env.run Terminal.Runner.run program
+  Context.run Terminal.Runner.run program
