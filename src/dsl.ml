@@ -23,6 +23,8 @@ module S = struct
     exception Error of error
 
     val string_of_error: error -> string
+
+    val throw: error -> exn
   end
 
   (**
@@ -185,6 +187,8 @@ module ErrorFor(E:Errors) : ErrorForSpec
 
   let string_of_error (e:error) : string =
     Sexplib.Sexp.to_string_hum @@ E.sexp_of_t e
+
+  let throw e = Error e
 end
 
 (**
