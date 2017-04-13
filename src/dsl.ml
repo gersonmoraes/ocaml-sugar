@@ -1,4 +1,3 @@
-(* module Generic = Generic *)
 open Abstract
 
 let id = fun x -> x
@@ -6,7 +5,33 @@ let id = fun x -> x
 (** Function composition *)
 let (@) f g = fun v -> f (g v)
 
-
+(**
+  In order to use error aware expressions mixing different DSLs, 
+  we need to make sure all DSLs are written using a compatible result type. 
+  That means using a shared open type for errors.
+  
+  We are using the [exn] type for this. But there are some grounding conventions:
+  
+   - Each DSL must define only one public constructor for the shared type. 
+   - The constructor must be called Error, so users will handle errors matching X.Error, Y.Error, and so on. 
+   - Different error cases must be handled with a polymorphic type, internal to each DSL
+   - There must be a public function `string_of_error` for this internal error type.
+   
+  For simplicity, we provide helpers to automate this pattern.
+  
+  <code>
+  module X = struct
+    ...
+    
+    module Errors = struct
+      type t = Failure1 | Failure2 [@@deriving sexp] 
+    end
+    include Sugar.Dsl.ErrorFor (Errors)
+    
+    ... 
+  end
+  </code>
+*)
 module Error = struct
   type t = exn
 end
@@ -66,6 +91,10 @@ module S = struct
   module type CoreResult = Result.S
     with type error = exn
 
+  (**
+    This describes the signature for an opaque, debuggable error. 
+    It supposed to be used with the ErrorFor builder. 
+  *)
   module type Errors = sig
     type t
 
@@ -73,13 +102,29 @@ module S = struct
     val sexp_of_t : t -> Sexplib.Type.t
   end
 
+  (**
+    This describes the signature for parametric module ErrorFor
+  *)
   module type ErrorForSpec = sig
+  
+    (**
+      Library internal error
+    *)
     type error
 
+    (**
+      Constructor for the shared error type
+    *)
     exception Error of error
 
+    (**
+      Convert the library internal error to string 
+    *)
     val string_of_error: error -> string
 
+    (**
+      Throw a library error
+    *) 
     val throw: error -> 'a Prelude.Algebra.result
   end
 
@@ -108,6 +153,9 @@ module S = struct
     include Natural
       with type 'a dst = 'a free_f
 
+    (**
+      Schedule the execution of an instruction in the current program
+    *)
     val lift: 'a src -> 'a Free.t
 
     include Promise.S
@@ -115,16 +163,18 @@ module S = struct
        and type 'a monad := 'a Free.t
 
     (**
-      Ignore operator
-
-      Ignore the expression in the left if it evaluates to a unit successful result
+      Semicolon operator
+      
+      If the expression in the left is successful, ignore it and return the expression in the right.
+      You can only use this operator if the expression in the left evaluates to "unit result".
+      If you want to discard a value different than unit, is the (>>>). 
     *)
     val (>>): unit promise -> 'b promise -> 'b promise
 
     (**
       Discard operator
 
-      If the expression in the left is successful result, ignore it and return
+      If the expression in the left is successful, ignore it and return
       the expression in the right.
     *)
     val (>>>): 'a promise -> 'b promise -> 'b promise
@@ -177,7 +227,9 @@ module S = struct
     end
   end (* Machine.Spec *)
 
-
+  (**
+    This signature just summarizes the common requirements to build a DSL library.
+  *)
   module type Library = sig
     module Errors : Errors
     exception Error of Errors.t
@@ -186,6 +238,19 @@ module S = struct
     module Spec : Spec with module Algebra = Algebra
   end
 
+  (**
+    A slightly modified version of the Library signature. 
+    
+    This is used to close a library around a default interpreter.
+    The interpreter must have two methods:
+     - run: default interpreter
+     - debug: higher verbosity interpreter
+    
+    The advantage of this definition is to use the Assemble builder:
+     - Better version of the Combine builder for algebras 
+     - Merge interpreters
+     - Produce a new combined Runtime
+  *)
   module type Runtime = sig
     module Algebra : Functor
     module Spec : Spec with module Algebra = Algebra
@@ -195,14 +260,23 @@ module S = struct
     end
   end
 
+  (**
+    The signature for the Assemble builder
+    
+    Check the Runtime definition for more information.
+  *)
   module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
-
-
 end
 
 open S
 
 
+(**
+ This builder enforces the conventions around the definitions of 
+ DSLs errors.
+ 
+ Check the definition of ErrorForSpec for more information.
+*)
 module ErrorFor(E:Errors) : ErrorForSpec
   with type error := E.t
  = struct
@@ -239,7 +313,7 @@ module SpecFor(L:Functor) : Spec
       val run: 'a Algebra.t -> 'a
       val debug: 'a Algebra.t -> 'a
     end
-  end (* SpecFor.S *)
+  end
 
   module Proxy(T:S.Natural) = struct
     module For(Ctx:S.Context) : Context
@@ -266,11 +340,20 @@ module SpecFor(L:Functor) : Spec
       let (>>) x y = bind_if x (fun () -> y)
       let (>>>) x y = bind_if x (fun _ -> y)
 
-    end  (* Spec.Proxy.For *)
-  end (* Spec.Proxy *)
+    end  (* SpecFor.Proxy.For *)
+  end (* SpecFor.Proxy *)
 
 end (* SpecFor *)
 
+
+(**
+  Combine two algebras. 
+  
+  This builder generates these new modules:
+   - Algebra: combined Algebra
+   - Spec: specification for the combined Algebra
+   - Natural: agregates all natural transformations (including context proxies) 
+*)
 module Combine (L1:Functor) (L2:Functor) = struct
 
   module Algebra = struct
@@ -284,7 +367,7 @@ module Combine (L1:Functor) (L2:Functor) = struct
   end
 
   module Spec = SpecFor (Algebra)
-
+  
   module Natural = struct
     open Algebra
     open Spec
@@ -298,6 +381,11 @@ module Combine (L1:Functor) (L2:Functor) = struct
 
 end (* Combine *)
 
+(**
+  Combine 3 algebras
+  
+  Similar to the Combine builder
+*)
 module Combine3 (L1:Functor) (L2:Functor) (L3:Functor) = struct
   module Algebra = struct
     type 'a t =
@@ -331,6 +419,8 @@ end (* Combine3 *)
 
 (**
   Combine 4 languages.
+  
+  Similar to the Combine builder
 *)
 module Combine4 (L1:Functor) (L2:Functor)
                 (L3:Functor) (L4:Functor) =
@@ -358,7 +448,9 @@ struct
   end
 end (* Combine4 *)
 
-
+(**
+  Read the signature for Context for more information.
+*)
 module ContextFor(L:Functor) = struct
   module Free = MakeFree (L)
   type 'a free   = 'a Free.t
@@ -371,8 +463,7 @@ module ContextFor(L:Functor) = struct
   let return f = Free.return f
   let lift f = Free.lift (apply f)
 
-  include Prelude.CoreResult.For (Free)
-  (* module Result = Prelude.CoreResult.For (Free) *)
+  include Prelude.CoreResult.For (Free) 
 
   let run_error_aware runner program =
     Free.iter runner (unwrap_or raise (program ()))
@@ -380,15 +471,22 @@ module ContextFor(L:Functor) = struct
   let run runner program =
     Free.iter runner (program ())
 
-
   let (>>) x y = bind_if x (fun () -> y)
   let (>>>) x y = bind_if x (fun _ -> y)
 end
 
+(**
+  Virtually the same as the ContextFor builder, but for runtimes
+*)
 module ContextForRuntime(R:Runtime) = struct
   include ContextFor(R.Algebra)
 end
 
+(**
+  Merge two runtimes.
+  
+  Check the Runtime definition for more information.
+*)
 module Assemble (R1:Runtime) (R2:Runtime) = struct
   include Combine (R1.Algebra) (R2.Algebra)
 
