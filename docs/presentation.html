@@ -584,7 +584,8 @@ module MyTerminal = Terminal.New (Context)
 
 ```ocaml
 open MyTerminal
-open Context.Result
+open Context
+open Context.Infix
 
 let program () =
   puts "What's your name?" >>
@@ -711,7 +712,7 @@ module Context = Sugar.DSL.ContextFor(X_and_Y.Algebra)
 module MyLib = X_and_Y.New (Context)
 
 open MyLib
-open Context.Result
+open Context.Infix
 
 let program () =
    a () >>
