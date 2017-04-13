@@ -67,9 +67,9 @@ module Y = struct
 
   module Spec = SpecFor (Algebra)
 
-  module New (Ctx:Spec.S.Context) = struct
-    let y_puts s = Puts (s, id) |> Ctx.lift
-    let y_get_line () = GetLine id |> Ctx.lift
+  module New (C:Spec.S.Context) = struct
+    let y_puts s = Puts (s, id) |> C.lift
+    let y_get_line () = GetLine id |> C.lift
   end
 
   module Errors = struct
@@ -80,21 +80,19 @@ module Y = struct
 
   module Runner = struct
     open Prelude.Runner
-    open Errors
 
     let run = function
       | Puts (s, f) ->
-          throw (Unexpected "Could not print your msg") |> f
+          throw (Errors.Unexpected "Could not print your msg") |> f
       | GetLine f -> read_line () |> return |> f
 
     let debug = function
       | Puts (s, f) ->
-          throw (Unexpected "Could not print your msg") |> f
+          throw (Errors.Unexpected "Could not print your msg") |> f
       | GetLine f ->
           printf "Y.GetLine: "; read_line () |> return |> f
   end
 end
-(* let _ = (module Y:DSL.S.Library) *)
 
 
 module X_and_Y = struct

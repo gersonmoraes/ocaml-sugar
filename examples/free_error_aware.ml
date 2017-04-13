@@ -33,21 +33,21 @@ module Terminal = struct
     type t = string
   end
 
-  type exn += Error of Errors.t
+  include ErrorFor(Errors)
 
   module Runner = struct
     open Prelude.Runner
 
     let run = function
-      | Puts (s, f) -> print_endline s; Result.return () |> f
-      | GetLine f -> read_line () |> Result.return |> f
+      | Puts (s, f) -> print_endline s; return () |> f
+      | GetLine f -> read_line () |> return |> f
 
     let debug = function
       | Puts (s, f) ->
-          printf "Puts: %s\n" s; Result.return () |> f
+          printf "Puts: %s\n" s; return () |> f
       | GetLine f ->
           printf "GetLine: ";
-          read_line () |> Result.return |> f
+          read_line () |> return |> f
   end
 end
 
