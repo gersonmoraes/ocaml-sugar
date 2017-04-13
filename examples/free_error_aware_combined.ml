@@ -121,16 +121,10 @@ end
 module Context = ContextFor(X_and_Y.Algebra)
 
 open Context
-open Context.Infix
+open Infix
 
 module Lib1 = X_and_Y.New (Context)
 
-(*
-  TODO
-    - We have a precedence issue with our semicolon operator: (/>)
-    - We need to "take" the combinator (>>) to act as the semicolon
-    - We should make the "discard operation" as the operator (>>>)
-*)
 open Lib1
 
 let program1 () =
@@ -170,8 +164,9 @@ let program1 () =
 let program2 () =
   x_puts "Hello"
   >---------
-  fun e ->
-  return ()
+  ( fun e ->
+    return ()
+  )
   >>= fun () ->
   x_puts "World"
 

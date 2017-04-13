@@ -113,9 +113,21 @@ module S = struct
     include Promise.S
       with type error := exn
        and type 'a monad := 'a Free.t
-    (* module Result : Promise.S
-      with type error := exn
-       and type 'a monad := 'a Free.t *)
+
+    (**
+      Ignore operator
+
+      Ignore the expression in the left if it evaluates to a unit successful result
+    *)
+    val (>>): unit promise -> 'b promise -> 'b promise
+
+    (**
+      Discard operator
+
+      If the expression in the left is successful result, ignore it and return
+      the expression in the right.
+    *)
+    val (>>>): 'a promise -> 'b promise -> 'b promise
   end
 
 
@@ -250,7 +262,10 @@ module SpecFor(L:Functor) : Spec
       module Free = Ctx.Free
 
       include Prelude.CoreResult.For (Ctx.Free)
-      (* module Result = Prelude.CoreResult.For (Ctx.Free) *)
+
+      let (>>) x y = bind_if x (fun () -> y)
+      let (>>>) x y = bind_if x (fun _ -> y)
+
     end  (* Spec.Proxy.For *)
   end (* Spec.Proxy *)
 
@@ -364,6 +379,10 @@ module ContextFor(L:Functor) = struct
 
   let run runner program =
     Free.iter runner (program ())
+
+
+  let (>>) x y = bind_if x (fun () -> y)
+  let (>>>) x y = bind_if x (fun _ -> y)
 end
 
 module ContextForRuntime(R:Runtime) = struct

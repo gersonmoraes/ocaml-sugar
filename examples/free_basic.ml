@@ -31,27 +31,21 @@ module Terminal = struct
           f (read_line ())
   end
 
-  module New (Ctx:Spec.S.Context) = struct
-    open Ctx
-
+  module New (C:Spec.S.Context) = struct
     let puts s =
-      Puts (s, id) |> lift
+      Puts (s, id) |> C.lift
 
     let get_line () =
-      GetLine id |> lift
+      GetLine id |> C.lift
   end
 end
-
-(* let _ =
-  (module Terminal.Algebra : Generic.Functor),
-  (module Terminal      : Machine.Runtime) *)
 
 
 module Context = ContextFor(Terminal.Algebra)
 module Lib1 = Terminal.New (Context)
 
 open Context.Free
-open Context.Free.Infix
+open Infix
 
 open Lib1
 

@@ -59,7 +59,7 @@ module MyTerminal = Terminal.New (Context)
 open MyTerminal
 
 open Context
-open Context.Infix
+open Infix
 
 let program1 () =
   puts "What's your name?" >>

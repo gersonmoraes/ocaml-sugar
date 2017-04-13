@@ -122,13 +122,13 @@ module type S = sig
   val (>---------): 'a promise -> (error -> 'a promise) -> 'a promise
 
 
-  (**
+  (*
     Ignore operator.
 
     Use this operator to ignore the previous result
     and return the next instruction.
   *)
-  val (>>>): 'a promise -> 'b promise -> 'b promise
+  (* val (>>>): 'a promise -> 'b promise -> 'b promise *)
 
   end
 
@@ -171,13 +171,13 @@ module type S = sig
   val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
 
 
- (**
+ (*
    Semicolon combinator.
 
    Like the standard semicolon in OCaml, ";", the previous operation needs
    to evaluate to a unit promise.
  *)
- val ( >> ) : unit promise -> 'b promise -> 'b promise
+ (* val ( >> ) : unit promise -> 'b promise -> 'b promise *)
 
 end
 

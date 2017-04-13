@@ -163,15 +163,15 @@ module type S = sig
   val (>>|): 'a result -> ('a -> 'b) -> 'b result
 
 
-  (**
+  (*
     Ignore operator.
 
     Use this operator to ignore the previous result
     and return the next instruction.
   *)
-  val (>>>): 'a result -> 'b result -> 'b result
+  (* val (>>>): 'a result -> 'b result -> 'b result *)
 
-  val (>>=): 'a result -> ('a -> 'b result) -> 'b result
+  (* val (>>=): 'a result -> ('a -> 'b result) -> 'b result *)
 
 
   val (<$>): ('a -> 'b) -> 'a result -> 'b result
