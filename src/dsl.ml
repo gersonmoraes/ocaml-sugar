@@ -54,7 +54,8 @@ module Prelude = struct
   module CoreResult = Result.Make (Error)
 
   module Runner = struct
-    module Result = CoreResult
+    (* module Result = CoreResult *)
+    let return = CoreResult.return
   end
 end
 

@@ -353,7 +353,7 @@ We need two instructions in the Terminal.
 ```ocaml
 module Terminal = struct
 
-  module Core = struct
+  module Algebra = struct
     type 'f t
       = Puts of string * ('f unrelated)
       | GetLine of ('f, string result) next
@@ -381,7 +381,7 @@ This is how the compiler will know how to store and iterate over the instruction
 ```ocaml
 module Terminal = struct
 
-  module Core = struct
+  module Algebra = struct
     ...
 
     let map f = function
@@ -478,7 +478,7 @@ A `Spec` module gives you interoperability signatures and builders so your DSL c
 module Terminal = struct
   ...
 
-  module Spec = Sugar.DSL.SpecFor(Core)
+  module Spec = Sugar.DSL.SpecFor(Algebra)
 end
 ```
 ---
@@ -512,7 +512,7 @@ This will be the only requirement for anyone to use your DSL.
 module Terminal = struct
   ...
 
-  module Api (C:Spec.S.Context) = struct
+  module New (C:Spec.S.Context) = struct
     open C
 
     let puts s =
@@ -563,9 +563,9 @@ Under the hood, they implement a natural transformation.
 If you just have one DSL, use the default builder to create a context. Instantiating a DSL's Public Api is also straightforward.
 
 ```ocaml
-module Context = Sugar.DSL.ContextFor(Terminal.Core)
+module Context = Sugar.DSL.ContextFor(Terminal.Algebra)
 
-module TerminalApi = Terminal.Api (Context)
+module MyTerminal = Terminal.New (Context)
 ```
 
 ---
@@ -583,7 +583,7 @@ module TerminalApi = Terminal.Api (Context)
 ----
 
 ```ocaml
-open TerminalApi
+open MyTerminal
 open Context.Result
 
 let program () =
@@ -618,7 +618,7 @@ module X = struct
   module Errors = struct
     type t = Not_found [@@deriving sexp]
   end
-  module Core = struct
+  module Algebra = struct
     type 'f t = A of 'f unrelated
     let map f = function
       | A g -> A (f @ g)
@@ -632,7 +632,7 @@ module Y = struct
   module Errors = struct
     type t = Not_available [@@deriving sexp]
   end
-  module Core = struct
+  module Algebra = struct
     type 'f t = B of 'f unrelated
     let map f = function
       | B g -> B (f @ g)
@@ -645,12 +645,12 @@ end
 
 # Combining DSLs
 
-Each one with its own Api module.
+Each one with its own `New` module.
 
 ```ocaml
 module X = struct
   ...
-  module Api (C:Spec.S.Context) = struct
+  module New (C:Spec.S.Context) = struct
     let a () =
       A id |> C.lift
   end
@@ -660,7 +660,7 @@ end
 ```ocaml
 module Y = struct
   ...
-  module Api (C:Spec.S.Context) = struct
+  module New (C:Spec.S.Context) = struct
     let b () =
       b id |> C.lift
   end
@@ -676,11 +676,11 @@ To use `X` and `Y` together, you need to combine both core instructions and Publ
 
 ```ocaml
 module X_and_Y = struct
-  include Sugar.DSL.Combine (X.Core) (Y.Core)
+  include Sugar.DSL.Combine (X.Algebra) (Y.Algebra)
 
-  module Api (C:Spec.S.Context) = struct
-    include X.Api (Natural.Proxy1.For(Ctx))
-    include Y.Api (Natural.Proxy2.For(Ctx))
+  module New (C:Spec.S.Context) = struct
+    include X.New (Natural.Proxy1.For(Ctx))
+    include Y.New (Natural.Proxy2.For(Ctx))
   end
 end
 ```
@@ -693,11 +693,11 @@ To use `X` and `Y` together, you need to combine both core instructions and Publ
 
 ```ocaml
 module X_and_Y = struct
-  include Sugar.DSL.Combine (X.Core) (Y.Core)
+  include Sugar.DSL.Combine (X.Algebra) (Y.Algebra)
 
-  module Api (C:Spec.S.Context) = struct
-    include X.Api (Natural.Proxy1.For(Ctx))
-    include Y.Api (Natural.Proxy2.For(Ctx))
+  module New (C:Spec.S.Context) = struct
+    include X.New (Natural.Proxy1.For(Ctx))
+    include Y.New (Natural.Proxy2.For(Ctx))
   end
 end
 ```
@@ -707,10 +707,10 @@ end
 From this point on, you can start coding.
 
 ```ocaml
-module Context = Sugar.DSL.ContextFor(X_and_Y.Core)
-module MyApi = X_and_Y.Api (Context)
+module Context = Sugar.DSL.ContextFor(X_and_Y.Algebra)
+module MyLib = X_and_Y.New (Context)
 
-open MyApi
+open MyLib
 open Context.Result
 
 let program () =
@@ -738,8 +738,8 @@ Every DSL comes with a signature for its `Runner`.
 module Spec = struct
   ...
   module type Runner = sig
-    val run: 'a Core.t -> 'a
-    val debug: 'a Core.t -> 'a
+    val run: 'a Algebra.t -> 'a
+    val debug: 'a Algebra.t -> 'a
   end
 end
 ```
@@ -754,8 +754,8 @@ Every DSL comes with a signature for its `Runner`.
 module Spec = struct
   ...
   module type Runner = sig
-    val run: 'a Core.t -> 'a
-    val debug: 'a Core.t -> 'a
+    val run: 'a Algebra.t -> 'a
+    val debug: 'a Algebra.t -> 'a
   end
 end
 ```
@@ -774,7 +774,7 @@ Here's a runner for the `Terminal` DSL:
 ```ocaml
 module TerminalRunner = struct
 
-  open Terminal.Core
+  open Terminal.Algebra
 
   let run = function
     | Puts (s, f) -> print_endline s; return () |> f
@@ -797,15 +797,15 @@ Combined DSLs also need a Runner.
 
 ```ocaml
 module X_and_Y_Runner = struct
-  open X_and_Y.Core
+  open X_and_Y.Algebra
 
   let run = function
-    | Case1 (X.Core.A f) -> f ()
-    | Case2 (Y.Core.B f) -> f ()
+    | Case1 (X.Algebra.A f) -> f ()
+    | Case2 (Y.Algebra.B f) -> f ()
 
   let debug = function
-    | Case1 (X.Core.A f) -> print_endline "X.A: "; f ()
-    | Case2 (Y.Core.B f) -> print_endline "X.B: "; f ()
+    | Case1 (X.Algebra.A f) -> print_endline "X.A: "; f ()
+    | Case2 (Y.Algebra.B f) -> print_endline "X.B: "; f ()
 end
 ```
 
@@ -817,15 +817,15 @@ Combined DSLs also need a Runner.
 
 ```ocaml
 module X_and_Y_Runner = struct
-  open X_and_Y.Core
+  open X_and_Y.Algebra
 
   let run = function
-    | Case1 (X.Core.A f) -> f ()
-    | Case2 (Y.Core.B f) -> f ()
+    | Case1 (X.Algebra.A f) -> f ()
+    | Case2 (Y.Algebra.B f) -> f ()
 
   let debug = function
-    | Case1 (X.Core.A f) -> print_endline "X.A: "; f ()
-    | Case2 (Y.Core.B f) -> print_endline "X.B: "; f ()
+    | Case1 (X.Algebra.A f) -> print_endline "X.A: "; f ()
+    | Case2 (Y.Algebra.B f) -> print_endline "X.B: "; f ()
 end
 ```
 
@@ -858,11 +858,11 @@ plus a runner.
 
 ```ocaml
 module type Runtime = sig
-  module Core : Functor
-  module Spec : Spec with module Core = Core
+  module Algebra : Functor
+  module Spec : Spec with module Algebra = Algebra
   module Runner : sig
-    val run : 'a Core.t -> 'a
-    val debug : 'a Core.t -> 'a
+    val run : 'a Algebra.t -> 'a
+    val debug : 'a Algebra.t -> 'a
   end
 end
 ```
@@ -876,11 +876,11 @@ plus a runner.
 
 ```ocaml
 module type Runtime = sig
-  module Core : Functor
-  module Spec : Spec with module Core = Core
+  module Algebra : Functor
+  module Spec : Spec with module Algebra = Algebra
   module Runner : sig
-    val run : 'a Core.t -> 'a
-    val debug : 'a Core.t -> 'a
+    val run : 'a Algebra.t -> 'a
+    val debug : 'a Algebra.t -> 'a
   end
 end
 ```
@@ -901,9 +901,9 @@ runners, with could merge them together with:
 module XY = struct
   include Assembly (X) (Y)
 
-  module Api (C:Spec.S.Context) = struct
-    include X.Api (Natural.Proxy1.For(C))
-    include Y.Api (Natural.Proxy2.For(C))
+  module New (C:Spec.S.Context) = struct
+    include X.New (Natural.Proxy1.For(C))
+    include Y.New (Natural.Proxy2.For(C))
   end
 end
 
