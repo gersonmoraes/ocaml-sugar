@@ -4,20 +4,14 @@
     <title>OCaml Sugar</title>
     <meta charset="utf-8">
     <style>
-      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
-      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=Roboto+Condensed:300,600,400italic);
-      @import url(https://fonts.googleapis.com/css?family=Fjalla+One:400,700,400italic);
       @import url(https://fonts.googleapis.com/css?family=Josefin+Sans:300,700,400italic);
 
-      /*body { font-family: 'Droid Serif'; }*/
       body { font-family: 'Roboto Condensed', sans-serif; }
       h1, h2, h3 {
         font-family: 'Josefin Sans';
-        /*font-family: 'Yanone Kaffeesatz';*/
-        /*font-family: 'Fjalla One';*/
         font-weight: normal;
       }
       .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
@@ -72,7 +66,7 @@ class: left, middle
 
 Set up an isolated module for your errors.
 ```ocaml
-module MyError = struct
+module Errors = struct
   type t = AlreadyExists | Not_found
 end
 ```
@@ -80,14 +74,13 @@ end
 
 And feed it to a *result module builder* to start coding:
 ```ocaml
-module MyResult = Sugar.Result.Make (MyError)
-open MyResult
+module Result = Sugar.Result.Make (Errors)
+open Result
 
-let main () : string result =
+let main () : unit result =
   do_something ()
   >>= fun res ->
-  run_computation res >>
-  return "hello world"
+  do_something_else res
 
 ```
 
@@ -355,7 +348,7 @@ need to do so other people can safely use your DSL.
 
 ----
 
-We are defining just two instructions: Puts and GetLine.
+We need two instructions in the Terminal.
 
 ```ocaml
 module Terminal = struct
@@ -383,7 +376,7 @@ end
 
 ----
 
-This is how the compiler will know how to store and iterate over instructions on our programs.
+This is how the compiler will know how to store and iterate over the instructions.
 
 ```ocaml
 module Terminal = struct
@@ -437,7 +430,7 @@ end
 
 **Code Generation**
 
-- Integrate your errors with Sugar
+- Make your errors compatible with other DSLs
 - Create a specification for this DSL
 
 ---
@@ -446,15 +439,17 @@ end
 
 **Code Generation**
 
-- **Integrate your errors with Sugar**
+- **Make your errors compatible with other DSLs**
 - Create a specification for this DSL
 
 <br/>
 
 ----
 
-This code get create a new `Error` constructor, compatible with other DSLs, but
-only accessible using the full namespaced name `Terminal.Error`. It will also create a `string_of_error` function.
+This will create a new `Error` constructor for a shared open type. It will
+be accessible only using the full namespaced name of your DSL, which in this case is `Terminal.Error`.
+
+It will also create a `string_of_error` function.
 
 ```ocaml
 module Terminal = struct
@@ -470,7 +465,7 @@ end
 
 **Code Generation**
 
-- ~~**Integrate your errors with Sugar**~~
+- ~~**Make your errors compatible with other DSLs**~~
 - **Create a specification for this DSL**
 
 <br/>
@@ -565,10 +560,10 @@ Under the hood, they implement a natural transformation.
 
 ----
 
-If you just have one DSL, use the default builder to create a context. Instantiating a DSL's Public Api is also straightforward. 
+If you just have one DSL, use the default builder to create a context. Instantiating a DSL's Public Api is also straightforward.
 
 ```ocaml
-module Context = Sugar.DSL.ContextFor(Terminal.Core) 
+module Context = Sugar.DSL.ContextFor(Terminal.Core)
 
 module TerminalApi = Terminal.Api (Context)
 ```
@@ -632,7 +627,7 @@ module X = struct
 end
 ```
 
-```ocaml 
+```ocaml
 module Y = struct
   module Errors = struct
     type t = Not_available [@@deriving sexp]
@@ -662,7 +657,7 @@ module X = struct
 end
 ```
 
-```ocaml 
+```ocaml
 module Y = struct
   ...
   module Api (C:Spec.S.Context) = struct
@@ -768,7 +763,7 @@ end
 
 The default interpreter is the `run` function.The `debug` function should do virtually the same with higher verbosity. You are not forced to follow this structure in your code base, but we believe it is an expressive one.
 
-Notice how a runner only knows about its core instructions. This holds even if you mix different DSLs and is the reason there is a clear separation of concerns when writing DSLs. 
+Notice how a runner only knows about its core instructions. This holds even if you mix different DSLs and is the reason there is a clear separation of concerns when writing DSLs.
 
 ---
 
