@@ -6,29 +6,29 @@ let id = fun x -> x
 let (@) f g = fun v -> f (g v)
 
 (**
-  In order to use error aware expressions mixing different DSLs, 
-  we need to make sure all DSLs are written using a compatible result type. 
+  In order to use error aware expressions mixing different DSLs,
+  we need to make sure all DSLs are written using a compatible result type.
   That means using a shared open type for errors.
-  
+
   We are using the [exn] type for this. But there are some grounding conventions:
-  
-   - Each DSL must define only one public constructor for the shared type. 
-   - The constructor must be called Error, so users will handle errors matching X.Error, Y.Error, and so on. 
+
+   - Each DSL must define only one public constructor for the shared type.
+   - The constructor must be called Error, so users will handle errors matching X.Error, Y.Error, and so on.
    - Different error cases must be handled with a polymorphic type, internal to each DSL
    - There must be a public function `string_of_error` for this internal error type.
-   
+
   For simplicity, we provide helpers to automate this pattern.
-  
+
   <code>
   module X = struct
     ...
-    
+
     module Errors = struct
-      type t = Failure1 | Failure2 [@@deriving sexp] 
+      type t = Failure1 | Failure2 [@@deriving sexp]
     end
     include Sugar.Dsl.ErrorFor (Errors)
-    
-    ... 
+
+    ...
   end
   </code>
 *)
@@ -79,10 +79,11 @@ module Prelude = struct
   module CoreResult = Result.Make (Error)
 
   module Runner = struct
+    open CoreResult
     (* module Result = CoreResult *)
     let return = CoreResult.return
-    
-    let commit f = f (return ())
+
+    let commit (f:'a result -> 'b) (v: 'a) = f (return v)
   end
 end
 
@@ -94,8 +95,8 @@ module S = struct
     with type error = exn
 
   (**
-    This describes the signature for an opaque, debuggable error. 
-    It supposed to be used with the ErrorFor builder. 
+    This describes the signature for an opaque, debuggable error.
+    It supposed to be used with the ErrorFor builder.
   *)
   module type Errors = sig
     type t
@@ -108,7 +109,7 @@ module S = struct
     This describes the signature for parametric module ErrorFor
   *)
   module type ErrorForSpec = sig
-  
+
     (**
       Library internal error
     *)
@@ -120,14 +121,15 @@ module S = struct
     exception Error of error
 
     (**
-      Convert the library internal error to string 
+      Convert the library internal error to string
     *)
     val string_of_error: error -> string
 
     (**
       Throw a library error
-    *) 
-    val throw: error -> 'a Prelude.Algebra.result
+    *)
+
+    val rollback: ('a Prelude.CoreResult.result -> 'b) -> error -> 'b
   end
 
   (**
@@ -166,10 +168,10 @@ module S = struct
 
     (**
       Semicolon operator
-      
+
       If the expression in the left is successful, ignore it and return the expression in the right.
       You can only use this operator if the expression in the left evaluates to "unit result".
-      If you want to discard a value different than unit, is the (>>>). 
+      If you want to discard a value different than unit, is the (>>>).
     *)
     val (>>): unit promise -> 'b promise -> 'b promise
 
@@ -241,15 +243,15 @@ module S = struct
   end
 
   (**
-    A slightly modified version of the Library signature. 
-    
+    A slightly modified version of the Library signature.
+
     This is used to close a library around a default interpreter.
     The interpreter must have two methods:
      - run: default interpreter
      - debug: higher verbosity interpreter
-    
+
     The advantage of this definition is to use the Assemble builder:
-     - Better version of the Combine builder for algebras 
+     - Better version of the Combine builder for algebras
      - Merge interpreters
      - Produce a new combined Runtime
   *)
@@ -264,7 +266,7 @@ module S = struct
 
   (**
     The signature for the Assemble builder
-    
+
     Check the Runtime definition for more information.
   *)
   module type Assembly = functor (R1:Runtime) (R2:Runtime) -> Runtime
@@ -274,9 +276,9 @@ open S
 
 
 (**
- This builder enforces the conventions around the definitions of 
+ This builder enforces the conventions around the definitions of
  DSLs errors.
- 
+
  Check the definition of ErrorForSpec for more information.
 *)
 module ErrorFor(E:Errors) : ErrorForSpec
@@ -289,7 +291,8 @@ module ErrorFor(E:Errors) : ErrorForSpec
   let string_of_error (e:error) : string =
     Sexplib.Sexp.to_string_hum @@ E.sexp_of_t e
 
-  let throw e = Pervasives.Error (Error e)
+  let rollback f e =
+    f (Prelude.CoreResult.throw (Error e))
 end
 
 (**
@@ -349,12 +352,12 @@ end (* SpecFor *)
 
 
 (**
-  Combine two algebras. 
-  
+  Combine two algebras.
+
   This builder generates these new modules:
    - Algebra: combined Algebra
    - Spec: specification for the combined Algebra
-   - Natural: agregates all natural transformations (including context proxies) 
+   - Natural: agregates all natural transformations (including context proxies)
 *)
 module Combine (L1:Functor) (L2:Functor) = struct
 
@@ -369,7 +372,7 @@ module Combine (L1:Functor) (L2:Functor) = struct
   end
 
   module Spec = SpecFor (Algebra)
-  
+
   module Natural = struct
     open Algebra
     open Spec
@@ -385,7 +388,7 @@ end (* Combine *)
 
 (**
   Combine 3 algebras
-  
+
   Similar to the Combine builder
 *)
 module Combine3 (L1:Functor) (L2:Functor) (L3:Functor) = struct
@@ -421,7 +424,7 @@ end (* Combine3 *)
 
 (**
   Combine 4 languages.
-  
+
   Similar to the Combine builder
 *)
 module Combine4 (L1:Functor) (L2:Functor)
@@ -465,7 +468,7 @@ module ContextFor(L:Functor) = struct
   let return f = Free.return f
   let lift f = Free.lift (apply f)
 
-  include Prelude.CoreResult.For (Free) 
+  include Prelude.CoreResult.For (Free)
 
   let run_error_aware runner program =
     Free.iter runner (unwrap_or raise (program ()))
@@ -486,7 +489,7 @@ end
 
 (**
   Merge two runtimes.
-  
+
   Check the Runtime definition for more information.
 *)
 module Assemble (R1:Runtime) (R2:Runtime) = struct

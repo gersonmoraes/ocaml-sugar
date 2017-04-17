@@ -21,7 +21,7 @@ module X = struct
 
     let map f = function
       | Puts (s, g) -> Puts (s, f @ g)
-      | GetLine g -> GetLine (f @ g)
+      | GetLine g   -> GetLine (f @ g)
   end
 
   open Algebra
