@@ -154,8 +154,11 @@ module S = struct
     type 'a free   = 'a Free.t
     type 'a free_f = 'a Free.f
 
-    include Natural
-      with type 'a dst = 'a free_f
+    (* include Natural
+      with type 'a dst = 'a free_f *)
+
+    type 'a src
+    val apply: 'a src -> 'a free_f
 
     (**
       Schedule the execution of an instruction in the current program
@@ -231,7 +234,7 @@ module S = struct
           and type 'a free  = 'a Ctx.Free.t
           and type 'a free_f = 'a Ctx.Free.f
           and type 'a src  = 'a T.src
-          and type 'a dst = 'a Ctx.Free.f
+          (* and type 'a dst = 'a Ctx.Free.f *)
       end
     end
   end (* Machine.Spec *)
@@ -331,10 +334,11 @@ module SpecFor(L:Functor) : Spec
      with type 'a free  = 'a Ctx.Free.t
       and type 'a free_f = 'a Ctx.Free.f
       and type 'a src  = 'a T.src
-      and type 'a dst = 'a Ctx.Free.f =
+      (* and type 'a dst = 'a Ctx.Free.f = *)
+      =
     struct
       type 'a src  = 'a T.src
-      type 'a dst = 'a Ctx.dst
+      (* type 'a dst = 'a Ctx.dst *)
 
       type 'a free   = 'a Ctx.Free.t
       type 'a free_f = 'a Ctx.Free.f
@@ -463,13 +467,16 @@ end (* Combine4 *)
 (**
   Read the signature for Context for more information.
 *)
-module ContextFor(L:Functor) = struct
+module ContextFor(L:Functor)
+(* : Context
+  with type 'a src = 'a L.t *)
+= struct
   module Free = MakeFree (L)
   type 'a free   = 'a Free.t
   type 'a free_f = 'a Free.f
 
   type 'a src = 'a L.t
-  type 'a dst = 'a L.t
+  (* type 'a dst = 'a L.t *)
   let apply v = v
 
   let return f = Free.return f
