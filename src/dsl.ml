@@ -80,7 +80,7 @@ module Prelude = struct
 
   module Runner = struct
     open CoreResult
-    (* module Result = CoreResult *)
+
     let return = CoreResult.return
 
     let commit (f:'a result -> 'b) (v: 'a) = f (return v)
@@ -149,16 +149,12 @@ module S = struct
       - It is easy to compose a big DSL from smaller ones
   *)
   module type Context = sig
+    include Natural
+
     module Free : FreeMonad
+      with type 'a f = 'a dst
 
     type 'a free   = 'a Free.t
-    type 'a free_f = 'a Free.f
-
-    (* include Natural
-      with type 'a dst = 'a free_f *)
-
-    type 'a src
-    val apply: 'a src -> 'a free_f
 
     (**
       Schedule the execution of an instruction in the current program
@@ -170,9 +166,9 @@ module S = struct
        and type 'a monad := 'a Free.t
 
 
-     val run: ('a Free.f -> 'a) -> (unit -> 'a Free.t) -> 'a
+     val run: ('a dst -> 'a) -> (unit -> 'a Free.t) -> 'a
 
-     val run_and_unwrap: ('a Free.f -> 'a) -> (unit -> 'a result Free.t) -> 'a
+     val run_and_unwrap: ('a dst -> 'a) -> (unit -> 'a result Free.t) -> 'a
 
     (**
       Semicolon operator
@@ -230,11 +226,10 @@ module S = struct
     module Proxy : functor(T:S.Natural) -> sig
       module For : functor(Ctx:S.Context) -> sig
         include Context with
-          module Free = Ctx.Free
+          type 'a dst = 'a Ctx.dst
+          and module Free = Ctx.Free
           and type 'a free  = 'a Ctx.Free.t
-          and type 'a free_f = 'a Ctx.Free.f
           and type 'a src  = 'a T.src
-          (* and type 'a dst = 'a Ctx.Free.f *)
       end
     end
   end (* Machine.Spec *)
@@ -330,18 +325,15 @@ module SpecFor(L:Functor) : Spec
 
   module Proxy(T:S.Natural) = struct
     module For(Ctx:S.Context) : Context
-     with module Free = Ctx.Free
-     with type 'a free  = 'a Ctx.Free.t
-      and type 'a free_f = 'a Ctx.Free.f
-      and type 'a src  = 'a T.src
-      (* and type 'a dst = 'a Ctx.Free.f = *)
-      =
+      with type 'a dst = 'a Ctx.dst
+       and module Free = Ctx.Free
+       and type 'a free = 'a Ctx.Free.t
+       and type 'a src = 'a T.src =
     struct
       type 'a src  = 'a T.src
-      (* type 'a dst = 'a Ctx.dst *)
+      type 'a dst = 'a Ctx.dst
 
       type 'a free   = 'a Ctx.Free.t
-      type 'a free_f = 'a Ctx.Free.f
 
       let apply v = Ctx.apply (T.apply v)
 
@@ -468,15 +460,15 @@ end (* Combine4 *)
   Read the signature for Context for more information.
 *)
 module ContextFor(L:Functor)
-(* : Context
-  with type 'a src = 'a L.t *)
+  : Context
+  with type 'a src = 'a L.t
+   and type 'a dst = 'a L.t
 = struct
   module Free = MakeFree (L)
   type 'a free   = 'a Free.t
-  type 'a free_f = 'a Free.f
 
   type 'a src = 'a L.t
-  (* type 'a dst = 'a L.t *)
+  type 'a dst = 'a L.t
   let apply v = v
 
   let return f = Free.return f
