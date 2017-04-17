@@ -836,7 +836,7 @@ You can use this runners with the context to run programs:
 
 ```ocaml
 let () =
-  Context.run_error_aware Terminal.Runner.debug program
+  Context.run_and_unwrap Terminal.Runner.debug program
 ```
 
 ---
@@ -913,7 +913,7 @@ Context = Sugar.DSL.ContextForRuntime(X_and_Y)
 ...
 
 let () =
-  Context.run_error_aware XY.Runner.debug program_for_xy
+  Context.run_and_unwrap XY.Runner.debug program_for_xy
 ```
 ---
 

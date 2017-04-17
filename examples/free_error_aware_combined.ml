@@ -174,5 +174,5 @@ let program2 () =
 
 
 let () =
-  Context.run_error_aware X_and_Y.Runner.debug program2
-  (* Context.run_error_aware X_and_Y.Runner.run program1 *)
+  Context.run_and_unwrap X_and_Y.Runner.debug program2
+  (* Context.run_and_unwrap X_and_Y.Runner.run program1 *)

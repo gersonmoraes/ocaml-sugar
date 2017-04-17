@@ -1,5 +1,6 @@
 B ../_build/default/examples
 B ../_build/default/src
+FLG -ppx "../_build/.ppx/default/ppx_sexp_conv/ppx.exe --as-ppx"
 FLG -w -40
 PKG base
 PKG base.caml

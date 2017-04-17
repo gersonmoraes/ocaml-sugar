@@ -166,6 +166,11 @@ module S = struct
       with type error := exn
        and type 'a monad := 'a Free.t
 
+
+     val run: ('a Free.f -> 'a) -> (unit -> 'a Free.t) -> 'a
+
+     val run_and_unwrap: ('a Free.f -> 'a) -> (unit -> 'a result Free.t) -> 'a
+
     (**
       Semicolon operator
 
@@ -345,6 +350,8 @@ module SpecFor(L:Functor) : Spec
       let (>>) x y = bind_if x (fun () -> y)
       let (>>>) x y = bind_if x (fun _ -> y)
 
+      let run = Ctx.run
+      let run_and_unwrap = Ctx.run_and_unwrap
     end  (* SpecFor.Proxy.For *)
   end (* SpecFor.Proxy *)
 
@@ -470,7 +477,7 @@ module ContextFor(L:Functor) = struct
 
   include Prelude.CoreResult.For (Free)
 
-  let run_error_aware runner program =
+  let run_and_unwrap runner program =
     Free.iter runner (unwrap_or raise (program ()))
 
   let run runner program =

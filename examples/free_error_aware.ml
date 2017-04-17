@@ -72,4 +72,4 @@ let program1 () =
   puts (name ^ ", have a nice day")
 
 let () =
-  Context.run_error_aware Terminal.Runner.run program1
+  Context.run_and_unwrap Terminal.Runner.run program1
