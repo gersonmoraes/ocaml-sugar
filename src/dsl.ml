@@ -81,6 +81,8 @@ module Prelude = struct
   module Runner = struct
     (* module Result = CoreResult *)
     let return = CoreResult.return
+    
+    let commit f = f (return ())
   end
 end
 

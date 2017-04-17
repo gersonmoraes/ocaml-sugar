@@ -40,15 +40,19 @@ module Terminal = struct
     open Prelude.Runner
 
     let run = function
-      | Puts (s, f) -> print_endline s; return () |> f
-      | GetLine f -> read_line () |> return |> f
+      | Puts (s, f) ->
+          print_endline s;
+          commit f ()
+      | GetLine f ->
+          commit f @@ read_line ()
 
     let debug = function
       | Puts (s, f) ->
-          printf "Puts: %s\n" s; return () |> f
+          printf "Puts: %s\n" s;
+          commit f ()
       | GetLine f ->
           printf "GetLine: ";
-          read_line () |> return |> f
+          commit f @@ read_line ()
   end
 end
 

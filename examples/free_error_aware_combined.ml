@@ -37,14 +37,16 @@ module X = struct
     open Prelude.Runner
 
     let run = function
-      | Puts (s, f) -> print_endline s; return () |> f
-      | GetLine f -> read_line () |> return |> f
-
-    let debug = function
       | Puts (s, f) ->
-          printf "X.Puts: %s\n" s; return () |> f
+          print_endline s;
+          commit f ()
       | GetLine f ->
-          printf "X.GetLine: "; read_line () |> return |> f
+          commit f @@ read_line ()
+
+    let debug cmd =
+      match cmd with
+      | Puts _ -> printf "X.Puts"; run cmd
+      | GetLine _ -> printf "X.GetLine: "; run cmd
   end
 end
 (* let _ = (module X:DSL.S.Library) *)
@@ -83,14 +85,14 @@ module Y = struct
 
     let run = function
       | Puts (s, f) ->
-          throw (Errors.Unexpected "Could not print your msg") |> f
-      | GetLine f -> read_line () |> return |> f
-
-    let debug = function
-      | Puts (s, f) ->
-          throw (Errors.Unexpected "Could not print your msg") |> f
+          rollback f @@ Errors.Unexpected "Could not print your msg"
       | GetLine f ->
-          printf "Y.GetLine: "; read_line () |> return |> f
+          commit f @@ read_line ()
+
+    let debug cmd =
+      match cmd with
+      | Puts _ -> printf "Y.Puts"; run cmd
+      | GetLine _ -> printf "Y.GetLine: "; run cmd
   end
 end
 
