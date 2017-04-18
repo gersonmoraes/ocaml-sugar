@@ -38,7 +38,7 @@ module X = struct
 
   module New (C:Spec.S.Context) : Api
     with module Context = C
-    and type 'a result = 'a C.promise =
+    and type 'a result = 'a C.result =
   struct
     include Init (C)
     module Errors = Errors
@@ -99,7 +99,7 @@ module Y = struct
 
   module New (C:Spec.S.Context) : Api
     with module Context = C
-    and type 'a result = 'a C.promise =
+    and type 'a result = 'a C.result =
   struct
     include Init (C)
     module Errors = Errors
@@ -156,7 +156,7 @@ module X_and_Y = struct
   end
 
   module New (Ctx: Spec.S.Context) : Api
-    with type 'a result = 'a Ctx.promise =
+    with type 'a result = 'a Ctx.result =
   struct
     include Init (Ctx)
     module Errors = Errors
@@ -182,9 +182,9 @@ module MainContext = ContextFor(X_and_Y.Algebra)
 open MainContext
 open Infix
 
-module Lib1 = X_and_Y.New (MainContext)
+module Terminal = X_and_Y.New (MainContext)
 
-open Lib1
+open Terminal
 
 let program1 () =
   X.puts "What's your name?" >>
@@ -231,5 +231,4 @@ let program2 () =
 
 
 let () =
-  MainContext.run_and_unwrap X_and_Y.Runner.debug program2
-  (* Context.run_and_unwrap X_and_Y.Runner.run program1 *)
+  MainContext.run_and_unwrap X_and_Y.Runner.debug program1

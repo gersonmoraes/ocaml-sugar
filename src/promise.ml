@@ -3,7 +3,7 @@ open Abstract
 (**
   This interface specifies an error handling layer for monadic computations.
 
-  Sugar result modules work with any monad.
+  Sugar core_result modules work with any monad.
 
   <code>
     module MyMonad = struct
@@ -19,8 +19,8 @@ module type S = sig
   (** Error definition imported from your project *)
   type error
 
-  (** Low level result type *)
-  type 'a result = ('a, error) Pervasives.result
+  (** Low level core_result type *)
+  type 'a core_result = ('a, error) Pervasives.result
 
   (**
     This is a virtual type that will be translated to your asynchronous
@@ -30,13 +30,13 @@ module type S = sig
 
 
   (**
-    High level result type, created to simplify type hinting.
+    High level core_result type, created to simplify type hinting.
     It hides two things: your choice of asynchronous library and the relation
     with your project's error definition.
 
     For example, considere this function:
     <code>
-      let run () : unit promise =
+      let run () : unit result =
         return ()
     </code>
 
@@ -45,50 +45,50 @@ module type S = sig
       (unit, error) Pervasives.result Lwt.t
     </code>
   *)
-  type 'a promise = 'a result monad
+  type 'a result = 'a core_result monad
 
 
   (**
      Similar to {{!Result.bind_if} Result.bind_if}
    *)
-  val bind_if:  'a promise -> ('a -> 'b promise) -> 'b promise
+  val bind_if:  'a result -> ('a -> 'b result) -> 'b result
 
 
   (**
      Similar to {{!Result.bind_unless} Result.bind_unless}
    *)
-  val bind_unless: 'a promise -> (error -> 'a promise) -> 'a promise
+  val bind_unless: 'a result -> (error -> 'a result) -> 'a result
 
 
  (**
     Similar to {{!Result.map} Result.map}
   *)
-  val map:  'a promise -> ('a -> 'b) -> 'b promise
+  val map:  'a result -> ('a -> 'b) -> 'b result
 
 
   (**
      Similar to {{!Result.return} Result.return}
   *)
-  val return: 'a -> 'a promise
+  val return: 'a -> 'a result
 
 
   (**
     Similar to {{!Result.throw} Result.throw}
   *)
-  val throw: error -> 'a promise
+  val throw: error -> 'a result
 
   module Infix : sig
 
   (**
     Similar to {{!Result.(>>|)} Result.(>>|)}
   *)
-  val (>>|): 'a promise -> ('a -> 'b) -> 'b promise
+  val (>>|): 'a result -> ('a -> 'b) -> 'b result
 
   (** Applicative combinator for map *)
-  val (<$>): ('a -> 'b) -> 'a promise -> 'b promise
+  val (<$>): ('a -> 'b) -> 'a result -> 'b result
 
   (** Applicative combinator for parallel execution of function and operand *)
-  val (<*>): ('a -> 'b) promise -> 'a promise -> 'b promise
+  val (<*>): ('a -> 'b) result -> 'a result -> 'b result
 
   (**
     Broom combinator
@@ -119,28 +119,28 @@ module type S = sig
     implying that a developer should never handle errors in an open
     anonymous function.
   *)
-  val (>---------): 'a promise -> (error -> 'a promise) -> 'a promise
+  val (>---------): 'a result -> (error -> 'a result) -> 'a result
 
 
   (*
     Ignore operator.
 
-    Use this operator to ignore the previous result
+    Use this operator to ignore the previous core_result
     and return the next instruction.
   *)
-  (* val (>>>): 'a promise -> 'b promise -> 'b promise *)
+  (* val (>>>): 'a result -> 'b result -> 'b result *)
 
   end
 
   (**
-    Unwraps the successful result as a normal value in the threading monad.
+    Unwraps the successful core_result as a normal value in the threading monad.
     If the value is not successful, it will raise an Invalid_arg exception.
   *)
-  val unwrap: 'a result monad -> 'a monad
+  val unwrap: 'a core_result monad -> 'a monad
 
 
   (**
-    Unwraps the successful result as a value in the threading monad.
+    Unwraps the successful core_result as a value in the threading monad.
     Different from [unwrap], you can assign an error handler to be
     executed if the computation failed. Example:
     <code>
@@ -149,14 +149,14 @@ module type S = sig
       |> unwrap_or (fun _ -> Lwt.return "default")
     </code>
   *)
-  val unwrap_or: (error -> 'a monad) -> 'a result monad -> 'a monad
+  val unwrap_or: (error -> 'a monad) -> 'a core_result monad -> 'a monad
 
 
   (**
     Extracts a successful value from an computation, or raises and Invalid_arg
     exception with the defined parameter.
   *)
-  val expect: 'a result monad -> string -> 'a monad
+  val expect: 'a core_result monad -> string -> 'a monad
 
   (**
     Bind combinator
@@ -168,37 +168,37 @@ module type S = sig
     If the computation in the left failed, the operator will propagate the error,
     skipping the function completely.
   *)
-  val (>>=): 'a promise -> ('a -> 'b promise) -> 'b promise
+  val (>>=): 'a result -> ('a -> 'b result) -> 'b result
 
 
  (*
    Semicolon combinator.
 
    Like the standard semicolon in OCaml, ";", the previous operation needs
-   to evaluate to a unit promise.
+   to evaluate to a unit result.
  *)
- (* val ( >> ) : unit promise -> 'b promise -> 'b promise *)
+ (* val ( >> ) : unit result -> 'b result -> 'b result *)
 
 end
 
 
 (**
-  A parametric module that implements the monadic interface for results.
+  A parametric module that implements the monadic interface for core_results.
   The complete documentation can be found in {!Types.Promise}.
 *)
 module Make  (UserMonad:Monad)  (UserError:Error) : S
   with
     type error := UserError.t
     and type 'a monad := 'a UserMonad.t
-    and type 'a result = ('a, UserError.t) Pervasives.result
-    and type 'a promise = ('a, UserError.t) result UserMonad.t
+    and type 'a core_result = ('a, UserError.t) Pervasives.result
+    and type 'a result = ('a, UserError.t) Pervasives.result UserMonad.t
 =
 struct
   include UserError
 
   type 'a monad = 'a UserMonad.t
-  type 'a result = ('a, UserError.t) Pervasives.result
-  type 'a promise = 'a result monad
+  type 'a core_result = ('a, UserError.t) Pervasives.result
+  type 'a result = 'a core_result monad
 
   open UserMonad
 
@@ -252,7 +252,7 @@ struct
     r
     >>= function
     | Ok v -> UserMonad.return v
-    | Error e -> invalid_arg "Could not unwrap result"
+    | Error e -> invalid_arg "Could not unwrap core_result"
 
   let unwrap_or f r =
     r

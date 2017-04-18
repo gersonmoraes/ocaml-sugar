@@ -168,7 +168,7 @@ module S = struct
 
      val run: ('a dst -> 'a) -> (unit -> 'a Free.t) -> 'a
 
-     val run_and_unwrap: ('a dst -> 'a) -> (unit -> 'a result Free.t) -> 'a
+     val run_and_unwrap: ('a dst -> 'a) -> (unit -> 'a result) -> 'a
 
     (**
       Semicolon operator
@@ -177,7 +177,7 @@ module S = struct
       You can only use this operator if the expression in the left evaluates to "unit result".
       If you want to discard a value different than unit, is the (>>>).
     *)
-    val (>>): unit promise -> 'b promise -> 'b promise
+    val (>>): unit result -> 'b result -> 'b result
 
     (**
       Discard operator
@@ -185,7 +185,7 @@ module S = struct
       If the expression in the left is successful, ignore it and return
       the expression in the right.
     *)
-    val (>>>): 'a promise -> 'b promise -> 'b promise
+    val (>>>): 'a result -> 'b result -> 'b result
   end
 
 
@@ -370,12 +370,12 @@ module Library (Spec:Spec) (Errors:Errors) = struct
     module Context: Spec.S.Context
 
     type 'a result
-    (* type 'a result = 'a Context.promise *)
+    (* type 'a result = 'a Context.result *)
   end
 
   module Init (C:Spec.S.Context) : Partials
     with module Context = C
-    and type 'a result = 'a C.promise
+    and type 'a result = 'a C.result
     =
   struct
     module Context = C
@@ -383,7 +383,7 @@ module Library (Spec:Spec) (Errors:Errors) = struct
     let string_of_error = string_of_error
     type exn += Error = Error
 
-    type 'a result = 'a Context.promise
+    type 'a result = 'a Context.result
   end
 end
 
