@@ -39,7 +39,7 @@ module X = struct
   module New (C:Spec.S.Context) : Api
     with module Context = C
     with module Errors = Errors
-    and type 'a result = 'a C.result =
+    and type 'a result = 'a C.promise =
   struct
     include Init (C)
     module Errors = Errors
@@ -101,7 +101,7 @@ module Y = struct
   module New (C:Spec.S.Context) : Api
     with module Context = C
     with module Errors = Errors
-    and type 'a result = 'a C.result =
+    and type 'a result = 'a C.promise =
   struct
     include Init (C)
     module Errors = Errors
