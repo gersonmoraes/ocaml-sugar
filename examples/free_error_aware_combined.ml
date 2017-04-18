@@ -58,8 +58,8 @@ module X = struct
 
     let debug cmd =
       match cmd with
-      | Puts _ -> printf "X.Puts"; run cmd
-      | GetLine _ -> printf "X.GetLine: "; run cmd
+      | Puts _ -> printf "[X.Puts] "; run cmd
+      | GetLine _ -> printf "[X.GetLine] "; run cmd
   end
 end
 (* let _ = (module X:DSL.S.Library) *)
@@ -117,8 +117,8 @@ module Y = struct
 
     let debug cmd =
       match cmd with
-      | Puts _ -> printf "Y.Puts"; run cmd
-      | GetLine _ -> printf "Y.GetLine: "; run cmd
+      | Puts _ -> printf "[Y.Puts] "; run cmd
+      | GetLine _ -> printf "[Y.GetLine] "; run cmd
   end
 end
 
