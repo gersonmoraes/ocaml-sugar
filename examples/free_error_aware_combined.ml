@@ -161,16 +161,6 @@ module X_and_Y = struct
 
     module X = X.New (Natural.Proxy1.For(Ctx))
     module Y = Y.New (Natural.Proxy2.For(Ctx))
-
-   (*
-   module X : X.Api
-      with type 'a result = 'a Ctx.result =
-      X.New (Natural.Proxy1.For(Ctx))
-
-    module Y : Y.Api
-      with type 'a result = 'a Ctx.result =
-      Y.New (Natural.Proxy2.For(Ctx))
-    *)
   end
 end
 
