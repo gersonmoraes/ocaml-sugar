@@ -3,7 +3,7 @@ open Abstract
 (**
   This interface specifies an error handling layer for monadic computations.
 
-  Sugar core_result modules work with any monad.
+  Sugar score modules work with any monad.
 
   <code>
     module MyMonad = struct
@@ -19,18 +19,18 @@ module type S = sig
   (** Error definition imported from your project *)
   type error
 
-  (** Low level core_result type *)
-  type 'a core_result = ('a, error) Pervasives.result
+  (** Evaluated result *)
+  type 'a score = ('a, error) Pervasives.result
 
   (**
-    This is a virtual type that will be translated to your asynchronous
-    library's main type.
+    This type will be translated to the main 
+    monad in your project 
    *)
   type 'a monad
 
 
   (**
-    High level core_result type, created to simplify type hinting.
+    High level score type, created to simplify type hinting.
     It hides two things: your choice of asynchronous library and the relation
     with your project's error definition.
 
@@ -45,7 +45,7 @@ module type S = sig
       (unit, error) Pervasives.result Lwt.t
     </code>
   *)
-  type 'a result = 'a core_result monad
+  type 'a result = 'a score monad
 
 
   (**
@@ -123,9 +123,18 @@ module type S = sig
 
 
   (*
+    Semicolon combinator.
+
+    Like the standard semicolon in OCaml, ";", the previous operation needs
+    to evaluate to a unit result.
+  *)
+  (* val ( >> ) : unit result -> 'b result -> 'b result *)
+
+
+  (*
     Ignore operator.
 
-    Use this operator to ignore the previous core_result
+    Use this operator to ignore the previous score
     and return the next instruction.
   *)
   (* val (>>>): 'a result -> 'b result -> 'b result *)
@@ -133,14 +142,14 @@ module type S = sig
   end
 
   (**
-    Unwraps the successful core_result as a normal value in the threading monad.
+    Unwraps the successful score as a normal value in the threading monad.
     If the value is not successful, it will raise an Invalid_arg exception.
   *)
-  val unwrap: 'a core_result monad -> 'a monad
+  val unwrap: 'a score monad -> 'a monad
 
 
   (**
-    Unwraps the successful core_result as a value in the threading monad.
+    Unwraps the successful score as a value in the threading monad.
     Different from [unwrap], you can assign an error handler to be
     executed if the computation failed. Example:
     <code>
@@ -149,14 +158,14 @@ module type S = sig
       |> unwrap_or (fun _ -> Lwt.return "default")
     </code>
   *)
-  val unwrap_or: (error -> 'a monad) -> 'a core_result monad -> 'a monad
+  val unwrap_or: (error -> 'a monad) -> 'a score monad -> 'a monad
 
 
   (**
     Extracts a successful value from an computation, or raises and Invalid_arg
     exception with the defined parameter.
   *)
-  val expect: 'a core_result monad -> string -> 'a monad
+  val expect: 'a score monad -> string -> 'a monad
 
   (**
     Bind combinator
@@ -170,35 +179,26 @@ module type S = sig
   *)
   val (>>=): 'a result -> ('a -> 'b result) -> 'b result
 
-
- (*
-   Semicolon combinator.
-
-   Like the standard semicolon in OCaml, ";", the previous operation needs
-   to evaluate to a unit result.
- *)
- (* val ( >> ) : unit result -> 'b result -> 'b result *)
-
 end
 
 
 (**
-  A parametric module that implements the monadic interface for core_results.
+  A parametric module that implements the monadic interface for scores.
   The complete documentation can be found in {!Types.Promise}.
 *)
 module Make  (UserMonad:Monad)  (UserError:Error) : S
   with
     type error := UserError.t
     and type 'a monad := 'a UserMonad.t
-    and type 'a core_result = ('a, UserError.t) Pervasives.result
+    and type 'a score = ('a, UserError.t) Pervasives.result
     and type 'a result = ('a, UserError.t) Pervasives.result UserMonad.t
 =
 struct
   include UserError
 
   type 'a monad = 'a UserMonad.t
-  type 'a core_result = ('a, UserError.t) Pervasives.result
-  type 'a result = 'a core_result monad
+  type 'a score = ('a, UserError.t) Pervasives.result
+  type 'a result = 'a score monad
 
   open UserMonad
 
@@ -225,16 +225,12 @@ struct
 
   module Infix = struct
     let (>>=) = bind_if
-    (* let (&&=) = bind_if
-    let (||=) = bind_unless
-    let (&&|) = map *)
 
     let (>>|) = map
 
-    let (>>>) x y =
-      x
-      >>= fun _ ->
-      y
+    let (>>) x y = bind_if x (fun () -> y)
+    
+    let (>>>) x y = bind_if x (fun _ -> y)
 
     let (>---------) = bind_unless
 
@@ -252,7 +248,7 @@ struct
     r
     >>= function
     | Ok v -> UserMonad.return v
-    | Error e -> invalid_arg "Could not unwrap core_result"
+    | Error e -> invalid_arg "Could not unwrap score"
 
   let unwrap_or f r =
     r
@@ -268,8 +264,4 @@ struct
 
 
   let (>>=) = bind_if
-  let (>>) x y =
-    x
-    >>= fun () ->
-    y
 end
