@@ -31,7 +31,7 @@ module Terminal = struct
           f (read_line ())
   end
 
-  module New (C:Spec.S.Context) = struct
+  module New (C:Spec.Context) = struct
     let puts s =
       Puts (s, id) |> C.lift
 

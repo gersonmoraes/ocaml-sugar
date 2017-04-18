@@ -148,7 +148,7 @@ module S = struct
       - All specification about compatibility is type safe and automated
       - It is easy to compose a big DSL from smaller ones
   *)
-  module type Context = sig
+  module type MainContext = sig
     include Natural
 
     module Free : FreeMonad
@@ -208,24 +208,22 @@ module S = struct
   module type Spec = sig
     module Algebra : Functor
 
-    module S : sig
-      module type Natural = sig
-        type 'a src
-        val apply: 'a src -> 'a Algebra.t
-      end
-
-      module type Context = Context
-        with type 'a src = 'a Algebra.t
-
-      module type Runner = sig
-        val run: 'a Algebra.t -> 'a
-        val debug: 'a Algebra.t -> 'a
-      end
+    module type Natural = sig
+      type 'a src
+      val apply: 'a src -> 'a Algebra.t
     end
 
-    module Proxy : functor(T:S.Natural) -> sig
-      module For : functor(Ctx:S.Context) -> sig
-        include Context with
+    module type Context = MainContext
+      with type 'a src = 'a Algebra.t
+
+    module type Runner = sig
+      val run: 'a Algebra.t -> 'a
+      val debug: 'a Algebra.t -> 'a
+    end
+
+    module Proxy : functor(T:Natural) -> sig
+      module For : functor(Ctx:Context) -> sig
+        include MainContext with
           type 'a dst = 'a Ctx.dst
           and module Free = Ctx.Free
           and type 'a free  = 'a Ctx.Free.t
@@ -308,23 +306,22 @@ module SpecFor(L:Functor) : Spec
 
   module Algebra = L
 
-  module S = struct
-    module type Context = Context
-      with type 'a src = 'a L.t
 
-    module type Natural = sig
-      type 'a src
-      val apply: 'a src -> 'a L.t
-    end
+  module type Context = MainContext
+    with type 'a src = 'a L.t
 
-    module type Runner = sig
-      val run: 'a Algebra.t -> 'a
-      val debug: 'a Algebra.t -> 'a
-    end
+  module type Natural = sig
+    type 'a src
+    val apply: 'a src -> 'a L.t
   end
 
-  module Proxy(T:S.Natural) = struct
-    module For(Ctx:S.Context) : Context
+  module type Runner = sig
+    val run: 'a Algebra.t -> 'a
+    val debug: 'a Algebra.t -> 'a
+  end
+
+  module Proxy(T:Natural) = struct
+    module For(Ctx:Context) : MainContext
       with type 'a dst = 'a Ctx.dst
        and module Free = Ctx.Free
        and type 'a free = 'a Ctx.Free.t
@@ -373,7 +370,7 @@ module Library (Spec:Spec) (Errors:Errors) = struct
     (* type 'a result = 'a Context.result *)
   end
 
-  module Init (C:Spec.S.Context) : Partials
+  module Init (C:Spec.Context) : Partials
     with type 'a result = 'a C.result
     =
   struct
@@ -493,11 +490,10 @@ end (* Combine4 *)
 (**
   Read the signature for Context for more information.
 *)
-module ContextFor(L:Functor)
-  : Context
+module ContextFor(L:Functor) : MainContext
   with type 'a src = 'a L.t
-   and type 'a dst = 'a L.t
-= struct
+   and type 'a dst = 'a L.t =
+struct
   module Free = MakeFree (L)
   type 'a free   = 'a Free.t
 
@@ -535,7 +531,7 @@ end
 module Assemble (R1:Runtime) (R2:Runtime) = struct
   include Combine (R1.Algebra) (R2.Algebra)
 
-  module Runner : Spec.S.Runner = struct
+  module Runner : Spec.Runner = struct
     open Algebra
 
     let run = function

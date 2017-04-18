@@ -36,7 +36,7 @@ module X = struct
     val get_line: unit -> string result
   end
 
-  module New (C:Spec.S.Context) : Api
+  module New (C:Spec.Context) : Api
     with type 'a result = 'a C.result =
   struct
     include Init (C)
@@ -96,7 +96,7 @@ module Y = struct
     val get_line: unit -> string result
   end
 
-  module New (C:Spec.S.Context) : Api
+  module New (C:Spec.Context) : Api
     with type 'a result = 'a C.result =
   struct
     include Init (C)
@@ -153,7 +153,7 @@ module X_and_Y = struct
     module Y : Y.Api with type 'a result := 'a result
   end
 
-  module New (Ctx: Spec.S.Context) : Api
+  module New (Ctx: Spec.Context) : Api
     with type 'a result = 'a Ctx.result =
   struct
     include Init (Ctx)

@@ -20,7 +20,7 @@ module Terminal = struct
 
   module Spec = SpecFor (Algebra)
 
-  module New (Ctx:Spec.S.Context) = struct
+  module New (Ctx:Spec.Context) = struct
     open Ctx
 
     let puts s =
