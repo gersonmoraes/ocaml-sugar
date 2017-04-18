@@ -157,8 +157,6 @@ module X_and_Y = struct
     module Y : Y.Api with type 'a result = 'a result
   end
 
-  include Library (Spec) (Errors)
-
   module New (Ctx: Spec.S.Context) = struct
     include Init (Ctx)
     module Errors = Errors
