@@ -30,7 +30,7 @@ module X = struct
 
   module type Api = sig
     include Partials
-    module Errors : S.Errors with type t = Errors.t
+    module Errors = Errors
 
     val puts: string -> unit result
     val get_line: unit -> string result
@@ -91,7 +91,7 @@ module Y = struct
 
   module type Api = sig
     include Partials
-    module Errors : S.Errors with type t = Errors.t
+    module Errors = Errors
 
     val puts: string -> unit result
     val get_line: unit -> string result
@@ -144,15 +144,15 @@ module X_and_Y = struct
   module Errors = struct
     type t = XY_error [@@deriving sexp]
   end
-  
+
   include Library (Spec) (Errors)
-  
+
   module type Api = sig
     include Partials
-    module Errors : S.Errors with type t = Errors.t
-    
-    module X : X.Api with type 'a result = 'a result
-    module Y : Y.Api with type 'a result = 'a result
+    module Errors = Errors
+
+    module X : X.Api with type 'a result := 'a result
+    module Y : Y.Api with type 'a result := 'a result
   end
 
   module New (Ctx: Spec.S.Context) : Api
@@ -166,23 +166,23 @@ module X_and_Y = struct
 
    (*
    module X : X.Api
-      with type 'a result = 'a Ctx.result = 
+      with type 'a result = 'a Ctx.result =
       X.New (Natural.Proxy1.For(Ctx))
 
     module Y : Y.Api
-      with type 'a result = 'a Ctx.result = 
+      with type 'a result = 'a Ctx.result =
       Y.New (Natural.Proxy2.For(Ctx))
     *)
   end
 end
 
 
-module Context = ContextFor(X_and_Y.Algebra)
+module MainContext = ContextFor(X_and_Y.Algebra)
 
-open Context
+open MainContext
 open Infix
 
-module Lib1 = X_and_Y.New (Context)
+module Lib1 = X_and_Y.New (MainContext)
 
 open Lib1
 
@@ -231,5 +231,5 @@ let program2 () =
 
 
 let () =
-  Context.run_and_unwrap X_and_Y.Runner.debug program2
+  MainContext.run_and_unwrap X_and_Y.Runner.debug program2
   (* Context.run_and_unwrap X_and_Y.Runner.run program1 *)
