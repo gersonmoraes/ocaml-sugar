@@ -157,7 +157,9 @@ module X_and_Y = struct
     module Y : Y.Api with type 'a result = 'a result
   end
 
-  module New (Ctx: Spec.S.Context) = struct
+  module New (Ctx: Spec.S.Context) : Api
+    with type 'a result = 'a Ctx.promise =
+  struct
     include Init (Ctx)
     module Errors = Errors
 
