@@ -367,23 +367,23 @@ module Library (Spec:Spec) (Errors:Errors) = struct
 
     val string_of_error: Errors.t -> string
 
-    module Context: Spec.S.Context
+    (* module Context: Spec.S.Context *)
 
     type 'a result
     (* type 'a result = 'a Context.result *)
   end
 
   module Init (C:Spec.S.Context) : Partials
-    with module Context = C
-    and type 'a result = 'a C.result
+    with type 'a result = 'a C.result
     =
   struct
-    module Context = C
+    (* module Context = C *)
 
     let string_of_error = string_of_error
+
     type exn += Error = Error
 
-    type 'a result = 'a Context.result
+    type 'a result = 'a C.result
   end
 end
 
