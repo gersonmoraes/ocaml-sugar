@@ -353,6 +353,40 @@ module SpecFor(L:Functor) : Spec
 
 end (* SpecFor *)
 
+module Library (Spec:Spec) (Errors:Errors) = struct
+  exception Error of Errors.t
+
+  let string_of_error (e:Errors.t) : string =
+    Sexplib.Sexp.to_string_hum @@ Errors.sexp_of_t e
+
+  let rollback f e =
+    f (Prelude.CoreResult.throw (Error e))
+
+  module type Partials = sig
+    exception Error of Errors.t
+
+    val string_of_error: Errors.t -> string
+
+    module Context: Spec.S.Context
+
+    (* type 'a promise *)
+    type 'a result = 'a Context.promise
+  end
+
+  module Init (C:Spec.S.Context) : Partials
+    with module Context = C
+    and type 'a result = 'a C.promise
+    =
+  struct
+    module Context = C
+
+    let string_of_error = string_of_error
+    type exn += Error = Error
+
+    type 'a result = 'a Context.promise
+  end
+end
+
 
 (**
   Combine two algebras.

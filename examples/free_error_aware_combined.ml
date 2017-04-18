@@ -10,8 +10,6 @@ module X = struct
     type t = Issue1 | Issue2 [@@deriving sexp]
   end
 
-  include ErrorFor(Errors)
-
   module Algebra = struct
     open Prelude.Algebra
 
@@ -28,9 +26,25 @@ module X = struct
 
   module Spec = SpecFor (Algebra)
 
-  module New (C:Spec.S.Context) = struct
-    let x_puts s = Puts (s, id) |> C.lift
-    let x_get_line () = GetLine id |> C.lift
+  include Library (Spec) (Errors)
+
+  module type Api = sig
+    include Partials
+    module Errors : S.Errors with type t = Errors.t
+
+    val puts: string -> unit result
+    val get_line: unit -> string result
+  end
+
+  module New (C:Spec.S.Context) : Api
+    with module Context = C
+    with module Errors = Errors =
+  struct
+    include Init (C)
+    module Errors = Errors
+
+    let puts s = Puts (s, id) |> C.lift
+    let get_line () = GetLine id |> C.lift
   end
 
   module Runner = struct
@@ -69,16 +83,30 @@ module Y = struct
 
   module Spec = SpecFor (Algebra)
 
-  module New (C:Spec.S.Context) = struct
-    let y_puts s = Puts (s, id) |> C.lift
-    let y_get_line () = GetLine id |> C.lift
-  end
-
   module Errors = struct
     type t = Unexpected of string | Not_found [@@deriving sexp]
   end
 
-  include ErrorFor(Errors)
+  include Library (Spec) (Errors)
+
+  module type Api = sig
+    include Partials
+    module Errors : S.Errors with type t = Errors.t
+
+    val puts: string -> unit result
+    val get_line: unit -> string result
+  end
+
+  module New (C:Spec.S.Context) : Api
+    with module Context = C
+    with module Errors = Errors =
+  struct
+    include Init (C)
+    module Errors = Errors
+
+    let puts s = Puts (s, id) |> C.lift
+    let get_line () = GetLine id |> C.lift
+  end
 
   module Runner = struct
     open Prelude.Runner
@@ -113,9 +141,18 @@ module X_and_Y = struct
       | Case2 cmd -> Y.Runner.debug cmd
   end
 
+  module Errors = struct
+    type t = XY_error [@@deriving sexp]
+  end
+
+  include Library (Spec) (Errors)
+
   module New (Ctx: Spec.S.Context) = struct
-    include X.New (Natural.Proxy1.For(Ctx))
-    include Y.New (Natural.Proxy2.For(Ctx))
+    include Init (Ctx)
+    module Errors = Errors
+
+    module X = X.New (Natural.Proxy1.For(Ctx))
+    module Y = Y.New (Natural.Proxy2.For(Ctx))
   end
 end
 
@@ -130,11 +167,11 @@ module Lib1 = X_and_Y.New (Context)
 open Lib1
 
 let program1 () =
-  x_puts "What's your name?" >>
-  y_get_line ()
+  X.puts "What's your name?" >>
+  Y.get_line ()
   >>= fun name ->
-  x_puts (name ^ ", have a nice day") >>
-  y_puts "Let's test some errors?! Type something."
+  X.puts (name ^ ", have a nice day") >>
+  Y.puts "Let's test some errors?! Type something."
   >---------
   ( function
     | X.Error e ->
@@ -143,34 +180,34 @@ let program1 () =
         | X.Errors.Issue2 -> return ()
       )
     | Y.Error e ->
-        x_puts ("Error in Y: " ^ (Y.string_of_error e))
+        X.puts ("Error in Y: " ^ (Y.string_of_error e))
     | _ -> assert false
   ) >>
-  x_get_line ()
+  X.get_line ()
   >---------
   ( fun _ ->
-    x_puts "The computation resulted in an unexpected error" >>
+    X.puts "The computation resulted in an unexpected error" >>
     return "recovered"
   )
   >>= fun line ->
-  x_puts ("You said: " ^ line) >>
-  y_puts "hello world"
+  X.puts ("You said: " ^ line) >>
+  Y.puts "hello world"
   >---------
   ( fun e ->
     ( match e with
-      | Y.Error error_y -> x_puts ("Error in Y: " ^ ( Y.string_of_error error_y ))
+      | Y.Error error_y -> X.puts ("Error in Y: " ^ ( Y.string_of_error error_y ))
       | _ -> throw e
     )
   )
 
 let program2 () =
-  x_puts "Hello"
+  X.puts "Hello"
   >---------
   ( fun e ->
     return ()
   )
   >>= fun () ->
-  x_puts "World"
+  X.puts "World"
 
 
 let () =

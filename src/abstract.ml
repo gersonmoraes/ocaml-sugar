@@ -107,3 +107,8 @@ module type Natural = sig
   type 'a dst
   val apply: 'a src -> 'a dst
 end
+
+
+module type OpaqueError = sig
+  type t
+end
