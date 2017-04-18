@@ -369,7 +369,6 @@ module Library (Spec:Spec) (Errors:Errors) = struct
 
     module Context: Spec.S.Context
 
-    (* type 'a promise *)
     type 'a result = 'a Context.promise
   end
 
