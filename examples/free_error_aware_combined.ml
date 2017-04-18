@@ -38,7 +38,8 @@ module X = struct
 
   module New (C:Spec.S.Context) : Api
     with module Context = C
-    with module Errors = Errors =
+    with module Errors = Errors
+    and type 'a result = 'a C.result =
   struct
     include Init (C)
     module Errors = Errors
@@ -99,7 +100,8 @@ module Y = struct
 
   module New (C:Spec.S.Context) : Api
     with module Context = C
-    with module Errors = Errors =
+    with module Errors = Errors
+    and type 'a result = 'a C.result =
   struct
     include Init (C)
     module Errors = Errors
@@ -144,6 +146,14 @@ module X_and_Y = struct
   module Errors = struct
     type t = XY_error [@@deriving sexp]
   end
+  
+  module type Api = sig
+    include Partials
+    module Errors : S.Errors with type t = Errors.t
+    
+    module X : X.Api with type 'a result = 'a result
+    module Y : Y.Api with type 'a result = 'a result
+  end
 
   include Library (Spec) (Errors)
 
@@ -153,6 +163,16 @@ module X_and_Y = struct
 
     module X = X.New (Natural.Proxy1.For(Ctx))
     module Y = Y.New (Natural.Proxy2.For(Ctx))
+
+   (*
+   module X : X.Api
+      with type 'a result = 'a Ctx.result = 
+      X.New (Natural.Proxy1.For(Ctx))
+
+    module Y : Y.Api
+      with type 'a result = 'a Ctx.result = 
+      Y.New (Natural.Proxy2.For(Ctx))
+    *)
   end
 end
 

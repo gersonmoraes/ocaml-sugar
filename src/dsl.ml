@@ -369,7 +369,8 @@ module Library (Spec:Spec) (Errors:Errors) = struct
 
     module Context: Spec.S.Context
 
-    type 'a result = 'a Context.promise
+    type 'a result
+    (* type 'a result = 'a Context.promise *)
   end
 
   module Init (C:Spec.S.Context) : Partials
