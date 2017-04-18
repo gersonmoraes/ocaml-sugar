@@ -147,6 +147,8 @@ module X_and_Y = struct
     type t = XY_error [@@deriving sexp]
   end
   
+  include Library (Spec) (Errors)
+  
   module type Api = sig
     include Partials
     module Errors : S.Errors with type t = Errors.t
