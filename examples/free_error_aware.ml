@@ -10,8 +10,6 @@ module Terminal = struct
   end
 
   module Algebra = struct
-    open Prelude.Algebra
-
     type 'f t =
       | Puts of string * ('f, unit result) next
       | GetLine of ('f, string result) next
@@ -20,11 +18,11 @@ module Terminal = struct
       | Puts (s, g) -> Puts (s, f @ g)
       | GetLine g -> GetLine (f @ g)
   end
-  open Algebra
 
   module Spec = SpecFor (Algebra)
-
-  include Library (Spec) (Errors)
+  include Library.Init (Spec) (Errors)
+  
+  open Algebra
 
   module New (C:Spec.Context) = struct
     include Init(C)
@@ -71,4 +69,4 @@ let program1 () =
   puts (name ^ ", have a nice day")
 
 let () =
-  Context.run_and_unwrap Terminal.Runner.run program1
+  Context.reduce Terminal.Runner.run program1

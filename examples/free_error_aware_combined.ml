@@ -19,7 +19,7 @@ module X = struct
   end
 
   module Spec = SpecFor (Algebra)
-  include LibraryFor (Spec) (Errors)
+  include Library.Init (Spec) (Errors)
 
   module type Api = sig
     include Partials
@@ -55,7 +55,7 @@ module X = struct
       | GetLine _ -> printf "[X.GetLine] "; run cmd
   end
 end
-let _ = (module X:Library)
+let _ = (module X:Library.S)
 
 module Y = struct
 
@@ -74,7 +74,7 @@ module Y = struct
   end
 
   module Spec = SpecFor (Algebra)
-  include LibraryFor (Spec) (Errors)
+  include Library.Init (Spec) (Errors)
 
   module type Api = sig
     include Partials
@@ -117,8 +117,8 @@ module X_and_Y = struct
     type t = XY_error [@@deriving sexp]
   end
 
-  include Combine (X.Algebra) (Y.Algebra)
-  include LibraryFor (Spec) (Errors)
+  include Assemble (X) (Y)
+  include Library.Init (Spec) (Errors)
 
   module type Api = sig
     include Partials
@@ -138,17 +138,6 @@ module X_and_Y = struct
     module Y = Y.New (Natural.Proxy2.For(Ctx))
   end
 
-  module Runner = struct
-    open Algebra
-
-    let run = function
-      | Case1 cmd -> X.Runner.run cmd
-      | Case2 cmd -> Y.Runner.run cmd
-
-    let debug = function
-      | Case1 cmd -> X.Runner.debug cmd
-      | Case2 cmd -> Y.Runner.debug cmd
-  end
 end
 
 

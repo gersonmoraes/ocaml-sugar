@@ -272,13 +272,14 @@ module SpecFor(L:Functor) : Spec
 
 end (* SpecFor *)
 
+module Library = struct
 (**
   This signature was created to help DSL writers ongoing creation process
   It serves only for duck typing porposes.
 
   For example, one can create a new libray module and validate its interface
 *)
-module type Library = sig
+module type S = sig
 
   module Algebra : Functor
 
@@ -338,7 +339,7 @@ module type Library = sig
   end
 end
 
-module LibraryFor (Spec:Spec) (Errors:Errors) = struct
+module Init (Spec:Spec) (Errors:Errors) = struct
   exception Error of Errors.t
 
   let string_of_error (e:Errors.t) : string =
@@ -365,7 +366,7 @@ module LibraryFor (Spec:Spec) (Errors:Errors) = struct
     type 'a result = 'a C.result
   end
 end
-
+end
 
 (**
   Combine two algebras.
