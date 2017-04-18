@@ -5,6 +5,42 @@ let id = fun x -> x
 (** Function composition *)
 let (@) f g = fun v -> f (g v)
 
+type 'a result = ('a, exn) Pervasives.result
+
+(**
+  A specification for the "next continuation".
+
+  Each instruction in our language must specify the type for the next
+  continuation in the chain. Some instructions return "unit", some return
+  a function. In all cases, this need to be defined.
+
+  But the type "next" makes this trivial. The code bellow define an
+  instruction that returns a string option.
+  <code>
+    type 'f t =
+      GetData of ('f, string option) next
+  </code>
+
+  To use this expression, the developer needs to provide a function ['f] that
+  can handle a [string option].
+
+  If your continuation needs to be more complex and return, for example, a
+  string option, an int, and a float, this could be done with:
+  <code>
+    type 'f t =
+      GetData of ('f, string option -> int -> float) next
+  </code>
+*)
+type ('f, 'args) next = 'args -> 'f
+
+(**
+  Specifies that the continuation ['f] is not related to the current
+  instruction.
+
+  This type is syntatic sugar for the type [next].
+*)
+type 'f unrelated = ('f, unit) next
+
 (**
   In order to use error aware expressions mixing different DSLs,
   we need to make sure all DSLs are written using a compatible result type.
@@ -36,63 +72,9 @@ module Error = struct
   type t = exn
 end
 
-module Prelude = struct
-
-  module Algebra = struct
-    type 'a result = ('a, exn) Pervasives.result
-
-    (**
-      A specification for the "next continuation".
-
-      Each instruction in our language must specify the type for the next
-      continuation in the chain. Some instructions return "unit", some return
-      a function. In all cases, this need to be defined.
-
-      But the type "next" makes this trivial. The code bellow define an
-      instruction that returns a string option.
-      <code>
-        type 'f t =
-          GetData of ('f, string option) next
-      </code>
-
-      To use this expression, the developer needs to provide a function ['f] that
-      can handle a [string option].
-
-      If your continuation needs to be more complex and return, for example, a
-      string option, an int, and a float, this could be done with:
-      <code>
-        type 'f t =
-          GetData of ('f, string option -> int -> float) next
-      </code>
-    *)
-    type ('f, 'args) next = 'args -> 'f
-
-    (**
-      Specifies that the continuation ['f] is not related to the current
-      instruction.
-
-      This type is syntatic sugar for the type [next].
-    *)
-    type 'f unrelated = ('f, unit) next
-  end
-
-  module CoreResult = Result.Make (Error)
-
-  module Runner = struct
-    open CoreResult
-
-    let return = CoreResult.return
-
-    let commit (f:'a result -> 'b) (v: 'a) = f (return v)
-  end
-end
-
-open Prelude
+(* module Result = Result.Make (Error) *)
 
 module S = struct
-
-  module type CoreResult = Result.S
-    with type error = exn
 
   (**
     This describes the signature for an opaque, debuggable error.
@@ -103,33 +85,6 @@ module S = struct
 
     val t_of_sexp : Sexplib.Type.t -> t
     val sexp_of_t : t -> Sexplib.Type.t
-  end
-
-  (**
-    This describes the signature for parametric module ErrorFor
-  *)
-  module type ErrorForSpec = sig
-
-    (**
-      Library internal error
-    *)
-    type error
-
-    (**
-      Constructor for the shared error type
-    *)
-    exception Error of error
-
-    (**
-      Convert the library internal error to string
-    *)
-    val string_of_error: error -> string
-
-    (**
-      Throw a library error
-    *)
-
-    val rollback: ('a Prelude.CoreResult.result -> 'b) -> error -> 'b
   end
 
   (**
@@ -233,17 +188,6 @@ module S = struct
   end (* Machine.Spec *)
 
   (**
-    This signature just summarizes the common requirements to build a DSL library.
-  *)
-  module type Library = sig
-    module Errors : Errors
-    exception Error of Errors.t
-
-    module Algebra : Functor
-    module Spec : Spec with module Algebra = Algebra
-  end
-
-  (**
     A slightly modified version of the Library signature.
 
     This is used to close a library around a default interpreter.
@@ -275,27 +219,6 @@ end
 
 open S
 
-
-(**
- This builder enforces the conventions around the definitions of
- DSLs errors.
-
- Check the definition of ErrorForSpec for more information.
-*)
-module ErrorFor(E:Errors) : ErrorForSpec
-  with type error := E.t
- = struct
-  type error = E.t
-
-  exception Error of error
-
-  let string_of_error (e:error) : string =
-    Sexplib.Sexp.to_string_hum @@ E.sexp_of_t e
-
-  let rollback f e =
-    f (Prelude.CoreResult.throw (Error e))
-end
-
 (**
   Automates the generation of minimum specification
   for a library based on its algebra.
@@ -305,7 +228,6 @@ module SpecFor(L:Functor) : Spec
  = struct
 
   module Algebra = L
-
 
   module type Context = MainContext
     with type 'a src = 'a L.t
@@ -338,7 +260,7 @@ module SpecFor(L:Functor) : Spec
 
       module Free = Ctx.Free
 
-      include Prelude.CoreResult.For (Ctx.Free)
+      include Promise.Make (Error) (Ctx.Free)
 
       let (>>) x y = bind_if x (fun () -> y)
       let (>>>) x y = bind_if x (fun _ -> y)
@@ -350,36 +272,96 @@ module SpecFor(L:Functor) : Spec
 
 end (* SpecFor *)
 
-module Library (Spec:Spec) (Errors:Errors) = struct
+(**
+  This signature was created to help DSL writers ongoing creation process
+  It serves only for duck typing porposes.
+
+  For example, one can create a new libray module and validate its interface
+*)
+module type Library = sig
+
+  module Algebra : Functor
+
+  module Spec : Spec with module Algebra = Algebra
+
+  module Errors : Debuggable
+
+  (** Constructor for the shared error type *)
+  exception Error of Errors.t
+
+  (** Convert the library internal error to string *)
+  val string_of_error: Errors.t -> string
+
+  (** Return a common result type *)
+  val return: 'a -> 'a result
+
+  (** Used for interpreters to commit a successful value to a continuation *)
+  val commit: ('a result -> 'b) -> 'a -> 'b
+
+  (** Used for interpreters to 'throw a library error' in the given continuation *)
+  val rollback: ('a result -> 'b) -> Errors.t -> 'b
+
+  (**
+    Missing pieces to help you write a signature for your [Library.New] builder.
+
+    This signature is generated when you include the contents of the Init builder
+    at the begining of your New builder.
+
+    <code>
+    module MyLibrary = struct
+      ...
+      module type Api = sig
+        include Partials
+        ...
+      end
+
+      module New(C:Spec.Context) : Api
+        with type 'a result = 'a C.result =
+      struct
+        include Init (C)
+        ...
+      end
+    end
+    </code>
+  *)
+  module type Partials = sig
+
+    (** Constructor alias for the shared error type in this library *)
+    exception Error of Errors.t
+
+    (* Alias for string_of_error function *)
+    val string_of_error: Errors.t -> string
+
+    (* Contextual result type to help type hinting *)
+    type 'a result
+
+  end
+end
+
+module LibraryFor (Spec:Spec) (Errors:Errors) = struct
   exception Error of Errors.t
 
   let string_of_error (e:Errors.t) : string =
     Sexplib.Sexp.to_string_hum @@ Errors.sexp_of_t e
 
   let rollback f e =
-    f (Prelude.CoreResult.throw (Error e))
+    f (Pervasives.Error (Error e))
+
+  let return v = Pervasives.Ok v
+
+  let commit (f:'a result -> 'b) (v: 'a) = f (return v)
 
   module type Partials = sig
     exception Error of Errors.t
-
     val string_of_error: Errors.t -> string
-
-    (* module Context: Spec.S.Context *)
-
     type 'a result
-    (* type 'a result = 'a Context.result *)
   end
 
   module Init (C:Spec.Context) : Partials
-    with type 'a result = 'a C.result
-    =
+    with type 'a result = 'a C.result =
   struct
-    (* module Context = C *)
-
     let string_of_error = string_of_error
-
     type exn += Error = Error
-
     type 'a result = 'a C.result
   end
 end
@@ -504,7 +486,7 @@ struct
   let return f = Free.return f
   let lift f = Free.lift (apply f)
 
-  include Prelude.CoreResult.For (Free)
+  include Promise.Make (Error) (Free)
 
   let run_and_unwrap runner program =
     Free.iter runner (unwrap_or raise (program ()))

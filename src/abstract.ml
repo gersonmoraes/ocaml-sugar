@@ -112,3 +112,10 @@ end
 module type OpaqueError = sig
   type t
 end
+
+module type Debuggable = sig
+  type t
+
+  val t_of_sexp : Sexplib.Type.t -> t
+  val sexp_of_t : t -> Sexplib.Type.t
+end

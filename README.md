@@ -30,8 +30,8 @@ Principles
 2. Generate a ```Result``` module for your errors.
 3. Open the recently created modules.
 
-Notice the hinting for function return types. We're using ```'a promise```
-instead of  ```'a result Lwt.t``` for convenience.
+Notice the hinting for function return types. We're using ```'a result```
+instead of  ```'a score Lwt.t``` for convenience.
 
 
 ```ocaml
@@ -46,7 +46,7 @@ open Errors
 open Result
 open Result.Infix
 
-let program () : unit promise =
+let program () : unit result =
   return [1; 2; 3]
   >>| List.length
   >---------

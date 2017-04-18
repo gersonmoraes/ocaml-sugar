@@ -321,6 +321,6 @@ struct
   end
 
   module For(M: Abstract.Monad) = struct
-    include Promise.Make (M) (UserError)
+    include Promise.Make (UserError) (M)
   end
 end

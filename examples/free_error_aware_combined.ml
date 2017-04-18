@@ -1,7 +1,5 @@
 open Sexplib.Std
-
 open Sugar.Dsl
-
 open Printf
 
 module X = struct
@@ -11,8 +9,6 @@ module X = struct
   end
 
   module Algebra = struct
-    open Prelude.Algebra
-
     type 'f t =
       | Puts of string * ('f, unit result) next
       | GetLine of ('f, string result) next
@@ -22,11 +18,8 @@ module X = struct
       | GetLine g   -> GetLine (f @ g)
   end
 
-  open Algebra
-
   module Spec = SpecFor (Algebra)
-
-  include Library (Spec) (Errors)
+  include LibraryFor (Spec) (Errors)
 
   module type Api = sig
     include Partials
@@ -35,6 +28,8 @@ module X = struct
     val puts: string -> unit result
     val get_line: unit -> string result
   end
+
+  open Algebra
 
   module New (C:Spec.Context) : Api
     with type 'a result = 'a C.result =
@@ -47,8 +42,6 @@ module X = struct
   end
 
   module Runner = struct
-    open Prelude.Runner
-
     let run = function
       | Puts (s, f) ->
           print_endline s;
@@ -62,13 +55,15 @@ module X = struct
       | GetLine _ -> printf "[X.GetLine] "; run cmd
   end
 end
-(* let _ = (module X:DSL.S.Library) *)
-
+let _ = (module X:Library)
 
 module Y = struct
-  module Algebra = struct
-    open Prelude.Algebra
 
+  module Errors = struct
+    type t = Unexpected of string | Not_found [@@deriving sexp]
+  end
+
+  module Algebra = struct
     type 'f t =
       | Puts of string * ('f, unit result) next
       | GetLine of ('f, string result) next
@@ -78,15 +73,8 @@ module Y = struct
       | GetLine g -> GetLine (f @ g)
   end
 
-  open Algebra
-
   module Spec = SpecFor (Algebra)
-
-  module Errors = struct
-    type t = Unexpected of string | Not_found [@@deriving sexp]
-  end
-
-  include Library (Spec) (Errors)
+  include LibraryFor (Spec) (Errors)
 
   module type Api = sig
     include Partials
@@ -95,6 +83,8 @@ module Y = struct
     val puts: string -> unit result
     val get_line: unit -> string result
   end
+
+  open Algebra
 
   module New (C:Spec.Context) : Api
     with type 'a result = 'a C.result =
@@ -107,8 +97,6 @@ module Y = struct
   end
 
   module Runner = struct
-    open Prelude.Runner
-
     let run = function
       | Puts (s, f) ->
           rollback f @@ Errors.Unexpected "Could not print your msg"
@@ -125,25 +113,12 @@ end
 
 module X_and_Y = struct
 
-  include Combine (X.Algebra) (Y.Algebra)
-
-  module Runner = struct
-    open Algebra
-
-    let run = function
-      | Case1 cmd -> X.Runner.run cmd
-      | Case2 cmd -> Y.Runner.run cmd
-
-    let debug = function
-      | Case1 cmd -> X.Runner.debug cmd
-      | Case2 cmd -> Y.Runner.debug cmd
-  end
-
   module Errors = struct
     type t = XY_error [@@deriving sexp]
   end
 
-  include Library (Spec) (Errors)
+  include Combine (X.Algebra) (Y.Algebra)
+  include LibraryFor (Spec) (Errors)
 
   module type Api = sig
     include Partials
@@ -161,6 +136,18 @@ module X_and_Y = struct
 
     module X = X.New (Natural.Proxy1.For(Ctx))
     module Y = Y.New (Natural.Proxy2.For(Ctx))
+  end
+
+  module Runner = struct
+    open Algebra
+
+    let run = function
+      | Case1 cmd -> X.Runner.run cmd
+      | Case2 cmd -> Y.Runner.run cmd
+
+    let debug = function
+      | Case1 cmd -> X.Runner.debug cmd
+      | Case2 cmd -> Y.Runner.debug cmd
   end
 end
 

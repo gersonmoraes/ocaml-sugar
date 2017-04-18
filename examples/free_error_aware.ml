@@ -5,6 +5,10 @@ open Printf
 
 module Terminal = struct
 
+  module Errors = struct
+    type t = string [@@deriving sexp]
+  end
+
   module Algebra = struct
     open Prelude.Algebra
 
@@ -20,8 +24,11 @@ module Terminal = struct
 
   module Spec = SpecFor (Algebra)
 
-  module New (Ctx:Spec.Context) = struct
-    open Ctx
+  include Library (Spec) (Errors)
+
+  module New (C:Spec.Context) = struct
+    include Init(C)
+    open C
 
     let puts s =
       Puts (s, id) |> lift
@@ -30,15 +37,7 @@ module Terminal = struct
       GetLine id |> lift
   end
 
-  module Errors = struct
-    type t = string [@@deriving sexp]
-  end
-
-  include ErrorFor(Errors)
-
   module Runner = struct
-    open Prelude.Runner
-
     let run = function
       | Puts (s, f) ->
           print_endline s;

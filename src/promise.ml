@@ -23,8 +23,8 @@ module type S = sig
   type 'a score = ('a, error) Pervasives.result
 
   (**
-    This type will be translated to the main 
-    monad in your project 
+    This type will be translated to the main
+    monad in your project
    *)
   type 'a monad
 
@@ -186,7 +186,7 @@ end
   A parametric module that implements the monadic interface for scores.
   The complete documentation can be found in {!Types.Promise}.
 *)
-module Make  (UserMonad:Monad)  (UserError:Error) : S
+module Make (UserError:Error) (UserMonad:Monad) : S
   with
     type error := UserError.t
     and type 'a monad := 'a UserMonad.t
@@ -229,7 +229,7 @@ struct
     let (>>|) = map
 
     let (>>) x y = bind_if x (fun () -> y)
-    
+
     let (>>>) x y = bind_if x (fun _ -> y)
 
     let (>---------) = bind_unless
