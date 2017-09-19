@@ -17,5 +17,5 @@ build: [
 depends: [
   "jbuilder"      {>= "1.0+beta5"}
 ]
-available: [ ocaml-version >= "4.03.0" ]
+available: [ ocaml-version >= "4.02.3" ]
 descr: "A DSL Driven library for OCaml projects"
