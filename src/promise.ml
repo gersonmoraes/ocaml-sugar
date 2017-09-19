@@ -90,6 +90,9 @@ module type S = sig
   (** Applicative combinator for parallel execution of function and operand *)
   val (<*>): ('a -> 'b) result -> 'a result -> 'b result
 
+  (** Direct interation with the underlying monad *)
+  val (>>>=): 'a monad -> ('a -> 'b monad) -> 'b monad
+
   (**
     Broom combinator
 
@@ -232,6 +235,8 @@ struct
     let (>>) x y = bind_if x (fun () -> y)
 
     let (>>>) x y = bind_if x (fun _ -> y)
+
+    let (>>>=) = UserMonad.(>>=)
 
     let (>---------) = bind_unless
 
