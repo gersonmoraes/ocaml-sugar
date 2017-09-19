@@ -2,36 +2,21 @@
 Sugar
 ==========
 
-[Sugar](https://www.ocamlplace.com/sugar) is a modern Model Driven Development library for OCaml.
+[Sugar](https://www.ocamlplace.com/sugar) is a small monadic library for error aware computations.
 
+## How to use it
 
-Principles
-------------
-
-- Follow a bare bones declarative aproach, complemented with meta programming.
-- Error aware expressions everywhere, to produce safer code
-- OCaml lean and clean with a unified monadic interface.
-- Don't write a program, write a description of a program that can be interpreted in many ways, using a a *Free Monad*.
-- Create pluggable DSLs that can be mixed in a number of ways
+1. Create an isolated module to describe your errors.
+2. Use one of Sugar's module builders to create a custom `Result` module for your project. *This module will implement a clean DSL to help you create error aware computations*.
+3. Open and start using these modules.
 
 
 
-## Clean and lean
+### An example
 
-**Notes on error aware expressions**
+The main idea of using this library is to help you use error aware expressions everywhere. 
 
-- Error aware computations *from the same layer* should always return the same ```error type```.
-- Chained expressions don't usually need to use parentesis
-- Error handlers always should be inside a block. Here is [why](https://www.ocamlplace.com/sugar/presentation.html#11).
-
-**An example using error aware expressions with Lwt**
-
-1. Create an isolated module for your errors.
-2. Generate a ```Result``` module for your errors.
-3. Open the recently created modules.
-
-Notice the hinting for function return types. We're using ```'a result```
-instead of  ```'a score Lwt.t``` for convenience.
+In the code bellow, we're using type hinting to make it clear the type `result` is used to represent the current monad.
 
 
 ```ocaml
@@ -39,7 +24,7 @@ module Errors = struct
   type t = Not_available | Unexpected of string
 end
 
-module Result = Sugar.Promise.Make (Lwt) (Errors)
+module Result = Sugar.Promise.Make (Errors) (Lwt)
 
 open Errors
 
@@ -54,14 +39,21 @@ let program () : unit result =
     | Not_available -> return 0
     | Unexpected s  -> return 0
   )
-  >>= fun len ->
-  Printf.printf "The len is %d\n" len;
-  return ()
+  >>=
+  ( fun len ->
+    Printf.printf "The len is %d\n" len;
+    return ()
+  )
 
 let () =
   Lwt_main.run ( unwrap (program ()) );;
 ```
 
-# Write a DSL
 
-Check the `examples` directory to see some implementations of toy DSLs. More information can be found in the [presentation](https://ocamlplace.com/sugar/presentation.html) for the project.
+
+Sugar creates a type `result` that represents  the result of a computation in this project. The translation of `result` in this example to stantard OCaml is:
+
+```ocaml
+type 'a result = ('a, Errors.t) Result.result Lwt.t
+```
+
