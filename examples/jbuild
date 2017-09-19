@@ -1,10 +1,16 @@
 (jbuild_version 1)
 
-(executables
- ((names       (example_basic))
+;;(executables
+;; ((names       (example_basic))
+;;  (libraries
+;;    (sexplib
+;;     ppx_sexp_conv
+;;     sugar))
+;;  (preprocess (pps (ppx_sexp_conv)))
+;;))
+
+(executable
+ ((name       example_strict)
   (libraries
-    (sexplib
-     ppx_sexp_conv
-     sugar))
-  (preprocess (pps (ppx_sexp_conv)))
+    (sugar))
 ))
