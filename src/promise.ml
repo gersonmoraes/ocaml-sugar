@@ -90,7 +90,9 @@ module type S = sig
   (** Applicative combinator for parallel execution of function and operand *)
   val (<*>): ('a -> 'b) result -> 'a result -> 'b result
 
-  (** Direct interation with the underlying monad *)
+  (** An alias for UserMonad.(>>=)
+
+      This combinator provides direct interaction with the underlying monad. *)
   val (>>>=): 'a monad -> ('a -> 'b monad) -> 'b monad
 
   (**
