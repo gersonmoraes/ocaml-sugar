@@ -12,7 +12,7 @@ module type S = sig
   (**
     An alias for the result type in the stdlib
   *)
-  type 'a result = ('a, error) Pervasives.result
+  type 'a result = ('a, error) Result.result
 
 
   (**
@@ -254,27 +254,27 @@ end
 module Make (UserError:Error) : S
   with type error = UserError.t =
 struct
-  type 'a result = ('a, UserError.t) Pervasives.result
+  type 'a result = ('a, UserError.t) Result.result
   type error = UserError.t
 
-  let return v = Ok v
+  let return v = Result.Ok v
 
-  let throw e = Error e
+  let throw e = Result.Error e
 
   let bind_if r f =
     match r with
-      | Error e -> Error e
-      | Ok v -> f v
+      | Result.Error e -> Result.Error e
+      | Result.Ok v -> f v
 
   let bind_unless r f =
     match r with
-    | Error e -> f e
-    | Ok v -> Ok v
+    | Result.Error e -> f e
+    | Result.Ok v -> Result.Ok v
 
   let map r f =
     match r with
-    | Error e -> Error e
-    | Ok v -> Ok (f v)
+    | Result.Error e -> Result.Error e
+    | Result.Ok v -> Result.Ok (f v)
 
 
   module Infix = struct
@@ -294,18 +294,18 @@ struct
   end
 
   let unwrap = function
-    | Ok r -> r
-    | Error _ -> invalid_arg "Could not unwrap value from result"
+    | Result.Ok r -> r
+    | Result.Error _ -> invalid_arg "Could not unwrap value from result"
 
   let unwrap_or f r =
     match r with
-    | Ok r -> r
-    | Error e -> f e
+    | Result.Ok r -> r
+    | Result.Error e -> f e
 
   let expect r msg =
     match r with
-    | Ok r -> r
-    | Error _ -> invalid_arg msg
+    | Result.Ok r -> r
+    | Result.Error _ -> invalid_arg msg
 
 
   let (>>=) = bind_if

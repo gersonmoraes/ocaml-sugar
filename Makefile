@@ -13,6 +13,6 @@ clean:
 	rm -rf _build
 
 examples:
-	jbuilder build examples/free_error_aware_combined.exe
+	jbuilder build examples/example_basic.exe
 
 .PHONY: default install uninstall reinstall clean examples

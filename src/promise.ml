@@ -20,7 +20,7 @@ module type S = sig
   type error
 
   (** Evaluated result *)
-  type 'a score = ('a, error) Pervasives.result
+  type 'a score = ('a, error) Result.result
 
   (**
     This type will be translated to the main
@@ -42,7 +42,7 @@ module type S = sig
 
     The actual could be something like:
     <code>
-      (unit, error) Pervasives.result Lwt.t
+      (unit, error) Result.result Lwt.t
     </code>
   *)
   type 'a result = 'a score monad
@@ -190,17 +190,18 @@ module Make (UserError:Error) (UserMonad:Monad) : S
   with
     type error := UserError.t
     and type 'a monad := 'a UserMonad.t
-    and type 'a score = ('a, UserError.t) Pervasives.result
-    and type 'a result = ('a, UserError.t) Pervasives.result UserMonad.t
+    and type 'a score = ('a, UserError.t) Result.result
+    and type 'a result = ('a, UserError.t) Result.result UserMonad.t
 =
 struct
   include UserError
 
   type 'a monad = 'a UserMonad.t
-  type 'a score = ('a, UserError.t) Pervasives.result
+  type 'a score = ('a, UserError.t) Result.result
   type 'a result = 'a score monad
 
   open UserMonad
+  open Result
 
   let return v = UserMonad.return (Ok v)
   let throw e = UserMonad.return (Error e)
