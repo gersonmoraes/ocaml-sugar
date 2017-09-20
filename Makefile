@@ -18,6 +18,7 @@ clean:
 examples: clean
 	@jbuilder build examples/strict_lwt/example_lwt_strict.exe
 	@jbuilder build examples/example_strict.exe
+	@jbuilder build examples/example_basic.exe
 
 
 run: examples

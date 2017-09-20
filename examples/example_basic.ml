@@ -27,7 +27,7 @@ open MyError
 open Printf
 
 (* We're only printing messages to the screen here *)
-let print_message m: unit result =
+let puts m: unit result =
   print_endline m;
   return ()
 
@@ -49,30 +49,34 @@ let _ =
 
 
 let _ =
-  print_message "We are extensively using a user defined result type" >>
-  ( List.length <$> load_list 10)
-  >>= fun len ->
-  throw (Unexpected (sprintf "List length invalid: %d" len))
+  puts "We are extensively using a user defined result type" >>lazy
+  ( List.length <$> load_list 10 )
+  >>=
+  ( fun len ->
+    throw (Unexpected (sprintf "List length invalid: %d" len))
+  )
   >---------
   ( function
     e -> error_handler e
   )
   >>=
   ( fun recovered ->
-    print_message "This will NOT be printed"        >>
-    print_message "The previous error_handler"      >>
-    print_message "can't catch 'Unexpected' errors" >>
-    return "for sure"
+    ( puts "This will NOT be printed"        ) >>lazy
+    ( puts "The previous error_handler"      ) >>lazy
+    ( puts "can't catch 'Unexpected' errors" ) >>lazy
+    ( return "for sure" )
   )
   >---------
   ( fun e ->
     return "Recover from any error"
   )
-  >>= print_message
+  >>=
+  puts
+
 
 let _ =
-  print_message "We are extensively using a user defined result type" >>
-  load_list 10
+  puts "We are extensively using a user defined result type" >>lazy
+  ( load_list 10 )
   >>| List.length
   >>= fun len ->
   throw (Unexpected (sprintf "List length invalid: %d" len))
@@ -82,13 +86,14 @@ let _ =
   )
   >>=
   ( fun recovered ->
-    print_message "This will NOT be printed"        >>
-    print_message "The previous error_handler"      >>
-    print_message "can't catch 'Unexpected' errors" >>
-    return "for sure"
+    ( puts "This will NOT be printed"        ) >>lazy
+    ( puts "The previous error_handler"      ) >>lazy
+    ( puts "can't catch 'Unexpected' errors" ) >>lazy
+    ( return "for sure" )
   )
   >---------
   ( fun e ->
     return "Recover from any error"
   )
-  >>= print_message
+  >>=
+  puts

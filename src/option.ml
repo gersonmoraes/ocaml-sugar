@@ -59,7 +59,8 @@ let (>>) x y = bind_if x (fun () -> y)
 module Infix = struct
   let (>---------) = bind_unless
   let (>>|) = map
-  let (>>>) x y = bind_if x (fun _ -> y)
+  let (>>) x y = bind_if x (fun () -> Lazy.force y)
+  let (>>>) x y = bind_if x (fun _ -> Lazy.force y)
 
   let (<*>) f x =
     f
