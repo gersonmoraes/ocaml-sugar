@@ -1,5 +1,5 @@
 module Promise = Promise
-module Result = SugarResult
+module Result = Sugar_result
 module Option = Option
 
 module Strict = struct
