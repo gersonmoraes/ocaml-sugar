@@ -13,7 +13,7 @@ uninstall:
 reinstall: uninstall install
 
 clean:
-	rm -rf _build
+	@jbuilder clean
 
 examples: clean
 	@jbuilder build examples/strict_lwt/example_lwt_strict.exe

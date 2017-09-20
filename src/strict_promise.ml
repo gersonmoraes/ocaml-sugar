@@ -188,6 +188,12 @@ module type S = sig
   *)
   val (>>=): 'a result -> ('a -> 'b result) -> 'b result
 
+  (**
+    Disable exception handling
+  *)
+  module NoExceptions : Promise.S
+    with type error := error
+    and type 'a monad := 'a monad
 end
 
 
@@ -280,4 +286,6 @@ struct
     | Error e -> invalid_arg msg
 
   let (>>=) = bind_if
+
+  module NoExceptions = Promise.Make (UserError) (UserMonad)
 end

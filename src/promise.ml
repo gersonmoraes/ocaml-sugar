@@ -133,7 +133,7 @@ module type S = sig
     Like the standard semicolon in OCaml, ";", the previous operation needs
     to evaluate to a unit result.
   *)
-  (* val ( >> ) : unit result -> 'b result -> 'b result *)
+  val ( >> ) : unit result -> 'b result Lazy.t -> 'b result
 
 
   (*
@@ -142,7 +142,7 @@ module type S = sig
     Use this operator to ignore the previous score
     and return the next instruction.
   *)
-  (* val (>>>): 'a result -> 'b result -> 'b result *)
+  val (>>>): 'a result -> 'b result Lazy.t -> 'b result
 
   end
 
@@ -234,9 +234,9 @@ struct
 
     let (>>|) = map
 
-    let (>>) x y = bind_if x (fun () -> y)
+    let (>>) x y = bind_if x (fun () -> Lazy.force y)
 
-    let (>>>) x y = bind_if x (fun _ -> y)
+    let (>>>) x y = bind_if x (fun _ -> Lazy.force y)
 
     let (>>>=) = UserMonad.(>>=)
 

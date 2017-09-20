@@ -41,11 +41,7 @@ let load_list n: int list result =
   let new_list = List.map (fun v -> v * n) l in
   return new_list
 
-(* let _ =
-  print_endline "Hello World" *)
-
-
-let _ =
+let main () =
   ( Lwt.fail (Failure "Something happened") ) >>>lazy
   ( List.length <$> load_list 10 )
   >---------
@@ -59,10 +55,7 @@ let _ =
     ( puts ("And length is " ^ (string_of_int len)) ) >>lazy
     ( puts "We're also using a semicolon operation" )
   )
-
-
-let _ =
-  puts "We are extensively using a user defined result type" >>lazy
+  >>lazy
   ( load_list 10 )
   >>| List.length
   >>=
@@ -73,3 +66,7 @@ let _ =
   ( fun e ->
     puts "Recover from any error"
   )
+
+
+let _ =
+  Lwt_main.run (main ())

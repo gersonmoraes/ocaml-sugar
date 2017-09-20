@@ -97,86 +97,96 @@ module type S = sig
   module Infix : sig
 
 
-  (**
-    Broom combinator
+    (**
+      Broom combinator
 
-    Used to introduce an error handler block to "clean errors".
+      Used to introduce an error handler block to "clean errors".
 
-    There's a secret message behind the form of this combinator.
-    It has the same number of characters sufficient for the whole block
-    in the next line. For example:
+      There's a secret message behind the form of this combinator.
+      It has the same number of characters sufficient for the whole block
+      in the next line. For example:
 
-    <code>
-    let program1 () =
-      do_something ()
-      >---------
-      ( fun e ->
-        return ()
-      )
+      <code>
+      let program1 () =
+        do_something ()
+        >---------
+        ( fun e ->
+          return ()
+        )
 
-    let program2 () =
-      do_something ()
-      >---------
-      ( function
-        e -> return ()
-      )
-    </code>
+      let program2 () =
+        do_something ()
+        >---------
+        ( function
+          e -> return ()
+        )
+      </code>
 
-    So beyond the clean aesthetics similar to markdown, we are
-    implying that a developer should never handle errors in an open
-    anonymous function.
-  *)
-  val (>---------): 'a result -> (error -> 'a result) -> 'a result
-
-
-  (**
-    Combinator for map with semantic similar to bind
-
-    As its name sugests, this is an alias for the function {{!map} map}.
-    Its intended use is to help integrate with functions that are not error
-    aware.
-
-    For example, considere the function [let double x = x + x] in the code
-    fragments bellow:
-
-    <code>
-     open Sugar.Option
-
-     (* example without Sugar *)
-     let twenty =
-       match Some 10 with
-       | None -> None
-       | Some n -> Some (double n)
-
-      (* using the default >>= combinator *)
-      let twenty =
-       Some 10
-       >>= fun n ->
-       return (double n)
-
-     (* using the map combinator *)
-     let twenty =
-       Some 10
-       >>| double
-    </code>
-  *)
-  val (>>|): 'a result -> ('a -> 'b) -> 'b result
+      So beyond the clean aesthetics similar to markdown, we are
+      implying that a developer should never handle errors in an open
+      anonymous function.
+    *)
+    val (>---------): 'a result -> (error -> 'a result) -> 'a result
 
 
-  (*
-    Ignore operator.
+    (**
+      Combinator for map with semantic similar to bind
 
-    Use this operator to ignore the previous result
-    and return the next instruction.
-  *)
-  (* val (>>>): 'a result -> 'b result -> 'b result *)
+      As its name sugests, this is an alias for the function {{!map} map}.
+      Its intended use is to help integrate with functions that are not error
+      aware.
 
-  (* val (>>=): 'a result -> ('a -> 'b result) -> 'b result *)
+      For example, considere the function [let double x = x + x] in the code
+      fragments bellow:
+
+      <code>
+       open Sugar.Option
+
+       (* example without Sugar *)
+       let twenty =
+         match Some 10 with
+         | None -> None
+         | Some n -> Some (double n)
+
+        (* using the default >>= combinator *)
+        let twenty =
+         Some 10
+         >>= fun n ->
+         return (double n)
+
+       (* using the map combinator *)
+       let twenty =
+         Some 10
+         >>| double
+      </code>
+    *)
+    val (>>|): 'a result -> ('a -> 'b) -> 'b result
 
 
-  val (<$>): ('a -> 'b) -> 'a result -> 'b result
-  val (<*>): ('a -> 'b) result -> 'a result -> 'b result
+    (*
+      Ignore operator.
 
+      Use this operator to ignore the previous result
+      and return the next instruction.
+    *)
+    (* val (>>>): 'a result -> 'b result -> 'b result *)
+
+    (* val (>>=): 'a result -> ('a -> 'b result) -> 'b result *)
+
+
+    val (<$>): ('a -> 'b) -> 'a result -> 'b result
+    val (<*>): ('a -> 'b) result -> 'a result -> 'b result
+
+
+    (**
+      Ignore operator.
+
+      Use this operator to ignore the previous result
+      and return the next instruction.
+    *)
+    val (>>>): 'a result -> 'b result Lazy.t -> 'b result
+
+    val (>>): unit result -> 'b result Lazy.t -> 'b result
   end
 
   (**
@@ -280,7 +290,8 @@ struct
   module Infix = struct
     let (>>=) = bind_if
     let (>>|) = map
-    let (>>>) x y = bind_if x (fun _ -> y)
+    let (>>>) x y = bind_if x (fun _ -> Lazy.force y)
+    let (>>) x y = bind_if x (fun () -> Lazy.force y)
     let (>---------) = bind_unless
 
     let (<*>) f x =

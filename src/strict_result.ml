@@ -245,6 +245,12 @@ module type S = sig
       with type error := error
       and type 'a monad := 'a UserMonad.t
 
+
+    (**
+      Disable exception handling
+    *)
+    module NoExceptions : Sugar_result.S
+      with type error := error
 end
 
 
@@ -334,4 +340,6 @@ struct
   module For (StrictMonad: Abstract.Strict.Monad) = struct
     include Strict_promise.Make (UserError) (StrictMonad)
   end
+
+  module NoExceptions = Sugar_result.Make (UserError)
 end
