@@ -1,8 +1,3 @@
-(*
-  The FreeMonad implementation in this module was translated from Haskell by
-     André Nathan (https://github.com/andrenth)
-*)
-
 module type Functor = sig
   type 'a t
   val map : ('a -> 'b) -> 'a t -> 'b t
@@ -20,20 +15,20 @@ end
   This is how Sugar understands the error handling layer of a project.
 
   Like:
-  <code>
+  {[
     module MyError = struct
       type error = Not_found | Invalid_arg of string
     end
-  </code>
+  ]}
 
   This module might be used to create blocking or asynchronous error handling
   layers, using the Sugar functors, like:
-  <code>
+  {[
     module MyResult = Sugar.Result.Make (MyError)
 
     module MyResult2 = Sugar.Promise.Make (Lwt) (MyError)
     module MyResult2 = MyResult.For (Lwt)
-  </code>
+  ]}
 *)
 module type Error = sig
   (**

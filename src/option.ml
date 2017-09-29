@@ -1,7 +1,7 @@
 open Abstract
 
 (**
-  An implementation of {{!Types.Result}  Sugar.Types.Result } interface
+  An implementation of {{!Sugar.Result.S}  Result } interface
   for the option type.
 
   This is probably the easiest way to start using Sugar, as there is no need to
@@ -11,7 +11,7 @@ open Abstract
   straightfoward.
 
   Usage example:
-  <code>
+  {[
     open Sugar.Option
 
     let do_something (): string result =
@@ -26,10 +26,11 @@ open Abstract
       ( fun () ->
         return "recovered"
       )
-  </code>
+  ]}
 
   In case you are wondering, the evaluation of [run ()] in the example above,
   will produce: [string option = Some "you could use any option type"].
+
 *)
 
 type error = unit

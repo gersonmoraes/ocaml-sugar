@@ -18,7 +18,7 @@ module type S = sig
 
   (**
     Apply the binding only if the computation was successful.
-    You can use the operator {{!(&&=)} &&=} instead of this function for syntatic sugar
+    You can use the operator {{!(>>=)} >>=} instead of this function for syntatic sugar
    *)
   val bind_if:  'a result -> ('a -> 'b result) -> 'b result
 
@@ -30,7 +30,7 @@ module type S = sig
     must throw an error or provide an equivalent for the result type of the
     previous computation.
 
-    You can use the operator {{!(>---------)} (>---------} instead of this function for syntatic sugar
+    You can use the operator {{!(>---------)} >---------} instead of this function for syntatic sugar
    *)
   val bind_unless: 'a result -> (error -> 'a result) -> 'a result
 
@@ -40,12 +40,12 @@ module type S = sig
      makes it ease to work with non error aware functions.
 
      Example:
-     <code>
+     {[
       open Sugar.Option
 
       let twenty =
         map (Some 10) (fun n -> n + n)
-     </code>
+     ]}
 
      You could also use the combinator {{!(>>|)} >>|} for syntatic sugar.
    *)
@@ -70,7 +70,7 @@ module type S = sig
     the code bellow have the same usage as the function [failwith], but is a lot
     safer.
 
-    <code>
+    {[
       module MyResult = Sugar.MakeResult (struct error = string end)
       open MyResult
       let run (): int result =
@@ -78,19 +78,19 @@ module type S = sig
           return 10
         else
           throw "something bad happend"
-    </code>
+    ]}
 
     You could also not describe your errors at all for some time, and
     use the {!Sugar.Option} module to create error aware computations, like:
 
-    <code>
+    {[
       open Sugar.Option
       let run (): string result =
         if true then
           return "hello world"
         else
           throw ()
-    </code>
+    ]}
 
    *)
   val throw: error -> 'a result
@@ -107,7 +107,7 @@ module type S = sig
     It has the same number of characters sufficient for the whole block
     in the next line. For example:
 
-    <code>
+    {[
     let program1 () =
       do_something ()
       >---------
@@ -121,7 +121,7 @@ module type S = sig
       ( function
         e -> return ()
       )
-    </code>
+    ]}
 
     So beyond the clean aesthetics similar to markdown, we are
     implying that a developer should never handle errors in an open
@@ -140,7 +140,7 @@ module type S = sig
     For example, considere the function [let double x = x + x] in the code
     fragments bellow:
 
-    <code>
+    {[
      open Sugar.Option
 
      (* example without Sugar *)
@@ -159,7 +159,7 @@ module type S = sig
      let twenty =
        Some 10
        >>| double
-    </code>
+    ]}
   *)
   val (>>|): 'a result -> ('a -> 'b) -> 'b result
 
@@ -203,11 +203,11 @@ module type S = sig
     Unwraps the successful result as a value in the threading monad.
     Different from [unwrap], you can assign an error handler to be
     executed if the computation failed. Example:
-    <code>
+    {[
     let run () =
       get_data ()
       |> unwrap_or (fun _ -> "default")
-    </code>
+    ]}
   *)
   val unwrap_or: (error -> 'a) -> 'a result -> 'a
 
@@ -225,7 +225,7 @@ module type S = sig
       The right-hand-side must be a thunk (a function that expects unit).
 
       It can be used to chain thunks in a meaningful way like:
-      <code>
+      {[
       let puts s () =
         print_endline s;
         return ()
@@ -234,7 +234,7 @@ module type S = sig
         puts "Hello" ()     />
         puts "Blocking"     />
         puts "Computations"
-      </code>
+      ]}
      *)
     val (>>): unit result -> 'b result Lazy.t -> 'b result
 

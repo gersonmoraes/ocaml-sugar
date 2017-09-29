@@ -5,14 +5,14 @@ open Abstract
 
   Sugar score modules work with any monad.
 
-  <code>
+  {[
     module MyMonad = struct
       type 'a monad = 'a Lwt.t
       let return = Lwt.return
       let (>>=) = Lwt.bind
     end
     module MyResult = Sugar.Promise.Make (MyMonad) (MyError)
-  </code>
+  ]}
 *)
 module type S = sig
 
@@ -35,21 +35,21 @@ module type S = sig
     with your project's error definition.
 
     For example, considere this function:
-    <code>
+    {[
       let run () : unit result =
         return ()
-    </code>
+    ]}
 
     The actual could be something like:
-    <code>
+    {[
       (unit, error) Result.result Lwt.t
-    </code>
+    ]}
   *)
   type 'a result = 'a score monad
 
 
   (**
-     Similar to {{!Result.bind_if} Result.bind_if}
+     Similar to {{!Sugar_result.S.bind_if} Result.bind_if}
    *)
   val bind_if:  'a result -> ('a -> 'b result) -> 'b result
 
@@ -104,7 +104,7 @@ module type S = sig
     It has the same number of characters sufficient for the whole block
     in the next line. For example:
 
-    <code>
+    {[
     let program1 () =
       do_something ()
       >---------
@@ -118,7 +118,7 @@ module type S = sig
       ( function
         e -> return ()
       )
-    </code>
+    ]}
 
     So beyond the clean aesthetics similar to markdown, we are
     implying that a developer should never handle errors in an open
@@ -157,11 +157,11 @@ module type S = sig
     Unwraps the successful score as a value in the threading monad.
     Different from [unwrap], you can assign an error handler to be
     executed if the computation failed. Example:
-    <code>
+    {[
     let run () =
       get_data ()
       |> unwrap_or (fun _ -> Lwt.return "default")
-    </code>
+    ]}
   *)
   val unwrap_or: (error -> 'a monad) -> 'a score monad -> 'a monad
 
