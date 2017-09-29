@@ -1,12 +1,24 @@
-module type Functor = sig
-  type 'a t
-  val map : ('a -> 'b) -> 'a t -> 'b t
-end
+(**
+  This module provides signatures for the dependencies used in Sugar's module builders.
+  Users do not need to access these interfaces directly.
+ *)
 
+(**
+  A generic signature describing a monad.
+*)
 module type Monad = sig
+
   type 'a t
+  (** A parametric type representing any OCaml value. *)
+
   val return: 'a -> 'a t
+  (** Creates a constant value in this monad.  *)
+
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+  (** Waits for the conclusion of the monad in the left,
+      and then, apply the unwrapped value to the function in the right.
+   *)
+
 end
 
 
@@ -31,25 +43,61 @@ end
   ]}
 *)
 module type Error = sig
-  (**
-    You should implement this type according to your project.
-    This could be any type, including strings or unit.
-  *)
+
   type t
+  (**
+    This type describes the errors of your project. It's one of the main requirements
+    to create a result monad.
+
+    If you don't want to specify your errors upfront, you can still use something like [unit] or
+    [string] as error type.
+  *)
+
 end
 
+(**
+  This signature describes an [Error] module that has some control over unexpected exceptions.
 
-module Strict = struct
-  module type Error = sig
-    include Error
+  If you want to handle unexpected exceptions as they appear, you should probably define
+  an error case with the type [exn], like in the code below:
+  {[
+  module Error = struct
+    type t =
+      | Because_reasons
+      | Unexpected of exn
 
-    val panic : exn -> t
+    let panic e = Unexpected e
   end
+  ]}
+ *)
+module type StrictError = sig
+  include Error
 
+  (**
+    When an exception is detected, this module can either terminate the process with a proper
+    message or chose convert the error to the type {!t}.
+  *)
+  val panic : exn -> t
+end
 
-  module type Monad = sig
-    include Monad
+(**
+  A monad that provides some awareness about unexpected exceptions.
 
-    val catch : (unit -> 'a t) -> (exn -> 'a t) -> 'a t
-  end
+  This module is related to {{!Sugar.Abstract.StrictError} StrictError}.
+*)
+module type StrictMonad = sig
+  include Monad
+
+  val catch : (unit -> 'a t) -> (exn -> 'a t) -> 'a t
+  (**
+    Checks if the monad returned by the thunk raised an exception, and applies
+    the given error handler if necessary.
+
+    This function has intentionally the
+    exact signature as [Lwt.catch]. This means the [Lwt] module is already a [StrictMonad]:
+    {[
+    let _ =
+      (module Lwt: Sugar.Abstract.StrictMonad)
+    ]}
+   *)
 end

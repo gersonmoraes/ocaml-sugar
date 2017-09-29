@@ -1,5 +1,5 @@
 (**
-  <h1>Sugar</h1>
+  <h1>Introduction</h1>
 
   Sugar is a small monadic library that provides syntactic sugar to help you manipulate error aware expressions.
 
@@ -7,7 +7,7 @@
 
   The first thing you'll notice if you look at the code examples using Sugar is that monads are used everywhere. They are not hidden with compiler extensions, nor look like anything other than monads.
 
-  But threre's a few conventions to style your code. These conventions are not mandatory - they just make it easier to undertand what is *cool* (and whats not) when writing monadic code in OCaml.
+  But threre's a few conventions to style your code. These conventions are not mandatory - they just make it easier to undertand what is cool (and whats not) when writing monadic code in OCaml.
 
   For example, a code like this:
 
@@ -35,11 +35,11 @@
   ]}
 
 
-    - If a function is non-monadic, maybe you should just use a combinator that supports non-monadic functions, and make code cleaner, like (`<$>`) or (`>>|`)
+    - If a function is non-monadic, maybe you should just use a combinator that supports non-monadic functions, and make code cleaner, like {{!Sugar.Promise.S.Infix.(<$>)} <$>} or {{!Sugar.Promise.S.Infix.(>>|)} >>|}.
 
-    - It's important to use blocks. They make code easier to read and unambiguous. Using one space to separate the parenthesis from its content is a good practice.
+    - It's important to use blocks. They make code easier to read and avoid ambiguity. Using one space to separate the parenthesis from its content is a good practice.
 
-    - We recommend treating `>>lazy` as one word, with the same meaning as the sequential *semicolon*. It can only be used if the expression in the left resolves to `unit result`. *(If you want to ignore any value without writing an anonymous function, you can use `>>>lazy`)*
+    - We recommend treating {{!Sugar.Promise.S.Infix.(>>)} >>lazy} as one word, with the same meaning as the sequential semicolon. It can only be used if the expression in the left resolves to `unit result`. If you want to ignore any value without writing an anonymous function, you can use {{!Sugar.Promise.S.Infix.(>>>)} >>>lazy}.
 
       ​
 
@@ -116,7 +116,7 @@
   open MyError
 
   let get_message () =
-    Lwt_unix.file_exists "README.md"
+    Lwt_unix.file_exists "README.md"{{: string }  text }
     >>>=
     ( fun exists ->
       if exists then
@@ -131,6 +131,7 @@
   ]}
 *)
 
+module Abstract = Abstract
 module Promise = Promise
 module Result = Sugar_result
 module Option = Option

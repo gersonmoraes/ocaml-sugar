@@ -39,7 +39,7 @@ type 'a result = 'a option
 let return v = Some v
 let throw () = None
 
-let bind_if r f =
+let bind r f =
   match r with
   | None -> None
   | Some v -> f v
@@ -54,14 +54,14 @@ let map r f =
   | None -> None
   | Some v -> Some (f v)
 
-let (>>=) = bind_if
-let (>>) x y = bind_if x (fun () -> y)
+let (>>=) = bind
+let (>>) x y = bind x (fun () -> y)
 
 module Infix = struct
   let (>---------) = bind_unless
   let (>>|) = map
-  let (>>) x y = bind_if x (fun () -> Lazy.force y)
-  let (>>>) x y = bind_if x (fun _ -> Lazy.force y)
+  let (>>) x y = bind x (fun () -> Lazy.force y)
+  let (>>>) x y = bind x (fun _ -> Lazy.force y)
 
   let (<*>) f x =
     f
@@ -96,5 +96,5 @@ module Monad : Monad
 struct
   type 'a t = 'a option
   let return = return
-  let (>>=) = bind_if
+  let (>>=) = bind
 end

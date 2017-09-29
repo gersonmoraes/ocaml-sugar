@@ -20,7 +20,7 @@ module type S = sig
     Apply the binding only if the computation was successful.
     You can use the operator {{!(>>=)} >>=} instead of this function for syntatic sugar
    *)
-  val bind_if:  'a result -> ('a -> 'b result) -> 'b result
+  val bind:  'a result -> ('a -> 'b result) -> 'b result
 
 
   (**
@@ -185,7 +185,7 @@ module type S = sig
 
     If the computation in the left is successful, the operator will
     Take the inner value and feed it to the function in the right. This is an
-    alias for the function [bind_if].
+    alias for the function [bind].
 
     If the computation in the left failed, the operator will propagate the error,
     skipping the function completely.
@@ -241,7 +241,7 @@ module type S = sig
     (**
       Create a new result module based on the current one, but wrapped around a monad.
     *)
-    module For : functor (UserMonad:Abstract.Strict.Monad) -> Strict_promise.S
+    module For : functor (UserMonad:Abstract.StrictMonad) -> Strict_promise.S
       with type error := error
       and type 'a monad := 'a UserMonad.t
 
@@ -259,7 +259,7 @@ end
 
   The complete documentation can be found in {!Types.Result}.
 *)
-module Make (UserError:Abstract.Strict.Error) : S
+module Make (UserError:Abstract.StrictError) : S
   with type error = UserError.t =
 struct
   type 'a result = ('a, UserError.t) Result.result
@@ -269,7 +269,7 @@ struct
 
   let throw e = Result.Error e
 
-  let bind_if r f =
+  let bind r f =
     match r with
       | Result.Error e -> Result.Error e
       | Result.Ok v ->
@@ -295,9 +295,9 @@ struct
 
 
   module Infix = struct
-    let (>>=) = bind_if
+    let (>>=) = bind
     let (>>|) = map
-    let (>>>) x y = bind_if x (fun _ -> Lazy.force y)
+    let (>>>) x y = bind x (fun _ -> Lazy.force y)
     let (>---------) = bind_unless
 
     let (<*>) f x =
@@ -325,8 +325,8 @@ struct
     | Result.Error _ -> invalid_arg msg
 
 
-  let (>>=) = bind_if
-  let (>>) x y = bind_if x (fun () -> Lazy.force y)
+  let (>>=) = bind
+  let (>>) x y = bind x (fun () -> Lazy.force y)
 
   module Monad : Abstract.Monad
     with type 'a t := 'a result =
@@ -334,10 +334,10 @@ struct
     type 'a t = 'a result
 
     let return = return
-    let (>>=) = bind_if
+    let (>>=) = bind
   end
 
-  module For (StrictMonad: Abstract.Strict.Monad) = struct
+  module For (StrictMonad: Abstract.StrictMonad) = struct
     include Strict_promise.Make (UserError) (StrictMonad)
   end
 

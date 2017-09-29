@@ -1,6 +1,12 @@
 open Abstract
 
-(** Monadic interface for result types *)
+(** <h1>Sugar.Result</h1> *)
+
+(**
+  <h2>Sugar.Result.S</h2>
+
+  The signature for the default result monad.
+*)
 module type S = sig
 
   (**
@@ -19,7 +25,7 @@ module type S = sig
     Apply the binding only if the computation was successful.
     You can use the operator {{!(>>=)} >>=} instead of this function for syntatic sugar
    *)
-  val bind_if:  'a result -> ('a -> 'b result) -> 'b result
+  val bind:  'a result -> ('a -> 'b result) -> 'b result
 
 
   (**
@@ -35,18 +41,18 @@ module type S = sig
 
 
   (**
-     Apply a function to the result of a successful computation. This function
-     makes it ease to work with non error aware functions.
+    Apply a function to the result of a successful computation. This function
+    makes it ease to work with non error aware functions.
 
-     Example:
-     {[
-      open Sugar.Option
+    Example:
+    {[
+    open Sugar.Option
 
-      let twenty =
-        map (Some 10) (fun n -> n + n)
-     ]}
+    let twenty =
+     map (Some 10) (fun n -> n + n)
+    ]}
 
-     You could also use the combinator {{!Infix.(>>|)} >>|} for syntatic sugar.
+    You could also use the combinator {{!Infix.(>>|)} >>|} for syntatic sugar.
    *)
   val map:  'a result -> ('a -> 'b) -> 'b result
 
@@ -142,20 +148,19 @@ module type S = sig
       {[
        open Sugar.Option
 
-       (* example without Sugar *)
        let twenty =
          match Some 10 with
          | None -> None
          | Some n -> Some (double n)
 
-        (* using the default >>= combinator *)
-        let twenty =
+        let using_bind_combinator =
          Some 10
-         >>= fun n ->
-         return (double n)
+         >>=
+         ( fun n ->
+           return (double n)
+         )
 
-       (* using the map combinator *)
-       let twenty =
+       let using_map_combinator =
          Some 10
          >>| double
       ]}
@@ -187,14 +192,16 @@ module type S = sig
     val (>>>): 'a result -> 'b result Lazy.t -> 'b result
 
     val (>>): unit result -> 'b result Lazy.t -> 'b result
+
   end
+
 
   (**
     Bind combinator
 
     If the computation in the left is successful, the operator will
     Take the inner value and feed it to the function in the right. This is an
-    alias for the function [bind_if].
+    alias for the function [bind].
 
     If the computation in the left failed, the operator will propagate the error,
     skipping the function completely.
@@ -227,26 +234,6 @@ module type S = sig
   *)
   val expect: 'a result -> string -> 'a
 
-
-    (**
-      Blocking semicolon operator.
-      It waits for the evaluation of unit result and ignore imediately ignore it.
-      The right-hand-side must be a thunk (a function that expects unit).
-
-      It can be used to chain thunks in a meaningful way like:
-      {[
-      let puts s () =
-        print_endline s;
-        return ()
-
-      let main =
-        puts "Hello" ()     />
-        puts "Blocking"     />
-        puts "Computations"
-      ]}
-     *)
-    val (>>): unit result -> 'b result -> 'b result
-
     (**
       Create a new result module based on the current one, but wrapped around a monad.
     *)
@@ -271,7 +258,7 @@ struct
 
   let throw e = Result.Error e
 
-  let bind_if r f =
+  let bind r f =
     match r with
       | Result.Error e -> Result.Error e
       | Result.Ok v -> f v
@@ -288,10 +275,10 @@ struct
 
 
   module Infix = struct
-    let (>>=) = bind_if
+    let (>>=) = bind
     let (>>|) = map
-    let (>>>) x y = bind_if x (fun _ -> Lazy.force y)
-    let (>>) x y = bind_if x (fun () -> Lazy.force y)
+    let (>>>) x y = bind x (fun _ -> Lazy.force y)
+    let (>>) x y = bind x (fun () -> Lazy.force y)
     let (>---------) = bind_unless
 
     let (<*>) f x =
@@ -318,9 +305,7 @@ struct
     | Result.Ok r -> r
     | Result.Error _ -> invalid_arg msg
 
-
-  let (>>=) = bind_if
-  let (>>) x y = bind_if x (fun () -> y)
+  let (>>=) = bind
 
   module Monad : Abstract.Monad
     with type 'a t = 'a result =
@@ -328,7 +313,7 @@ struct
     type 'a t = 'a result
 
     let return = return
-    let (>>=) = bind_if
+    let (>>=) = bind
   end
 
   module For(M: Abstract.Monad) = struct

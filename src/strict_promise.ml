@@ -4,7 +4,7 @@ open Abstract
 (**
   This interface specifies an error handling layer for monadic computations.
 
-  Sugar score modules work with any monad.
+  Sugar value modules work with any monad.
 
   {[
     module MyMonad = struct
@@ -21,7 +21,7 @@ module type S = sig
   type error
 
   (** Evaluated result *)
-  type 'a score = ('a, error) Result.result
+  type 'a value = ('a, error) Result.result
 
   (**
     This type will be translated to the main
@@ -31,7 +31,7 @@ module type S = sig
 
 
   (**
-    High level score type, created to simplify type hinting.
+    High level value type, created to simplify type hinting.
     It hides two things: your choice of asynchronous library and the relation
     with your project's error definition.
 
@@ -46,42 +46,42 @@ module type S = sig
       (unit, error) Result.result Lwt.t
     ]}
   *)
-  type 'a result = 'a score monad
+  type 'a result = 'a value monad
 
 
   (**
-     Similar to {{!Result.bind_if} Result.bind_if}
+     Similar to {{!Sugar__Sugar_result.S.bind} Sugar.Result.S.bind}
    *)
-  val bind_if:  'a result -> ('a -> 'b result) -> 'b result
+  val bind:  'a result -> ('a -> 'b result) -> 'b result
 
 
   (**
-     Similar to {{!Result.bind_unless} Result.bind_unless}
+     Similar to {{!Sugar__Sugar_result.S.bind_unless} Sugar.Result.S.bind_unless}
    *)
   val bind_unless: 'a result -> (error -> 'a result) -> 'a result
 
 
  (**
-    Similar to {{!Result.map} Result.map}
+    Similar to {{!Sugar__Sugar_result.S.map} Sugar.Result.S.map}
   *)
   val map:  'a result -> ('a -> 'b) -> 'b result
 
 
   (**
-     Similar to {{!Result.return} Result.return}
+     Similar to {{!Sugar__Sugar_result.S.return} Sugar.Result.S.return}
   *)
   val return: 'a -> 'a result
 
 
   (**
-    Similar to {{!Result.throw} Result.throw}
+    Similar to {{!Sugar__Sugar_result.S.throw} Sugar.Result.S.throw}
   *)
   val throw: error -> 'a result
 
   module Infix : sig
 
   (**
-    Similar to {{!Result.(>>|)} Result.(>>|)}
+    Similar to {{!Sugar__Sugar_result.S.(>>|)} Sugar.Result.S.(>>|)}
   *)
   val (>>|): 'a result -> ('a -> 'b) -> 'b result
 
@@ -143,7 +143,7 @@ module type S = sig
   (*
     Ignore operator.
 
-    Use this operator to ignore the previous score
+    Use this operator to ignore the previous value
     and return the next instruction.
   *)
   (* val (>>>): 'a result -> 'b result -> 'b result *)
@@ -151,14 +151,14 @@ module type S = sig
   end
 
   (**
-    Unwraps the successful score as a normal value in the threading monad.
+    Unwraps the successful value as a normal value in the threading monad.
     If the value is not successful, it will raise an Invalid_arg exception.
   *)
-  val unwrap: 'a score monad -> 'a monad
+  val unwrap: 'a value monad -> 'a monad
 
 
   (**
-    Unwraps the successful score as a value in the threading monad.
+    Unwraps the successful value as a value in the threading monad.
     Different from [unwrap], you can assign an error handler to be
     executed if the computation failed. Example:
     {[
@@ -167,21 +167,21 @@ module type S = sig
       |> unwrap_or (fun _ -> Lwt.return "default")
     ]}
   *)
-  val unwrap_or: (error -> 'a monad) -> 'a score monad -> 'a monad
+  val unwrap_or: (error -> 'a monad) -> 'a value monad -> 'a monad
 
 
   (**
     Extracts a successful value from an computation, or raises and Invalid_arg
     exception with the defined parameter.
   *)
-  val expect: 'a score monad -> string -> 'a monad
+  val expect: 'a value monad -> string -> 'a monad
 
   (**
     Bind combinator
 
     If the computation in the left is successful, the operator will
     Take the inner value and feed it to the function in the right. This is an
-    alias for the function [bind_if].
+    alias for the function [bind].
 
     If the computation in the left failed, the operator will propagate the error,
     skipping the function completely.
@@ -198,22 +198,22 @@ end
 
 
 (**
-  A parametric module that implements the monadic interface for scores.
+  A parametric module that implements the monadic interface for values.
   The complete documentation can be found in {!Types.Promise}.
 *)
-module Make (UserError:Strict.Error) (UserMonad:Strict.Monad) : S
+module Make (UserError:StrictError) (UserMonad:StrictMonad) : S
   with
     type error := UserError.t
     and type 'a monad := 'a UserMonad.t
-    and type 'a score = ('a, UserError.t) Result.result
+    and type 'a value = ('a, UserError.t) Result.result
     and type 'a result = ('a, UserError.t) Result.result UserMonad.t
 =
 struct
   include UserError
 
   type 'a monad = 'a UserMonad.t
-  type 'a score = ('a, UserError.t) Result.result
-  type 'a result = 'a score monad
+  type 'a value = ('a, UserError.t) Result.result
+  type 'a result = 'a value monad
 
   open UserMonad
   open Result
@@ -226,7 +226,7 @@ struct
       ( fun () -> r )
       ( fun e -> throw (UserError.panic e) )
 
-  let bind_if r f =
+  let bind r f =
     resolve r
     >>= function
     | Error e -> throw e
@@ -245,13 +245,13 @@ struct
     | Ok v -> return (f v)
 
   module Infix = struct
-    let (>>=) = bind_if
+    let (>>=) = bind
 
     let (>>|) = map
 
-    let (>>) x y = bind_if x (fun () -> Lazy.force y)
+    let (>>) x y = bind x (fun () -> Lazy.force y)
 
-    let (>>>) x y = bind_if x (fun _ -> Lazy.force y)
+    let (>>>) x y = bind x (fun _ -> Lazy.force y)
 
     let (>>>=) = UserMonad.(>>=)
 
@@ -285,7 +285,7 @@ struct
     | Ok v -> UserMonad.return v
     | Error e -> invalid_arg msg
 
-  let (>>=) = bind_if
+  let (>>=) = bind
 
   module NoExceptions = Promise.Make (UserError) (UserMonad)
 end
