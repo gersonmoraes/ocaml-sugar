@@ -1,4 +1,4 @@
-Copyright (c) 2016 Gerson Moraes <gerson@digirati.com.br>
+Copyright (c) 2017 Gerson Moraes <gerson@digirati.com.br>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

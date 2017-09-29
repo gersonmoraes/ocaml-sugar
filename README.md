@@ -14,7 +14,7 @@ Sugar
 
 ### An example
 
-The main idea of using this library is to help you use error aware expressions everywhere. 
+The main idea of using this library is to help you use error aware expressions everywhere.
 
 In the code bellow, we're using type hinting to make it clear the type `result` is used to represent the current monad.
 
@@ -56,4 +56,3 @@ Sugar creates a type `result` that represents  the result of a computation in th
 ```ocaml
 type 'a result = ('a, Errors.t) Result.result Lwt.t
 ```
-

@@ -18,4 +18,3 @@ depends: [
   "jbuilder"      {>= "1.0+beta5"}
 ]
 available: [ ocaml-version >= "4.02.3" ]
-descr: "A small monadic library for error aware computations"
