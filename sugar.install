@@ -40,5 +40,6 @@ lib: [
 ]
 doc: [
   "_build/install/default/doc/sugar/README.md"
-  "_build/install/default/doc/sugar/LICENSE"
+  "_build/install/default/doc/sugar/LICENSE.md"
+  "_build/install/default/doc/sugar/CHANGES.md"
 ]
