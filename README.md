@@ -1,8 +1,8 @@
+# Sugar — Syntatic constructs for result monads
 
-Sugar
-==========
+%%VERSION%%
 
-[Sugar](https://www.ocamlplace.com/sugar) is a small monadic library for error aware computations.
+Sugar is a small monadic library that tries to simplify the use of error aware expressions with a monadic interface.
 
 ## How to use it
 
@@ -12,7 +12,7 @@ Sugar
 
 
 
-### An example
+### Example
 
 The main idea of using this library is to help you use error aware expressions everywhere.
 

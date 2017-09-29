@@ -6,3 +6,6 @@ _build
 setup.data
 *.log
 .merlin
+doc/latest
+doc/releases
+sugar.install

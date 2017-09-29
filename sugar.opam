@@ -8,6 +8,7 @@ bug-reports: "https://github.com/gersonmoraes/ocaml-sugar/issues"
 doc: "https://gersonmoraes.github.io/ocaml-sugar/doc"
 license: "MIT"
 build: [
+  ["jbuilder" "subst"] {pinned}
   ["jbuilder" "build"
     "--only-packages" "sugar"
     "--root" "."
