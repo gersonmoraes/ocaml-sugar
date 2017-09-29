@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Sugar (sugar.Sugar)</title><link rel="stylesheet" href="../../odoc.css"/><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="generator" content="doc-ock-html v1.0.0-1-g1fc9bf0"/></head><body><nav id="top"><a href="../index.html">Up</a> &mdash; <span class="package">package <a href="../index.html">sugar</a></span></nav><header><h1><span class="keyword">Module</span> <span class="module-path">Sugar</span></h1></header><p>Sugar is a small monadic library that provides syntactic sugar to help you manipulate error aware expressions.</p><h3>Submodules</h3><div class="spec module" id="module-S"><a href="#module-S" class="anchor"></a><div class="def module"><code><span class="keyword">module </span><a href="S/index.html">S</a> : <span class="keyword">sig</span> ... <span class="keyword">end</span></code></div><div class="doc"><p>Sugar module signatures.</p></div></div><div class="spec module" id="module-Promise"><a href="#module-Promise" class="anchor"></a><div class="def module"><code><span class="keyword">module </span>Promise = <a href="../Sugar__/index.html#module-Promise_builder">Sugar__.Promise_builder</a></code></div><div class="doc"><p>Use to create a result monad on top of an arbitrary monad.</p></div></div><div class="spec module" id="module-Result"><a href="#module-Result" class="anchor"></a><div class="def module"><code><span class="keyword">module </span>Result = <a href="../Sugar__/index.html#module-Result_builder">Sugar__.Result_builder</a></code></div><div class="doc"><p>Create a result monad for synchronous processing.</p></div></div><div class="spec module" id="module-Option"><a href="#module-Option" class="anchor"></a><div class="def module"><code><span class="keyword">module </span><a href="Option/index.html">Option</a> : <span class="keyword">sig</span> ... <span class="keyword">end</span></code></div><div class="doc"><p>An implementation of <a href="S/module-type-Result_partials/index.html">Result</a> interface
+for the option type.</p></div></div><div class="spec module" id="module-Strict"><a href="#module-Strict" class="anchor"></a><div class="def module"><code><span class="keyword">module </span><a href="Strict/index.html">Strict</a> : <span class="keyword">sig</span> ... <span class="keyword">end</span></code></div><div class="doc"></div></div><h3>Introduction</h3><p>The first thing you'll notice if you look at the code examples using Sugar is that monads are used everywhere. They are not hidden with compiler extensions, nor look like anything other than monads.</p><p>But threre's a few conventions to style your code. These conventions are not mandatory - they just make it easier to undertand what is cool (and whats not) when writing monadic code in OCaml.</p><p>For example, a code like this:</p><pre><code class="code">
+  return [1; 2; 3]
+  &gt;&gt;= fun list -&gt;
+  return (List.length list)
+  &gt;&gt;= fun _len -&gt;
+  do_something ()
+  &gt;&gt;= fun () -&gt;
+  return &quot;hello world&quot;
+  </code></pre><p>Could be refactored to look like this:</p><pre><code class="code">
+  ( List.length &lt;$&gt; return [1; 2; 3] )
+  &gt;&gt;=
+  ( fun _len -&gt;
+    do_something ()
+  )
+  &gt;&gt;lazy
+  ( return &quot;Hello World&quot;  )
+  </code></pre><ul><li>If a function is non-monadic, maybe you should just use a combinator that supports non-monadic functions, and make code cleaner, like <a href="S/module-type-Promise/Infix/index.html#val-(&lt;$&gt;)">&lt;$&gt;</a> or <a href="S/module-type-Promise/Infix/index.html#val-(&gt;&gt;|)">&gt;&gt;|</a>.</li></ul><ul><li>It's important to use blocks. They make code easier to read and avoid ambiguity. Using one space to separate the parenthesis from its content is a good practice.</li></ul><ul><li>We recommend treating <a href="S/module-type-Promise/Infix/index.html#val-(&gt;&gt;)">&gt;&gt;lazy</a> as one word, with the same meaning as the sequential semicolon. It can only be used if the expression in the left resolves to <code class="code">unit result</code>. If you want to ignore any value without writing an anonymous function, you can use <a href="S/module-type-Promise/Infix/index.html#val-(&gt;&gt;&gt;)">&gt;&gt;&gt;lazy</a>.</li></ul><p>​</p><h3>Your own result monad</h3><p>Sugar is easy to use and customize. At the beginning, you create a result monad specific to your project. For that, you describe things like the errors of your project and if an underlining monad should be used for async. After that, you can basically ignore the fact that your result monad was customized at all. You get the same clean interface for all error aware computations.</p><p>It's interesting to say that describing your errors at an early development state is a good practice. The correct usage of this monad is enforced by Sugar interfaces. The most basic ones are:</p><ul><li><a href="S/module-type-Result/index.html#val-(&gt;&gt;=)">&gt;&gt;=</a>: Also called the <code class="code">bind</code> combinator. It resolves the expression in the left, and if successful, applies the returned value to the function in the right. If case of failures, it just returns the error.</li></ul><ul><li><a href="S/module-type-Result/index.html#val-return">return</a>: Create a value in your result monad</li></ul><ul><li><a href="S/module-type-Result/index.html#val-throw">throw</a>: Throws a project error using your result monad</li></ul><p>​
+These constructs abstract away things like the usage of async code and the concrete result type, making code easier to read.</p><h3>Exception awareness</h3><p>It would be great if exceptions would not be used as openly as they are in libraries like the Stdlib and Lwt. But they are, and you might want to use then nonetheless. You can still have some control over exceptions while using Sugar.</p><p>Sugar has some *strict* modules builders that take exception handling into account before creating a result monad. That is reflected in small changes in the <code class="code">Error</code> and <code class="code">Monad</code> modules provided as dependencies.</p><p>When you use a strict result monad, Sugar will handle the <code class="code">try-with</code> blocks for you and ask your <code class="code">Error</code> module to decide if the detected exception should be converted into one of your project errors, or some other action should be taken, like logging the error and kiling the process.</p><h3>Expressive error handling</h3><p>One common problem in the transition for writing heavily monadic code is that you need to think about how to handle errors in an expressive way.</p><p>Here's a code fragment that relies merely on exception and <code class="code">try-with</code> blocks to handle errors.</p><pre><code class="code">
+  try
+    delete_user &quot;john&quot;
+  with
+    Not_found -&gt; ()
+  </code></pre><p>And here is the same example, now using error aware expressions and a result monad to handle failures:</p><pre><code class="code">
+  delete_user &quot;john&quot;
+  &gt;---------
+  ( function
+    | Not_found -&gt; return ()
+    | e -&gt; throw e
+  )
+  </code></pre><p>As you can see, both versions are easy to write and read, but the latter is much safer, since it does not hide the fact that some errors can still be returned to the caller.</p><h3>Interacting with threading libraries</h3><p>If you use an async library with Sugar, chances are you will need to convert monads back and fourth to access functionality outside your project. Fear not, you will have access to the underlining monad with the operator <a href="S/module-type-Promise/Infix/index.html#val-(&gt;&gt;&gt;=)">&gt;&gt;&gt;=</a>.</p><p>The code bellow mixes both usage of the underlining bind, the result bind, and exception handling. Take into account that the code raising the exception just exemplifies an interaction with Lwt code that already raises exceptions. You should avoid writing this kind of code.</p><pre><code class="code">
+  module MyError = struct
+    type t = Unexpected of exn
+
+    let panic e = Unexpected e
+  end
+
+  module MyResult = Sugar.Strict.Promise.Make (MyError) (Lwt)
+
+  open MyResult
+  open MyResult.Infix
+  open MyError
+
+  let get_message () =
+    Lwt_unix.file_exists &quot;README.md&quot;{{: string }  text }
+    &gt;&gt;&gt;=
+    ( fun exists -&gt;
+      if exists then
+        return &quot;file exists&quot;
+      else
+        Lwt.fail (Failure &quot;file does not exists&quot;)
+    )
+    &gt;---------
+    ( function
+      Unexpected e -&gt; return (&quot;Unexpected: &quot; ^ (Printexc.to_string e))
+    )
+  </code></pre></body></html>

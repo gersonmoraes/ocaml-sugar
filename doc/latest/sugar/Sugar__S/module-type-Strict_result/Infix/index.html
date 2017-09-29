@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Infix (sugar.Sugar__S.Strict_result.Infix)</title><link rel="stylesheet" href="../../../../odoc.css"/><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><meta name="generator" content="doc-ock-html v1.0.0-1-g1fc9bf0"/></head><body><nav id="top"><a href="../index.html">Up</a> &mdash; <span class="package">package <a href="../../../index.html">sugar</a></span></nav><header><h1><span class="keyword">Module</span> <span class="module-path">Sugar__S.Strict_result.Infix</span></h1></header><div class="spec val" id="val-(&gt;---------)"><a href="#val-(&gt;---------)" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>(&gt;---------) : <span class="type-var">'a</span> <a href="../index.html#type-result">result</a> <span class="keyword">&#8209;&gt;</span> (<a href="../index.html#type-error">error</a> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'a</span> <a href="../index.html#type-result">result</a>) <span class="keyword">&#8209;&gt;</span> <span class="type-var">'a</span> <a href="../index.html#type-result">result</a></code></div><div class="doc"><p>Combinator used to introduce an error handler block to &quot;clean errors&quot;.</p><p>There's a secret message behind the form of this combinator.
+It has the same number of characters sufficient for the whole block
+in the next line. For example:</p><pre><code class="code">
+      let program1 () =
+       do_something ()
+       &gt;---------
+       ( fun e -&gt;
+         return ()
+       )
+
+      let program2 () =
+       do_something ()
+       &gt;---------
+       ( function
+         e -&gt; return ()
+       )
+      </code></pre><p>So beyond the clean aesthetics similar to markdown, we are
+implying that a developer should never handle errors in an open
+anonymous function.</p></div></div><div class="spec val" id="val-(&gt;&gt;|)"><a href="#val-(&gt;&gt;|)" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>(&gt;&gt;|) : <span class="type-var">'a</span> <a href="../index.html#type-result">result</a> <span class="keyword">&#8209;&gt;</span> (<span class="type-var">'a</span> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span>) <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span> <a href="../index.html#type-result">result</a></code></div><div class="doc"><p>Combinator for map with semantic similar to bind</p><p>As its name sugests, this is an alias for the function <a href="../index.html#val-map">map</a>.
+Its intended use is to help integrate with functions that are not error
+aware.</p><p>For example, considere the function <code class="code">let double x = x + x</code> in the code
+fragments bellow:</p><pre><code class="code">
+       open Sugar.Option
+
+       let twenty =
+         match Some 10 with
+         | None -&gt; None
+         | Some n -&gt; Some (double n)
+
+        let using_bind_combinator =
+         Some 10
+         &gt;&gt;=
+         ( fun n -&gt;
+           return (double n)
+         )
+
+       let using_map_combinator =
+         Some 10
+         &gt;&gt;| double
+      </code></pre></div></div><div class="spec val" id="val-(&lt;$&gt;)"><a href="#val-(&lt;$&gt;)" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>(&lt;$&gt;) : (<span class="type-var">'a</span> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span>) <span class="keyword">&#8209;&gt;</span> <span class="type-var">'a</span> <a href="../index.html#type-result">result</a> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span> <a href="../index.html#type-result">result</a></code></div><div class="doc"></div></div><div class="spec val" id="val-(&lt;*&gt;)"><a href="#val-(&lt;*&gt;)" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>(&lt;*&gt;) : (<span class="type-var">'a</span> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span>) <a href="../index.html#type-result">result</a> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'a</span> <a href="../index.html#type-result">result</a> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span> <a href="../index.html#type-result">result</a></code></div><div class="doc"></div></div><div class="spec val" id="val-(&gt;&gt;&gt;)"><a href="#val-(&gt;&gt;&gt;)" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>(&gt;&gt;&gt;) : <span class="type-var">'a</span> <a href="../index.html#type-result">result</a> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span> <a href="../index.html#type-result">result</a> Lazy.t <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span> <a href="../index.html#type-result">result</a></code></div><div class="doc"><p>Ignore operator.</p><p>This is a type of semicolon combinator that can be used to ignore any
+result. It is supposed to be used with the keyword lazy as in <code class="code">&gt;&gt;&gt;lazy</code>.
+It can be used to replace the creation of an anonymous function to discard
+the previous value, like:</p><pre><code class="code">
+      (* instead of writing *)
+      do_something ()
+      &gt;&gt;=
+      ( fun _ -&gt;
+        do_something_else ()
+      )
+
+      (* you can write *)
+      ( do_something ()      ) &gt;&gt;&gt;lazy
+      ( do_something_else () )
+      </code></pre><p>For more information, look at <a href="index.html#val-(&gt;&gt;)">(&gt;&gt;)</a>.</p></div></div><div class="spec val" id="val-(&gt;&gt;)"><a href="#val-(&gt;&gt;)" class="anchor"></a><div class="def val"><code><span class="keyword">val </span>(&gt;&gt;) : unit <a href="../index.html#type-result">result</a> <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span> <a href="../index.html#type-result">result</a> Lazy.t <span class="keyword">&#8209;&gt;</span> <span class="type-var">'b</span> <a href="../index.html#type-result">result</a></code></div><div class="doc"><p>A sequential semicolon combinator.</p><p>This operator is supposed to be used with the keyword lazy, as <code class="code">&gt;&gt;lazy</code>.
+To reduce cognitive load, it's interesting to treat <code class="code">&gt;&gt;lazy</code> as one word.</p><p>To chain monadic expressions that are not related to each other.
+Instead of writing code like:</p><pre><code class="code">
+      puts &quot;hello&quot;
+      &gt;&gt;=
+      ( fun () -&gt;
+        puts &quot;monadic&quot;
+      )
+      &gt;&gt;=
+      ( fun () -&gt;
+        puts &quot;world&quot;
+      )
+      </code></pre><p>You can use these form:
+</p><pre><code class="code">
+      ( puts &quot;hello&quot;   ) &gt;&gt;lazy
+      ( puts &quot;monadic&quot; ) &gt;&gt;lazy
+      ( puts &quot;world&quot;   )
+      </code></pre><p>Or this alternative form that has exactly the structure as the example above:
+</p><pre><code class="code">
+      ( puts &quot;hello&quot;   )&gt;&gt;lazy(
+        puts &quot;monadic&quot; )&gt;&gt;lazy(
+        puts &quot;world&quot;
+      )
+      </code></pre><p>Notice that the expression on the left must be of type <code class="code">unit result</code>. If you wish to
+ignore other type of <code class="code">result</code>s, use <a href="index.html#val-(&gt;&gt;&gt;)">&gt;&gt;&gt;lazy</a></p></div></div></body></html>
