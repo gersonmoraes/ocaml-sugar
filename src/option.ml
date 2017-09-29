@@ -75,7 +75,7 @@ end
 
 let wrap f =
   try Some (f ()) with
-  | e -> None
+  | _ -> None
 
 let unwrap = function
   | Some r -> r

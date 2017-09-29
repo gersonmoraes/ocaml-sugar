@@ -1,4 +1,3 @@
-v0.6.0
-------------------
+### 0.7.2 (2017-09-29)
 
-Initial release
+- initial version

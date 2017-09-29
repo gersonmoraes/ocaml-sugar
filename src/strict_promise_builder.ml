@@ -109,7 +109,7 @@ struct
     resolve r
     >>= function
     | Ok v -> UserMonad.return v
-    | Error e -> invalid_arg "Could not unwrap value"
+    | Error _ -> invalid_arg "Could not unwrap value"
 
   let unwrap_or f r =
     resolve r
@@ -121,7 +121,7 @@ struct
     resolve r
     >>= function
     | Ok v -> UserMonad.return v
-    | Error e -> invalid_arg msg
+    | Error _ -> invalid_arg msg
 
   let (>>=) = bind
 
