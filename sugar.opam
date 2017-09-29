@@ -15,6 +15,9 @@ build: [
 ]
 depends: [
   "jbuilder"      {>= "1.0+beta5"}
-  "topkg-jbuilder"
+  "ocamlfind" {build}
+  "ocamlbuild" {build}
+  "topkg" {build & >= "0.9.0"}
+  "topkg-jbuilder" {build}
 ]
 available: [ ocaml-version >= "4.02.3" ]

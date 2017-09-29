@@ -1,5 +1,39 @@
 open S.Params
 
+(**
+  This module is similar to {{!Sugar__Promise_builder}Sugar.Promise}.
+  It lets you create a result monad on top of an arbitrary monad.
+
+  The main difference is that the functions in this module were created to
+  recognize unexpected exceptions, and require you to provide some mecanism to
+  recover from that. This is done with the signatures for {{!Sugar.S.Params.Strict_error}
+   strict error} and {{!Sugar.S.Params.Strict_monad} strict monad}.
+
+
+  An example:
+  {[
+  module MyError = struct
+    type t = A | B | Unexpected of exn
+
+    let panic e = Unexpected e
+  end
+
+  module MyMonad = struct
+    type 'a t = 'a Lwt.t
+    let return = Lwt.return
+    let (>>=) = Lwt.(>>=)
+    let catch = Lwt.catch
+  end
+
+  module MyResult = Sugar.Strict.Promise.Make (MyError) (MyMonad)
+  ]}
+
+  Notice that the signature for the required strict monad is the same as the Lwt
+  library. That means, you can just plug it in:
+  {[
+    module MyResult = Sugar.Strict.Promise.Make (MyError) (Lwt)
+  ]}
+*)
 
 (**
   A parametric module that implements the monadic interface for values.

@@ -1,6 +1,21 @@
 open S.Params
 
 (**
+  How to create a result monad:
+
+  {[
+  module MyError = struct
+    type t = A | B | C
+  end
+
+  module MyResult = Sugar.Result.Make (MyError)
+  ]}
+
+  The generated module will have the signature of {!Sugar.S.Result}
+*)
+
+
+(**
   A parametric module that implements the blocking interface.
 
   The complete documentation can be found in {!Types.Result}.

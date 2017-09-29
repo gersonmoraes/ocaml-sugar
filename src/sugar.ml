@@ -1,9 +1,27 @@
 (**
-  <h1>Introduction</h1>
-
   Sugar is a small monadic library that provides syntactic sugar to help you manipulate error aware expressions.
+*)
 
-  <h2>Whos afraid of monads?</h2>
+(** <h2>Submodules</h2> *)
+
+module S = S
+
+(** Use to create a result monad on top of an arbitrary monad.  *)
+module Promise = Promise_builder
+
+(** Create a result monad for synchronous processing. *)
+module Result = Result_builder
+
+module Option = Option
+
+module Strict = struct
+  module Result = Strict_result_builder
+  module Promise = Strict_promise_builder
+end
+
+
+(**
+  <h2>Introduction</h2>
 
   The first thing you'll notice if you look at the code examples using Sugar is that monads are used everywhere. They are not hidden with compiler extensions, nor look like anything other than monads.
 
@@ -130,18 +148,3 @@
     )
   ]}
 *)
-
-module S = S
-
-module Promise = Promise_builder
-(** Use to create a result monad on top of an arbitrary monad.  *)
-
-module Result = Result_builder
-(** Create a result monad for synchronous processing. *)
-
-module Option = Option
-
-module Strict = struct
-  module Result = Strict_result_builder
-  module Promise = Strict_promise_builder
-end

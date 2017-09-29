@@ -1,6 +1,32 @@
 open S.Params
 
 (**
+  How to create a {{!Sugar.S.Promise}promise-based} result monad:
+
+  {[
+  module MyError = struct
+    type t = A | B | C
+  end
+
+  module MyMonad = struct
+    type 'a t = 'a Lwt.t
+    let return = Lwt.return
+    let (>>=) = Lwt.(>>=)
+  end
+
+  module MyResult = Sugar.Promise.Make (MyError) (MyMonad)
+  ]}
+
+  Notice that for most cases, you can just plug the module
+  directly from a monadic library, like:
+
+  {[
+    module MyResult = Sugar.Promise.Make (MyError) (Lwt)
+    module MyResult2 = Sugar.Promise.Make (MyError) (Async.Std.Deferred)
+  ]}
+*)
+
+(**
   A parametric module that implements the monadic interface for values.
   The complete documentation can be found in {!Sugar.S.Promise}.
 *)

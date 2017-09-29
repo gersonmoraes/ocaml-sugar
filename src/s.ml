@@ -94,7 +94,7 @@ end
 (**
   A monad that provides some awareness about unexpected exceptions.
 
-  This module is related to {{!Sugar.Params.Strict_error} Strict_error}.
+  This module is related to {{!Sugar.S.Params.Strict_error} Strict_error}.
 *)
 module type Strict_monad = sig
   include Monad

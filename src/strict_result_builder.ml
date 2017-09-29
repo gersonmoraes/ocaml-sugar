@@ -1,9 +1,24 @@
 open S.Params
 
 (**
-  A parametric module that implements the blocking interface.
+  How to create a {{!Sugar.S.Strict_result} strict result monad}:
 
-  The complete documentation can be found in {!Types.Result}.
+  {[
+  module MyError = struct
+    type t = A | B | Unexpected of exn
+
+    let panic e = Unexpected e
+  end
+
+  module MyResult = Sugar.Result.Make (MyError)
+  ]}
+
+  The generated module will have the signature of {!Sugar.S.Strict_result}
+*)
+
+
+(**
+  A parametric module that implements the blocking interface.
 *)
 module Make (UserError:Strict_error) : S.Strict_result
   with type error = UserError.t =
