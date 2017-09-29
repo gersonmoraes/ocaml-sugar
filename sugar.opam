@@ -5,6 +5,7 @@ authors: "Gerson Moraes <gerson@digirati.com.br>"
 homepage: "https://github.com/gersonmoraes/ocaml-sugar"
 dev-repo: "https://github.com/gersonmoraes/ocaml-sugar"
 bug-reports: "https://github.com/gersonmoraes/ocaml-sugar/issues"
+doc: "https://gersonmoraes.github.io/ocaml-sugar/doc"
 license: "MIT"
 build: [
   ["jbuilder" "build"
