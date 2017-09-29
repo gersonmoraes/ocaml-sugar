@@ -49,11 +49,11 @@
 
   It's interesting to say that describing your errors at an early development state is a good practice. The correct usage of this monad is enforced by Sugar interfaces. The most basic ones are:
 
-  - {{!Sugar.Result.S.(>>=)} >>=}: Also called the `bind` combinator. It resolves the expression in the left, and if successful, applies the returned value to the function in the right. If case of failures, it just returns the error.
+  - {{!Sugar.S.Result.(>>=)} >>=}: Also called the `bind` combinator. It resolves the expression in the left, and if successful, applies the returned value to the function in the right. If case of failures, it just returns the error.
 
-  - {{!Sugar.Result.S.return} return}: Create a value in your result monad
+  - {{!Sugar.S.Result.return} return}: Create a value in your result monad
 
-  - {{!Sugar.Result.S.throw} throw}: Throws a project error using your result monad
+  - {{!Sugar.S.Result.throw} throw}: Throws a project error using your result monad
 
     ​
   These constructs abstract away things like the usage of async code and the concrete result type, making code easier to read.
@@ -131,12 +131,17 @@
   ]}
 *)
 
-module Abstract = Abstract
-module Promise = Promise
-module Result = Sugar_result
+module S = S
+
+module Promise = Promise_builder
+(** Use to create a result monad on top of an arbitrary monad.  *)
+
+module Result = Result_builder
+(** Create a result monad for synchronous processing. *)
+
 module Option = Option
 
 module Strict = struct
-  module Result = Strict_result
-  module Promise = Strict_promise
+  module Result = Strict_result_builder
+  module Promise = Strict_promise_builder
 end

@@ -1,7 +1,7 @@
-open Abstract
+open S.Params
 
 (**
-  An implementation of {{!Sugar.Result.S}  Result } interface
+  An implementation of {{!Sugar.S.Result_partials}  Result } interface
   for the option type.
 
   This is probably the easiest way to start using Sugar, as there is no need to
