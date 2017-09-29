@@ -35,11 +35,11 @@
   ]}
 
 
-    - If a function is non-monadic, maybe you should just use a combinator that supports non-monadic functions, and make code cleaner, like {{!Sugar.Promise.S.Infix.(<$>)} <$>} or {{!Sugar.Promise.S.Infix.(>>|)} >>|}.
+    - If a function is non-monadic, maybe you should just use a combinator that supports non-monadic functions, and make code cleaner, like {{!Sugar.S.Promise.Infix.(<$>)} <$>} or {{!Sugar.S.Promise.Infix.(>>|)} >>|}.
 
     - It's important to use blocks. They make code easier to read and avoid ambiguity. Using one space to separate the parenthesis from its content is a good practice.
 
-    - We recommend treating {{!Sugar.Promise.S.Infix.(>>)} >>lazy} as one word, with the same meaning as the sequential semicolon. It can only be used if the expression in the left resolves to `unit result`. If you want to ignore any value without writing an anonymous function, you can use {{!Sugar.Promise.S.Infix.(>>>)} >>>lazy}.
+    - We recommend treating {{!Sugar.S.Promise.Infix.(>>)} >>lazy} as one word, with the same meaning as the sequential semicolon. It can only be used if the expression in the left resolves to [unit result]. If you want to ignore any value without writing an anonymous function, you can use {{!Sugar.S.Promise.Infix.(>>>)} >>>lazy}.
 
       ​
 
@@ -49,7 +49,7 @@
 
   It's interesting to say that describing your errors at an early development state is a good practice. The correct usage of this monad is enforced by Sugar interfaces. The most basic ones are:
 
-  - {{!Sugar.S.Result.(>>=)} >>=}: Also called the `bind` combinator. It resolves the expression in the left, and if successful, applies the returned value to the function in the right. If case of failures, it just returns the error.
+  - {{!Sugar.S.Result.(>>=)} >>=}: Also called the [bind] combinator. It resolves the expression in the left, and if successful, applies the returned value to the function in the right. If case of failures, it just returns the error.
 
   - {{!Sugar.S.Result.return} return}: Create a value in your result monad
 
@@ -63,9 +63,9 @@
 
   It would be great if exceptions would not be used as openly as they are in libraries like the Stdlib and Lwt. But they are, and you might want to use then nonetheless. You can still have some control over exceptions while using Sugar.
 
-  Sugar has some *strict* modules builders that take exception handling into account before creating a result monad. That is reflected in small changes in the `Error` and `Monad` modules provided as dependencies.
+  Sugar has some *strict* modules builders that take exception handling into account before creating a result monad. That is reflected in small changes in the [Error] and [Monad] modules provided as dependencies.
 
-  When you use a strict result monad, Sugar will handle the `try-with` blocks for you and ask your `Error` module to decide if the detected exception should be converted into one of your project errors, or some other action should be taken, like logging the error and kiling the process.
+  When you use a strict result monad, Sugar will handle the [try-with] blocks for you and ask your [Error] module to decide if the detected exception should be converted into one of your project errors, or some other action should be taken, like logging the error and kiling the process.
 
 
 
@@ -73,7 +73,7 @@
 
   One common problem in the transition for writing heavily monadic code is that you need to think about how to handle errors in an expressive way.
 
-  Here's a code fragment that relies merely on exception and `try-with` blocks to handle errors.
+  Here's a code fragment that relies merely on exception and [try-with] blocks to handle errors.
 
   {[
   try
@@ -98,7 +98,7 @@
 
   <h2>Interacting with threading libraries</h2>
 
-  If you use an async library with Sugar, chances are you will need to convert monads back and fourth to access functionality outside your project. Fear not, you will have access to the underlining monad with the operator `>>>=`.
+  If you use an async library with Sugar, chances are you will need to convert monads back and fourth to access functionality outside your project. Fear not, you will have access to the underlining monad with the operator {{!Sugar.S.Promise.Infix.(>>>=)} >>>=}.
 
   The code bellow mixes both usage of the underlining bind, the result bind, and exception handling. Take into account that the code raising the exception just exemplifies an interaction with Lwt code that already raises exceptions. You should avoid writing this kind of code.
 

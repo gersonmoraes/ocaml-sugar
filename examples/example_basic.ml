@@ -19,7 +19,7 @@ struct
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-module MyResult = Sugar.Result.Make(MyError)
+module MyResult = Sugar.Result.Make (MyError)
 
 (* Start using them *)
 open MyResult
@@ -70,16 +70,17 @@ let _ =
   ( fun e ->
     return "Recover from any error"
   )
-  >>=
-  puts
+  >>= puts
 
 
 let _ =
   puts "We are extensively using a user defined result type" >>lazy
   ( load_list 10 )
   >>| List.length
-  >>= fun len ->
-  throw (Unexpected (sprintf "List length invalid: %d" len))
+  >>=
+  ( fun len ->
+    throw (Unexpected (sprintf "List length invalid: %d" len))
+  )
   >---------
   ( function
     e -> error_handler e
@@ -95,5 +96,4 @@ let _ =
   ( fun e ->
     return "Recover from any error"
   )
-  >>=
-  puts
+  >>= puts
