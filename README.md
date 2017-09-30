@@ -1,10 +1,21 @@
-# Sugar — Syntatic constructs for result monads
+# Sugar — On demand error handling layers
 
 %%VERSION%%
 
-Sugar is a small monadic library that tries to simplify the use of error aware expressions with a monadic interface.
+Sugar is a small monadic library that tries to simplify the use of error aware expressions with a monadic interface. Check out the the [documentation][docs] online for more information.
 
-## How to use it
+
+
+## Main features
+
+- Unified interface to describe a result monad
+- Module builders to customize the monadic interface to your project
+- Works well on top of threading libraries like Lwt or Async
+- Exception handling is supported to some degree with the *strict* interfaces
+
+
+
+## Quick start
 
 1. Create an isolated module to describe your errors.
 2. Use one of Sugar's module builders to create a custom `Result` module for your project. *This module will implement a clean DSL to help you create error aware computations*.
@@ -51,8 +62,19 @@ let () =
 
 
 
-Sugar creates a type `result` that represents  the result of a computation in this project. The translation of `result` in this example to stantard OCaml is:
+### Type hinting
+
+Your result monad will have a type `'a result` that represents  the result of any computation inside your project. If you use `Lwt`, this type would take the form:
 
 ```ocaml
 type 'a result = ('a, Errors.t) Result.result Lwt.t
 ```
+
+The `Result.result` type comes from the [result package][result package]. In recent versions of OCaml (>= 4.03), defaults to `Pervasives.result`.
+
+
+
+
+
+[docs]: https://gersonmoraes.github.io/ocaml-sugar/doc/latest/sugar/Sugar/index.html
+[result package]: https://github.com/janestreet/result
