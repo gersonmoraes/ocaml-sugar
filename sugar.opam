@@ -9,17 +9,13 @@ doc: "https://gersonmoraes.github.io/ocaml-sugar/doc"
 license: "MIT"
 build: [
   ["jbuilder" "subst"] {pinned}
-  ["jbuilder" "build"
-    "--only-packages" "sugar"
-    "--root" "."
-    "-j" jobs
-    "@install"]
+  ["jbuilder" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "jbuilder"      {>= "1.0+beta5"}
-  "ocamlfind" {build}
-  "ocamlbuild" {build}
-  "topkg" {build & >= "0.9.0"}
+  "jbuilder"       {>= "1.0+beta11"}
+  "ocamlfind"      {build}
+  "ocamlbuild"     {build}
+  "topkg"          {build & >= "0.9.0"}
   "topkg-jbuilder" {build}
 ]
 available: [ ocaml-version >= "4.02.3" ]
