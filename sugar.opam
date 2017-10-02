@@ -14,5 +14,6 @@ build: [
 ]
 depends: [
   "jbuilder" {>= "1.0+beta11"}
+  "result" {>= "1.2"}
 ]
 available: [ ocaml-version >= "4.02.3" ]
