@@ -1,5 +1,6 @@
 opam-version: "1.2"
 name: "sugar"
+version: "0.7.3"
 maintainer: "Gerson Moraes <gerson@digirati.com.br>"
 authors: "Gerson Moraes <gerson@digirati.com.br>"
 homepage: "https://github.com/gersonmoraes/ocaml-sugar"
@@ -12,10 +13,6 @@ build: [
   ["jbuilder" "build" "-p" name "-j" jobs]
 ]
 depends: [
-  "jbuilder"       {>= "1.0+beta11"}
-  "ocamlfind"      {build}
-  "ocamlbuild"     {build}
-  "topkg"          {build & >= "0.9.0"}
-  "topkg-jbuilder" {build}
+  "jbuilder" {>= "1.0+beta11"}
 ]
 available: [ ocaml-version >= "4.02.3" ]
