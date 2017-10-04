@@ -62,17 +62,15 @@ let () =
 
 
 
-### Type hinting
+### Warning about type hinting
 
-Your result monad will have a type `'a result` that represents  the result of any computation inside your project. If you use `Lwt`, this type would take the form:
+The result monad will create a new type `'a result` that describes  the result of any computation inside your project. If you use `Lwt`, this type would take the form:
 
 ```ocaml
 type 'a result = ('a, Errors.t) Result.result Lwt.t
 ```
 
-The `Result.result` type comes from the [result package][result package]. In recent versions of OCaml (>= 4.03), defaults to `Pervasives.result`.
-
-
+The `Result.result` type above comes from the [result][result package] package. In recent versions of OCaml (>= 4.03), this type will be an alias for `Pervasives.result`.
 
 
 
