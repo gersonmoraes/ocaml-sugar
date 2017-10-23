@@ -1,4 +1,4 @@
-MAIN := _build/default/examples/strict_lwt/example_lwt_strict.exe
+MAIN := _build/default/examples/strict_async/main.exe
 
 VERSION := $(shell git describe)
 
@@ -37,8 +37,9 @@ doc-release: docs
 	@mkdir -p $(DOC_RELEASES)
 	@cp -r $(DOCDIR) $(FROZEN_DOC)
 
-examples: clean
-	@jbuilder build examples/strict_lwt/example_lwt_strict.exe
+examples:
+	@#jbuilder build examples/strict_lwt/main.exe
+	@jbuilder build examples/strict_async/main.exe
 	@jbuilder build examples/example_strict.exe
 	@jbuilder build examples/example_basic.exe
 

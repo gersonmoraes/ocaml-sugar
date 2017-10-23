@@ -2,5 +2,5 @@
 (executable
  ((name main)
   (libraries
-    (sugar lwt lwt.unix))
+    (sugar async async_unix threads))
 ))
