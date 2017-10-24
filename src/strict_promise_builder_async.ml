@@ -71,7 +71,6 @@ struct
         )
       >>= function
       | Ok v -> return v
-      (* WE CAN NOT PLACE A Error CONSTRUCTOR HERE *)
       | Error e -> return (Error (UserError.panic e))
     )
     |> fun v ->
