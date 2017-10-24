@@ -68,7 +68,7 @@ struct
   let (>>=) r f =
     UserMonad.catch
       ( fun () ->  UserMonad.(>>=) (Lazy.force r) (fun v -> Lazy.force (f v)) )
-      ( fun e -> Lazy.force ( throw (UserError.panic e)) )
+      ( fun e -> UserMonad.return (Error (UserError.panic e)) )
     |> fun v ->
     lazy v
 

@@ -38,7 +38,7 @@ doc-release: docs
 	@cp -r $(DOCDIR) $(FROZEN_DOC)
 
 examples:
-	@#jbuilder build examples/strict_lwt/main.exe
+	@jbuilder build examples/strict_lwt/main.exe
 	@jbuilder build examples/strict_async/main.exe
 	@jbuilder build examples/example_strict.exe
 	@jbuilder build examples/example_basic.exe

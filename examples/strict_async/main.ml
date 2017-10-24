@@ -28,11 +28,12 @@ module MyMonad = struct
   let return = Deferred.return
   let (>>=) = Deferred.(>>=)
 
-  let catch f g =
-    Monitor.try_with f
+  let catch (f: unit -> 'a t) (g: exn -> 'a t) : 'a t =
+    try_with f
     >>= function
     | Ok v -> return v
-    | Error e -> g e
+    | Error e ->
+      g e
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
@@ -57,11 +58,11 @@ let load_list n: int list result =
 
 let main () =
   ( puts "Hello World"                   ) >>lazy
-  ( raise (Failure "Something happened") ) >>lazy
+  ( raise (Failure "Something happened") ) >>>lazy
   ( List.length <$> load_list 10 )
   >---------
   ( function
-    | Unexpected (Failure e) -> return 50
+    | Unexpected (e) -> return 50
     | e -> throw e
   )
   >>=
@@ -81,6 +82,8 @@ let main () =
   ( fun e ->
     puts "Recover from any error"
   )
+  >>= fun _ ->
+  exit 0
 
 
 
