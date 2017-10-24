@@ -17,8 +17,8 @@ module Option = Option
 module Strict = struct
   module Result = Strict_result_builder
   module Promise = Strict_promise_builder
+  module PromiseAsync = Strict_promise_builder_async
 end
-
 
 (**
   <h2>Introduction</h2>

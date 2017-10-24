@@ -45,7 +45,7 @@ examples:
 
 
 run: examples
-	@$(MAIN)
+	$(MAIN)
 
 
 .PHONY: default install uninstall reinstall clean examples

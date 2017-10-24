@@ -36,7 +36,7 @@ module MyMonad = struct
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-module MyResult = Sugar.Strict.Promise.Make (MyError) (MyMonad)
+module MyResult = Sugar.Strict.PromiseAsync.Make (MyError) (MyMonad)
 
 (* Start using them *)
 open MyResult
@@ -83,6 +83,7 @@ let main () =
   )
 
 
+
 let _ =
-  (* let _ = main () in *)
+  let _ = main () in
   Async.Scheduler.go ()
