@@ -41,12 +41,12 @@ open Result
   The complete documentation can be found in {!Sugar.S.Promise}.
 *)
 module Make (UserError:Strict_error) (Async:Async)
-(* : S.Strict_promise
+: S.Strict_promise
   with
     type error := UserError.t
     and type 'a monad := 'a Async.Deferred.t
     and type 'a value = ('a, UserError.t) Result.result
-    and type 'a result = (('a, UserError.t) Result.result Async.Deferred.t) lazy_t *)
+    and type 'a result = (('a, UserError.t) Result.result Async.Deferred.t) lazy_t
 =
 struct
   include UserError
@@ -71,6 +71,7 @@ struct
         )
       >>= function
       | Ok v -> return v
+      (* WE CAN NOT PLACE A Error CONSTRUCTOR HERE *)
       | Error e -> return (Error (UserError.panic e))
     )
     |> fun v ->
@@ -107,40 +108,40 @@ struct
 
     let (>---------) = bind_unless
 
-    let (<*>) f x =
+    let (<*>) (f: ('a -> 'b) result) (x:'a result) : 'b result =
       f
       >>= fun f' ->
       x
       >>= fun x' ->
-      (f' x')
+      return (f' x')
 
     let (<$>) f x = map x f
   end
 
 
   let unwrap (r: 'a result) : 'a monad =
-    ( r
+    let open UserMonad in
+    ( Lazy.force r
       >>= function
-      | Result.Ok v -> lazy (UserMonad.return v)
+      | Result.Ok v -> (UserMonad.return v)
       | Result.Error e -> raise (Invalid_argument "Could not unwrap value")
     )
-    |> Lazy.force
 
-  let unwrap_or f r =
-    ( r
+  let unwrap_or (f: UserError.t -> 'a monad) (r: 'a result) : 'a monad =
+    let open UserMonad in
+    ( Lazy.force r
       >>= function
-      | Result.Ok v -> lazy (UserMonad.return v)
-      | Result.Error e -> lazy (f (UserError.panic e))
+      | Result.Ok v -> UserMonad.return v
+      | Result.Error e -> f e
     )
-    |> Lazy.force
 
   let expect r msg =
-    ( r
+    let open UserMonad in
+    ( Lazy.force r
       >>= function
-      | Result.Ok v -> lazy (UserMonad.return v)
+      | Result.Ok v -> UserMonad.return v
       | Result.Error e -> raise (Invalid_argument msg)
     )
-    |> Lazy.force
 
   let (>>=) = bind
 

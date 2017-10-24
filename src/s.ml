@@ -234,12 +234,12 @@ module type Promise = sig
       ]}
     *)
 
-    val ( >> ) : unit result -> 'b result Lazy.t -> 'b result
+    val ( >> ) : unit result -> 'b result lazy_t -> 'b result
     (**
       {{!Sugar.S.Result.Infix.(>>)} More...}
     *)
 
-    val (>>>): 'a result -> 'b result Lazy.t -> 'b result
+    val (>>>): 'a result -> 'b result lazy_t -> 'b result
     (**
       {{!Sugar.S.Result.Infix.(>>>)} More...}
     *)
@@ -442,7 +442,7 @@ module type Result_partials = sig
     val (<*>): ('a -> 'b) result -> 'a result -> 'b result
 
 
-    val (>>>): 'a result -> 'b result Lazy.t -> 'b result
+    val (>>>): 'a result -> 'b result lazy_t -> 'b result
     (**
       Ignore operator.
 
@@ -467,7 +467,7 @@ module type Result_partials = sig
       For more information, look at {!(>>)}.
     *)
 
-    val (>>): unit result -> 'b result Lazy.t -> 'b result
+    val (>>): unit result -> 'b result lazy_t -> 'b result
     (**
       A sequential semicolon combinator.
 
