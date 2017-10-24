@@ -2,5 +2,5 @@
 (executable
  ((name main)
   (libraries
-    (sugar async async_unix threads))
+    (sugar async async_unix threads result))
 ))

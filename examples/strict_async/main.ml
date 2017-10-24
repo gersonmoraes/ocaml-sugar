@@ -22,22 +22,15 @@ struct
 end
 
 module MyMonad = struct
-  open Async
 
-  type 'a t = 'a Deferred.t
-  let return = Deferred.return
-  let (>>=) = Deferred.(>>=)
+  module Deferred = Async.Deferred
 
-  let catch (f: unit -> 'a t) (g: exn -> 'a t) : 'a t =
-    try_with f
-    >>= function
-    | Ok v -> return v
-    | Error e ->
-      g e
+  let try_with f =
+    Async.try_with f
 end
 
 (* Generate your error handling layer with your parametrized Result module *)
-module MyResult = Sugar.Strict.PromiseAsync.Make (MyError) (MyMonad)
+module MyResult = Sugar.Strict.JsPromise.Make (MyError) (MyMonad)
 
 (* Start using them *)
 open MyResult

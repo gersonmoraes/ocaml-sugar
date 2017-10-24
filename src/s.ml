@@ -114,6 +114,14 @@ module type Strict_monad = sig
 end
 
 
+module type Async = sig
+  module Deferred : Monad
+
+  val try_with :
+    (unit -> 'a Deferred.t) ->
+    ('a, exn) Result.result  Deferred.t
+end
+
 end
 
 open Params
@@ -135,7 +143,8 @@ module type Promise = sig
     or [Async.Std.Deferred.t] for Async).
    *)
 
-  type 'a result = 'a value monad
+  (* type 'a result = 'a value monad *)
+  type 'a result
   (**
     This type describes a result monad inside a project.
 
@@ -237,20 +246,21 @@ module type Promise = sig
 
   end
 
-  val unwrap: 'a value monad -> 'a monad
+  (* val unwrap: 'a value monad -> 'a monad *)
+  val unwrap: 'a result -> 'a monad
   (**
     Unwraps the successful value as a normal value in the threading monad.
     If the value is not successful, it will raise an [Invalid_arg] exception.
   *)
 
-  val unwrap_or: (error -> 'a monad) -> 'a value monad -> 'a monad
+  val unwrap_or: (error -> 'a monad) -> 'a result -> 'a monad
   (**
     Unwraps the successful value as a value in the threading monad.
     Different from [unwrap], you can assign an error handler to be
     executed if the computation failed.
   *)
 
-  val expect: 'a value monad -> string -> 'a monad
+  val expect: 'a result -> string -> 'a monad
   (**
     Extracts a successful value from an computation, or raises and [Invalid_arg]
     exception with a customized error message.

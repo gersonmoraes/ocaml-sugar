@@ -1,4 +1,5 @@
 open S.Params
+open Result
 
 (**
   This module is similar to {{!Sugar__Promise_builder}Sugar.Promise}.
@@ -39,36 +40,39 @@ open S.Params
   A parametric module that implements the monadic interface for values.
   The complete documentation can be found in {!Sugar.S.Promise}.
 *)
-module Make (UserError:Strict_error) (UserMonad:Strict_monad)
+module Make (UserError:Strict_error) (Async:Async)
 (* : S.Strict_promise
   with
     type error := UserError.t
-    and type 'a monad := 'a UserMonad.t
+    and type 'a monad := 'a Async.Deferred.t
     and type 'a value = ('a, UserError.t) Result.result
-    and type 'a result = ('a, UserError.t) Result.result UserMonad.t *)
+    and type 'a result = (('a, UserError.t) Result.result Async.Deferred.t) lazy_t *)
 =
 struct
   include UserError
+  module UserMonad = Async.Deferred
 
   type 'a monad = 'a UserMonad.t
   type 'a value = ('a, UserError.t) Result.result
-  type 'a result = 'a value monad Lazy.t
+  type 'a result = 'a value monad lazy_t
 
-  open UserMonad
-  open Result
+  (* open UserMonad *)
 
   let return v = lazy ( UserMonad.return (Ok v) )
   let throw e = lazy ( UserMonad.return (Error e) )
 
-  (* let resolve r =
-    UserMonad.catch
-      ( fun () -> Lazy.force r )
-      ( fun e -> Lazy.force ( throw (UserError.panic e)) ) *)
-
-  let (>>=) r f =
-    UserMonad.catch
-      ( fun () ->  UserMonad.(>>=) (Lazy.force r) (fun v -> Lazy.force (f v)) )
-      ( fun e -> UserMonad.return (Error (UserError.panic e)) )
+  let (>>=) (r:'a monad lazy_t) (f:'a -> 'b monad lazy_t) : 'b monad lazy_t =
+    let open UserMonad in
+    ( Async.try_with
+        ( fun () ->
+          Lazy.force r
+          >>= fun v ->
+          Lazy.force (f v)
+        )
+      >>= function
+      | Ok v -> return v
+      | Error e -> return (Error (UserError.panic e))
+    )
     |> fun v ->
     lazy v
 
@@ -81,8 +85,8 @@ struct
   let bind_unless r f =
     r
     >>= function
-    | Error e -> f e
     | Ok v -> return v
+    | Error e -> f e
 
   let map r f =
     r
@@ -108,28 +112,35 @@ struct
       >>= fun f' ->
       x
       >>= fun x' ->
-      return (f' x')
+      (f' x')
 
     let (<$>) f x = map x f
   end
 
-  let unwrap r =
-    r
-    >>= function
-    | Ok v -> lazy (UserMonad.return v)
-    | Error _ -> invalid_arg "Could not unwrap value"
+
+  let unwrap (r: 'a result) : 'a monad =
+    ( r
+      >>= function
+      | Result.Ok v -> lazy (UserMonad.return v)
+      | Result.Error e -> raise (Invalid_argument "Could not unwrap value")
+    )
+    |> Lazy.force
 
   let unwrap_or f r =
-    r
-    >>= function
-    | Ok v -> lazy (UserMonad.return v)
-    | Error e -> f e
+    ( r
+      >>= function
+      | Result.Ok v -> lazy (UserMonad.return v)
+      | Result.Error e -> lazy (f (UserError.panic e))
+    )
+    |> Lazy.force
 
   let expect r msg =
-    r
-    >>= function
-    | Ok v -> lazy (UserMonad.return v)
-    | Error _ -> invalid_arg msg
+    ( r
+      >>= function
+      | Result.Ok v -> lazy (UserMonad.return v)
+      | Result.Error e -> raise (Invalid_argument msg)
+    )
+    |> Lazy.force
 
   let (>>=) = bind
 
