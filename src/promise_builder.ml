@@ -103,7 +103,7 @@ struct
     | Ok v -> UserMonad.return v
     | Error e -> f e
 
-  let expect r msg =
+  let expect msg r =
     r
     >>= function
     | Ok v -> UserMonad.return v

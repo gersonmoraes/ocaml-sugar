@@ -117,7 +117,7 @@ struct
     | Ok v -> UserMonad.return v
     | Error e -> f e
 
-  let expect r msg =
+  let expect msg r =
     resolve r
     >>= function
     | Ok v -> UserMonad.return v

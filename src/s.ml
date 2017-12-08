@@ -260,7 +260,7 @@ module type Promise = sig
     executed if the computation failed.
   *)
 
-  val expect: 'a result -> string -> 'a monad
+  val expect: string -> 'a result -> 'a monad
   (**
     Extracts a successful value from an computation, or raises and [Invalid_arg]
     exception with a customized error message.
@@ -544,7 +544,7 @@ module type Result_partials = sig
   *)
 
 
-  val expect: 'a result -> string -> 'a
+  val expect: string -> 'a result -> 'a
   (**
     Extracts a successful value from an computation, or raises and Invalid_arg
     exception with the defined parameter.

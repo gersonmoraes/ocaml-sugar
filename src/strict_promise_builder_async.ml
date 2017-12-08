@@ -134,7 +134,7 @@ struct
       | Result.Error e -> f e
     )
 
-  let expect r msg =
+  let expect msg r =
     let open UserMonad in
     ( Lazy.force r
       >>= function

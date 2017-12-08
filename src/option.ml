@@ -86,7 +86,7 @@ let unwrap_or r f =
   | Some r -> r
   | None -> f ()
 
-let expect r msg =
+let expect msg r =
   match r with
   | Some r -> r
   | None -> invalid_arg msg

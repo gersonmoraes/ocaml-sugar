@@ -82,7 +82,7 @@ struct
     | Result.Ok r -> r
     | Result.Error e -> f e
 
-  let expect r msg =
+  let expect msg r =
     match r with
     | Result.Ok r -> r
     | Result.Error _ -> invalid_arg msg
