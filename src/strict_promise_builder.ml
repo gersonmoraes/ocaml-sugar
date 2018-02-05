@@ -123,6 +123,13 @@ struct
     | Ok v -> UserMonad.return v
     | Error _ -> invalid_arg msg
 
+  let ok_or_else f r =
+    resolve r
+    >>= function
+    | Result.Ok (Some v) -> return v
+    | Result.Ok None -> f ()
+    | Result.Error e -> throw e
+
   let (>>=) = bind
 
   module NoExceptions = Promise_builder.Make (UserError) (UserMonad)

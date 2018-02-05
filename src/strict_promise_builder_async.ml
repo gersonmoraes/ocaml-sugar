@@ -142,6 +142,18 @@ struct
       | Result.Error e -> raise (Invalid_argument msg)
     )
 
+  let ok_or_else (f:unit -> 'a result) (r:'a option result) : 'a result =
+    let (>>=) = UserMonad.(>>=) in
+    ( Lazy.force r
+      >>= function
+      | Result.Ok (Some v) -> UserMonad.return (Ok v)
+      | Result.Ok None -> Lazy.force (f ())
+      | Result.Error e -> UserMonad.return (Error e)
+    )
+    |> fun v ->
+    lazy v
+
+
   let (>>=) = bind
 
   module NoExceptions = Promise_builder.Make (UserError) (UserMonad)

@@ -266,6 +266,8 @@ module type Promise = sig
     exception with a customized error message.
   *)
 
+  val ok_or_else: (unit -> 'a result) -> 'a option result -> 'a result
+
 end
 
 (**
@@ -549,6 +551,8 @@ module type Result_partials = sig
     Extracts a successful value from an computation, or raises and Invalid_arg
     exception with the defined parameter.
   *)
+
+  val ok_or_else: (unit -> 'a result) -> 'a option result -> 'a result
 
 end
 

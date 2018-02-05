@@ -109,6 +109,13 @@ struct
     | Ok v -> UserMonad.return v
     | Error _ -> invalid_arg msg
 
+  let ok_or_else f r =
+    r
+    >>= function
+    | Ok (Some v) -> UserMonad.return (Ok v)
+    | Ok None -> f ()
+    | Error e -> UserMonad.return (Error e)
+
 
   let (>>=) = bind
 end

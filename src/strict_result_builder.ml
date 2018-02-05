@@ -87,6 +87,11 @@ struct
     | Result.Ok r -> r
     | Result.Error _ -> invalid_arg msg
 
+  let ok_or_else f r =
+    match r with
+    | Result.Ok (Some v) -> return v
+    | Result.Ok None -> f ()
+    | Result.Error e -> throw e
 
   let (>>=) = bind
 

@@ -77,6 +77,12 @@ struct
     | Result.Ok r -> r
     | Result.Error _ -> invalid_arg msg
 
+  let ok_or_else f r =
+    match r with
+    | Result.Ok (Some v) -> Result.Ok v
+    | Result.Ok None -> f ()
+    | Result.Error e -> Result.Error e
+
   let (>>=) = bind
 
   module Monad : Monad
